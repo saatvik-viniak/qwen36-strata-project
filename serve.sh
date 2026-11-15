@@ -16,11 +16,12 @@ MODEL_NAME="${MODEL_NAME:-qwen3.6-35b-a3b}"
 # (45 KB/token: 11 attention layers x 2 x 2 KV heads x 256 head dim x 4 bytes),
 # so 32K = 1.4 GB, 64K = 2.9 GB, 128K = 5.8 GB, 262114 = 11.8 GB.
 # The engine refuses a context that does not fit; that is the guard, not a warning.
-MAX_CONTEXT="${MAX_CONTEXT:-32768}"
+MAX_CONTEXT="${MAX_CONTEXT:-36864}"
 
-# Prompt chunk: auto lets the engine pick (2048 in the hybrid mode), 512 is the
-# base engine's text bit for bit.
-PREFILL="${PREFILL:-auto}"
+# Prompt chunk. auto lets the engine pick from free VRAM (512 on this card);
+# 1024 is the default here: bigger chunks feed the expert kernels more rows, and
+# 2048 costs ~0.26 GiB more buffers per step, which this card does not have.
+PREFILL="${PREFILL:-1024}"
 
 # MTP drafts per step from the GGUF's own MTP block. 0 turns drafting off.
 MTP="${MTP:-2}"
