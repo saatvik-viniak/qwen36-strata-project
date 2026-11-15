@@ -12,6 +12,12 @@ OUT="$ROOT/out"
 BUILD="$ROOT/build"
 JOBS="${JOBS:-$(nproc)}"
 
+. "$ROOT/cuda_env.sh"
+strata_find_cuda || {
+  strata_cuda_help
+  exit 1
+}
+
 cmake -G Ninja -S "$ROOT" -B "$OUT" \
   -DCMAKE_BUILD_TYPE=Release \
   -DSTRATA_ENABLE_CUDA=ON \

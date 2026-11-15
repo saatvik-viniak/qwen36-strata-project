@@ -1,10 +1,13 @@
 #!/bin/sh
-# Fetch the Qwen3.6-35B-A3B heretic weights Strata can run, and a tokenizer folder
+# Fetch the ready-made qwen35moe GGUF for this fine-tune, and a tokenizer folder
 # for the benchmark client.
 #
 # Strata's Qwen3.6 path reads one GGUF whose architecture is qwen35moe and whose
 # own MTP block is intact. llmfan46 publishes exactly that for this fine-tune, so
-# nothing is converted and no engine patch is needed for the weights.
+# nothing is converted. If you want to use a local GPTQ-Int4 checkpoint instead,
+# run prepare_model.sh.
+#
+#   ./download_model.sh [QUANT] [DIR] [TOKENIZER_DIR]
 set -eu
 
 QUANT="${1:-Q4_K_M}"
@@ -14,13 +17,26 @@ TOKDIR="${3:-/models/qwen36-tokenizer}"
 REPO="llmfan46/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-GGUF"
 BASE="llmfan46/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved"
 
-mkdir -p "$DIR" "$TOKDIR"
+# /models is system-wide so the judge's own user can read it; creating it needs
+# root the first time.
+make_dir() {
+  if mkdir -p "$1" 2>/dev/null; then
+    :
+  else
+    echo "creating $1 (needs sudo)"
+    sudo mkdir -p "$1"
+    sudo chown "$USER" "$1"
+  fi
+}
 
-if command -v hf >/dev/null; then
-  HF=hf
+if command -v hf >/dev/null 2>&1; then
+  HF="hf download"
 else
   HF="huggingface-cli download"
 fi
+
+make_dir "$DIR"
+make_dir "$TOKDIR"
 
 $HF "$REPO" \
   "Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-${QUANT}.gguf" \

@@ -59,7 +59,9 @@ and 262K unreachable until the KV cache is quantised — which is engine work, a
 | `serve.sh` | The serving entry point. Writes the server config and starts `serve.server` with `--engine strata`. |
 | `build_kit.sh` | Compiles `strata` here and stages `build/` (engine binary + server + this tree) for the judge. |
 | `setup_rig.sh` | Run once on the rig: toolchain, `/opt/strata/venv`, first compile. |
-| `download_model.sh` | Fetches the heretic GGUF and the tokenizer folder. |
+| `download_model.sh` | Fetches the published `qwen35moe` GGUF instead, if you would rather not convert. |
+| `prepare_model.sh` | Converts a local GPTQ-Int4 checkpoint into the `qwen35moe` GGUF the engine reads (dequant → GGUF → quantize). |
+| `cuda_env.sh` | Finds `nvcc`; WSL keeps the toolkit in a versioned folder that is not on `PATH`. |
 | `src/`, `include/`, `cmake/`, `serve/` | Strata. `src/qwen35/` is the engine path for this family. |
 
 ## Run it by hand
@@ -77,6 +79,31 @@ curl -s http://127.0.0.1:30000/v1/models
 
 `serve.sh` uses `build/strata` when it exists (what the kit stages) and `out/strata` otherwise (after
 `build_kit.sh` on the rig).
+
+## Using a checkpoint you already have
+
+If the checkpoint on disk is a HF GPTQ-Int4 directory (for example
+`/models/qwen36-35b-a3b-gptq-int4`), it is not something the engine can read: Strata's Qwen3.6 path reads one GGUF
+with architecture `qwen35moe`. Convert it once, on this machine:
+
+```sh
+./prepare_model.sh /models/qwen36-35b-a3b-gptq-int4 Q4_K_M /models/qwen36-heretic
+export MODEL_GGUF=/models/qwen36-heretic/qwen36-heretic-Q4_K_M.gguf
+```
+
+What it does: GPTQModel dequantizes the packed tensors to a dense bf16 directory, llama.cpp's converter writes a
+bf16 GGUF carrying architecture `qwen35moe`, and `llama-quantize` writes the final file in the quant you name.
+It is a one-time job of roughly 1-3 hours on this CPU, and it wants about four times the packed model's size in
+free disk (~165 GB) because the dense copy and the bf16 GGUF both exist at once.
+
+One limit worth knowing before you spend that time: this checkpoint has **no MTP block** (the tensor index has no
+`mtp` entry), so a GGUF made from it also has none, and the engine turns drafting off by itself — you lose the
+roughly 1.6x that the MTP drafter gives a solo request on a small card. The published
+`…-Native-MTP-Preserved-GGUF` was made from the MTP-preserving version of the same fine-tune and keeps it. Both are
+the same fine-tune; only the drafter differs.
+
+`prepare_model.sh` checks the result and prints the architecture and whether the MTP block is present, so a bad
+conversion is caught before a campaign runs.
 
 ## Knobs that matter for speed
 
