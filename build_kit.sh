@@ -12,6 +12,15 @@ OUT="$ROOT/out"
 BUILD="$ROOT/build"
 JOBS="${JOBS:-$(nproc)}"
 
+# Thermite gives a lane a cache folder that survives its trials: CCACHE_DIR and
+# CCACHE_BASEDIR point into it. Using ccache as the compiler launcher turns a
+# lane's second build of the same engine into cache hits instead of 15 minutes of
+# nvcc. Without ccache, or outside Thermite, the build is unchanged.
+CCACHE_ARGS=""
+if command -v ccache >/dev/null 2>&1; then
+  CCACHE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CUDA_COMPILER_LAUNCHER=ccache"
+fi
+
 . "$ROOT/cuda_env.sh"
 strata_find_cuda || {
   strata_cuda_help
@@ -62,7 +71,8 @@ cmake -G Ninja -S "$ROOT" -B "$OUT" \
   -DSTRATA_PORTABLE=ON \
   -DSTRATA_Q6K_EXPERTS=ON \
   -DSTRATA_MMQ_KQUANTS=ON \
-  -DCMAKE_CUDA_ARCHITECTURES=86-real
+  -DCMAKE_CUDA_ARCHITECTURES=86-real \
+  $CCACHE_ARGS
 
 cmake --build "$OUT" --target strata -j "$JOBS"
 
