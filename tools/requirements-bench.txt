@@ -1,0 +1,5 @@
+# Only the benchmark client needs these: it builds a prompt of an exact token
+# count with the model's own tokenizer. The engine and the server do not.
+transformers==4.57.1
+sentencepiece==0.2.0
+protobuf==5.29.3

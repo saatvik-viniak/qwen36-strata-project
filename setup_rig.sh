@@ -53,6 +53,9 @@ python3 -m venv "$SHARED/venv"
 "$SHARED/venv/bin/pip" install -U pip
 "$SHARED/venv/bin/pip" install -r "$ROOT/requirements.txt"
 "$SHARED/venv/bin/pip" install "huggingface_hub[cli]"
+# The kit's benchmark client builds an exact-length prompt with transformers; it
+# runs with this interpreter (STRATA_PYTHON in the kit's model.env).
+"$SHARED/venv/bin/pip" install -r "$ROOT/tools/requirements-bench.txt"
 
 JOBS="$(nproc)" sh "$ROOT/build_kit.sh"
 
