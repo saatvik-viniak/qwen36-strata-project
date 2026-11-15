@@ -24,14 +24,28 @@ cmake_ok() {
   v="$(cmake --version 2>/dev/null | head -1 | awk '{print $3}')"
   [ -n "$v" ] && [ "$(printf '%s\n3.24\n' "$v" | sort -V | head -1)" = "3.24" ]
 }
+# The judge's build sandbox is not this shell: it has python3 and network but no
+# curl, wget or pip. Download with whatever is there.
+fetch() {
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$1" -o "$2"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -qO "$2" "$1"
+  else
+    python3 - "$1" "$2" <<'PY'
+import sys, urllib.request
+urllib.request.urlretrieve(sys.argv[1], sys.argv[2])
+PY
+  fi
+}
 if ! cmake_ok; then
   TC="$ROOT/.toolchain/cmake"
   if [ ! -x "$TC/bin/cmake" ]; then
     v=3.31.6
     mkdir -p "$ROOT/.toolchain"
     echo "system cmake is too old; fetching cmake $v into .toolchain/"
-    curl -fsSL "https://github.com/Kitware/CMake/releases/download/v${v}/cmake-${v}-linux-x86_64.tar.gz" \
-      -o "$ROOT/.toolchain/cmake.tar.gz"
+    fetch "https://github.com/Kitware/CMake/releases/download/v${v}/cmake-${v}-linux-x86_64.tar.gz" \
+      "$ROOT/.toolchain/cmake.tar.gz"
     tar -xzf "$ROOT/.toolchain/cmake.tar.gz" -C "$ROOT/.toolchain"
     mv "$ROOT/.toolchain/cmake-${v}-linux-x86_64" "$TC"
     rm -f "$ROOT/.toolchain/cmake.tar.gz"
