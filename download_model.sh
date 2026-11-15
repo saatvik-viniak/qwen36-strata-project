@@ -3,14 +3,18 @@
 # for the benchmark client.
 #
 # Strata's Qwen3.6 path reads one GGUF whose architecture is qwen35moe and whose
-# own MTP block is intact. llmfan46 publishes exactly that for this fine-tune, so
-# nothing is converted. If you want to use a local GPTQ-Int4 checkpoint instead,
-# run prepare_model.sh.
+# own MTP block is intact. llmfan46 publishes exactly that for this fine-tune.
+#
+# Which quant: the native expert kernels take Q5_K, Q6_K and Q8_0, but not Q4_K
+# or Q3_K, because their expert down_proj types are missing from the kernel
+# tables (src/kernels/cuda/iq_kernels.cu, STRATA_D_FMTS). Q4_K_M loads the dense
+# weights and then refuses the experts. Q5_K_S is the default here: 24.6 GB, and
+# this box has 26 GB of RAM.
 #
 #   ./download_model.sh [QUANT] [DIR] [TOKENIZER_DIR]
 set -eu
 
-QUANT="${1:-Q4_K_M}"
+QUANT="${1:-Q5_K_S}"
 DIR="${2:-/models/qwen36-heretic}"
 TOKDIR="${3:-/models/qwen36-tokenizer}"
 

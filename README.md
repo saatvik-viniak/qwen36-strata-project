@@ -25,7 +25,12 @@ llmfan46/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-GGUF
 ```
 
 So the GPTQ-Int4 checkpoint is **not** the artifact this engine wants, and no quantisation patch is needed to
-load the same weights. `download_model.sh` fetches the GGUF.
+load the same weights.
+
+Which quant runs: `Q5_K_S`, `Q5_K_M`, `Q6_K` and `Q8_0`. `Q4_K_S`, `Q4_K_M`, `Q3_K_*` and `BF16` are refused —
+their expert `down_proj` type is not in the kernel tables (`STRATA_D_FMTS` in `src/kernels/cuda/iq_kernels.cu`),
+and the engine says which layer failed instead of running it wrong. Q5_K_S (24.6 GB) is the default for a 26 GB
+machine. `download_model.sh` fetches the GGUF.
 
 ## The wall: KV cache is fp32
 
