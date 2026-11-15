@@ -43,7 +43,7 @@ say "4. weights and tokenizer"
 ok "$(basename "$GGUF") ($(du -h "$GGUF" | cut -f1)) and tokenizer/"
 
 say "5. the server answers like the judge expects"
-export MODEL_GGUF="$GGUF" MAX_CONTEXT="${MAX_CONTEXT:-32768}" PORT
+export MODEL_GGUF="$GGUF" MAX_CONTEXT="${MAX_CONTEXT:-65536}" PORT
 "$ROOT/build/serve.sh" >/tmp/preflight-serve.log 2>&1 &
 SERVE=$!
 trap 'kill $SERVE 2>/dev/null || true' EXIT INT TERM
