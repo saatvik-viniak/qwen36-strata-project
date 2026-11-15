@@ -43,7 +43,7 @@ say "4. weights and tokenizer"
 ok "$(basename "$GGUF") ($(du -h "$GGUF" | cut -f1)) and tokenizer/"
 
 say "5. the server answers like the judge expects"
-export MODEL_GGUF="$GGUF" MAX_CONTEXT="${MAX_CONTEXT:-65536}" PORT
+export MODEL_GGUF="$GGUF" MAX_CONTEXT="${PREFLIGHT_CONTEXT:-65536}" PORT
 "$ROOT/build/serve.sh" >/tmp/preflight-serve.log 2>&1 &
 SERVE=$!
 trap 'kill $SERVE 2>/dev/null || true' EXIT INT TERM
@@ -60,8 +60,11 @@ curl -sf "http://127.0.0.1:$PORT/v1/chat/completions" -H 'Content-Type: applicat
   -d '{"model":"qwen3.6-35b-a3b","messages":[{"role":"user","content":"hi"}],"max_tokens":8}' \
   | grep -q '"choices"' || bad "a chat completion failed"
 ok "chat completion"
-grep -q "MTP block loaded" /tmp/preflight-serve.log && ok "MTP block loaded (drafting on)" \
-  || say "note: no 'MTP block loaded' in the log; drafting is off, the file may lack the MTP block"
+ENGINE_LOG="$ROOT/strata-qwen36.log"
+{ grep -h "MTP block loaded" /tmp/preflight-serve.log "$ENGINE_LOG" 2>/dev/null | head -1; } | grep -q . \
+  && ok "MTP block loaded (drafting on)" \
+  || say "note: no 'MTP block loaded' in either log; drafting is off, the file may lack the MTP block"
+{ grep -h "prompt chunk" "$ENGINE_LOG" 2>/dev/null | tail -1 | sed 's/^/   /'; } || true
 
 say "6. the benchmark client, exactly as the kit runs it"
 KIT="${KIT_DIR:-$HOME/qwen36-strata-kit}"
