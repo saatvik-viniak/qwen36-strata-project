@@ -16,7 +16,13 @@ MODEL_NAME="${MODEL_NAME:-qwen3.6-35b-a3b}"
 # (45 KB/token: 11 attention layers x 2 x 2 KV heads x 256 head dim x 4 bytes),
 # so 32K = 1.4 GB, 64K = 2.9 GB, 128K = 5.8 GB, 262114 = 11.8 GB.
 # The engine refuses a context that does not fit; that is the guard, not a warning.
-MAX_CONTEXT="${MAX_CONTEXT:-36864}"
+# Context: an explicit MAX_CONTEXT wins; otherwise it follows the cell the kit is
+# measuring (prompt + output + room for the chat template, at least 8K). That is
+# what lets a 64K or 128K cell exist at all once the KV cache is quantised.
+if [ "${MAX_CONTEXT:-auto}" = "auto" ]; then
+  MAX_CONTEXT=$(( ${PROMPT_TOKENS:-0} + ${OUTPUT_TOKENS:-0} + 4096 ))
+  [ "$MAX_CONTEXT" -lt 8192 ] && MAX_CONTEXT=8192
+fi
 
 # Prompt chunk. auto lets the engine pick from free VRAM (512 on this card);
 # 1024 is the default here: bigger chunks feed the expert kernels more rows, and
