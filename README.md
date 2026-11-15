@@ -61,6 +61,7 @@ and 262K unreachable until the KV cache is quantised — which is engine work, a
 | File | What it is |
 | --- | --- |
 | `INSTRUCTIONS.md` | The optimizing agent's brief. Job 1: int4 KV cache in `src/qwen35`. |
+| `CAMPAIGN.md` | How to create a campaign for this project, and the two limits that must be set. |
 | `serve.sh` | The serving entry point. Writes the server config and starts `serve.server` with `--engine strata`. |
 | `build_kit.sh` | Compiles `strata` here and stages `build/` (engine binary + server + this tree) for the judge. |
 | `setup_rig.sh` | Run once on the rig: toolchain, `/opt/strata/venv`, first compile. |
