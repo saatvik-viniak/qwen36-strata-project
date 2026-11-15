@@ -82,9 +82,8 @@ One change per trial, measured on all selected cells, with a negative control ke
 ## Do not change
 
 The model file, the tokenizer, the benchmark, the timer, the sampling (greedy), the prompt or output lengths,
-the hardware, or the workload's concurrency. The weights are whichever `qwen35moe` GGUF the rig was given — the
-published file or a conversion of the local GPTQ-Int4 checkpoint by `prepare_model.sh`. Do not swap it, re-quantize
-it, or convert it again; a different file is a different candidate. No cached answers, no skipped tokens, no output
+the hardware, or the workload's concurrency. The weights are the `qwen35moe` GGUF the rig was given
+(`download_model.sh`). Do not swap it, re-quantize it or convert it; a different file is a different candidate. No cached answers, no skipped tokens, no output
 trimming. Peak VRAM per GPU stays under 7.9 GiB and system RAM under 24 GiB; an OOM is a failed trial, not a
 tradeoff.
 
