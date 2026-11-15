@@ -7,6 +7,9 @@ licensed; `LICENSE` is its licence.
 **Qwen3.6-35B-A3B is the model and Strata is the engine. Neither is changed.** Everything else in this tree,
 including the engine's kernels under `src/`, is fair game for the optimizing agent.
 
+**The first job is not a flag: `INSTRUCTIONS.md` asks for an int4 KV cache in `src/qwen35` before any tuning,** because
+the engine's fp32 cache is what makes 128K and the 262,114-token context impossible on 8 GB.
+
 ## What the engine runs
 
 Strata has a dedicated path for this family (`src/qwen35`). It switches to it when the GGUF's architecture is
@@ -41,7 +44,8 @@ MTP block), 2 KV heads, head dim 256:
 | 262,114 | 11.3 GiB |
 
 The engine allocates it at start-up and refuses a context the card cannot hold. On an 8 GB card that makes 128K
-and 262K unreachable until the KV cache is quantised — which is engine work, and the first thing worth doing:
+and 262K unreachable until the KV cache is quantised — which is engine work, and **the first task in
+`INSTRUCTIONS.md`**. int4 brings the same table to 5.6 KB/token: 128K = 0.70 GiB, 262,114 = 1.41 GiB.
 
 * `k_kv_f16` in `src/qwen35/q36_engine.cu` already converts f32 KV to half precision for one path; a full f16
   cache halves the table above and makes 128K fit.
@@ -51,6 +55,7 @@ and 262K unreachable until the KV cache is quantised — which is engine work, a
 
 | File | What it is |
 | --- | --- |
+| `INSTRUCTIONS.md` | The optimizing agent's brief. Job 1: int4 KV cache in `src/qwen35`. |
 | `serve.sh` | The serving entry point. Writes the server config and starts `serve.server` with `--engine strata`. |
 | `build_kit.sh` | Compiles `strata` here and stages `build/` (engine binary + server + this tree) for the judge. |
 | `setup_rig.sh` | Run once on the rig: toolchain, `/opt/strata/venv`, first compile. |
