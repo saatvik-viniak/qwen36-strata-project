@@ -29,10 +29,16 @@ make_dir() {
   fi
 }
 
-if command -v hf >/dev/null 2>&1; then
+if [ -x /opt/strata/venv/bin/hf ]; then
+  HF="/opt/strata/venv/bin/hf download"
+elif command -v hf >/dev/null 2>&1; then
   HF="hf download"
-else
+elif command -v huggingface-cli >/dev/null 2>&1; then
   HF="huggingface-cli download"
+else
+  echo "no huggingface cli found; installing it into /opt/strata/venv"
+  /opt/strata/venv/bin/pip install -q "huggingface_hub[cli]"
+  HF="/opt/strata/venv/bin/hf download"
 fi
 
 make_dir "$DIR"
