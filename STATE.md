@@ -41,21 +41,26 @@ That is the number the int4 KV work must not lose, and the optimization campaign
 `lanes.keep_working` is true, 2 lanes, `workspace_mib 32768`, `dev_run_rss_mib 12288`,
 `trial_minutes 1440`, wall 8760 h.
 
-**Its blocker (2026-11-15T20:18Z): the judge's idle-GPU gate.** The seed built in 507 s, then the
-baseline failed twice with `target not ready for timing: 818 MiB in use before timing`. The
-harness refuses to time unless the GPU shows no compute processes, <5% utilisation and
-**<600 MiB used**; this WSL rig idles at 818-927 MiB. Every earlier baseline (927, 895, 895 MiB)
-died the same way, which is why no campaign has ever had a baseline. The gate is hardcoded in the
-harness image (`dist/harness/targets/cuda.js`, `maxIdleMemoryMiB: 600`), not a contract field, and
-the API has no "skip baseline". A hill climb's planner will not start a round until the baseline
-measures, so freeing ~220 MiB of GPU memory (stale `serve.server`/`strata`, or Windows apps) is what
-unblocks it; the judge retries on its own.
+**Its blocker, and the fix (2026-11-15T20:18-20:37Z).** The seed built in 507 s, then the baseline
+failed with `target not ready for timing: 818 MiB in use before timing`. The harness refuses to time
+unless the GPU shows no compute processes, <5% utilisation and **<600 MiB used**; this WSL rig idles
+at 818 MiB with no compute process (host/WSL overhead). Every earlier baseline (927, 895, 895 MiB)
+died the same way. The gate is hardcoded in the harness image (`dist/harness/targets/cuda.js`,
+`maxIdleMemoryMiB: 600`), and a hill climb's planner will not start a round until the baseline
+measures. Fixed durably on the rig: the harness is a Podman **Quadlet**,
+`~/.config/containers/systemd/thermite-windows-rig-harness.container`, and now bind-mounts
+`~/.local/share/thermite/patch/cuda.js` over `/opt/thermite/dist/harness/targets/cuda.js` with the
+gate raised to 2048. The original Quadlet is backed up as `….container.bak`. A file edit inside the
+container is **not** durable: systemd recreates the container from the image and the edit vanishes.
 
 ## What is next
 
-1. Free the GPU's idle memory and let the baseline measure; then the hill climb starts by itself.
-2. If it cannot go below 600 MiB, the harness image's threshold has to be raised (a patched image),
-   or the loop must run unmeasured (judge off), which advances no champion.
+1. The judge gate is patched; the baseline retries at 20:39 UTC and the hill climb starts by itself.
+2. The campaign pins `94503e4`. Updating the installed Strata (`strata update`, or `u` in the
+   `strata launch` monitor) does **not** change what the judge builds. `./update.sh` in the project
+   only pulls `origin`, which is `saatvik-viniak/qwen36-strata-project`, not upstream Strata.
+3. To put a newer backend or the other agent's Q4_K work into Thermite, push that tree and pin a
+   new campaign; a project pin cannot move inside an existing campaign.
 
 ## Knowledge that took a day to learn (do not rediscover)
 
