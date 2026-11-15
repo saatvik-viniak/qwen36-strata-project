@@ -34,15 +34,28 @@ That is the number the int4 KV work must not lose, and the optimization campaign
 | `qwen36-strata-maximization-v3` | paused | project `ba797d2`, kit `b478ed5` | kit moved forward live |
 | `qwen36-strata-maximization-v4` | paused | project `d9e4290`, kit `ca7b672` | fp32 reference |
 | `qwen36-int4-kv` | paused | project `9295084`, kit `dd25c45` | int4 KV patch, now done outside Thermite |
+| `qwen36-strata-optimization` | **run 1 running** | project `94503e4`, kit `dd25c45` | the live optimization hill climb |
 
-Nothing is running. `windows-rig` is free.
+`qwen36-strata-optimization-1` was assigned 2026-11-15T20:08Z with `OPTIMIZATION-CONTRACT.json`
+(contract sha `cbce52e4…`). Cells are `ctx0` and `ctx32k` only: fp32 KV cannot start 64K.
+`lanes.keep_working` is true, 2 lanes, `workspace_mib 32768`, `dev_run_rss_mib 12288`,
+`trial_minutes 1440`, wall 8760 h.
+
+**Its blocker (2026-11-15T20:18Z): the judge's idle-GPU gate.** The seed built in 507 s, then the
+baseline failed twice with `target not ready for timing: 818 MiB in use before timing`. The
+harness refuses to time unless the GPU shows no compute processes, <5% utilisation and
+**<600 MiB used**; this WSL rig idles at 818-927 MiB. Every earlier baseline (927, 895, 895 MiB)
+died the same way, which is why no campaign has ever had a baseline. The gate is hardcoded in the
+harness image (`dist/harness/targets/cuda.js`, `maxIdleMemoryMiB: 600`), not a contract field, and
+the API has no "skip baseline". A hill climb's planner will not start a round until the baseline
+measures, so freeing ~220 MiB of GPU memory (stale `serve.server`/`strata`, or Windows apps) is what
+unblocks it; the judge retries on its own.
 
 ## What is next
 
-1. Another agent implements int4 KV from `INT4-KV-PROMPT.md`, on the rig, outside Thermite.
-2. When it reports a passing commit, create **one** optimization campaign pinned to that commit:
-   cells `ctx0/ctx32k/ctx64k/ctx128k`, `MAX_CONTEXT=auto`, score `decode_tps` max 2%, guards 7.9 GiB VRAM and
-   24 GiB RAM, `workspace_mib 32768`, `dev_run_rss_mib 12288`, `trial_minutes 1440`, wall 8760 h.
+1. Free the GPU's idle memory and let the baseline measure; then the hill climb starts by itself.
+2. If it cannot go below 600 MiB, the harness image's threshold has to be raised (a patched image),
+   or the loop must run unmeasured (judge off), which advances no champion.
 
 ## Knowledge that took a day to learn (do not rediscover)
 
@@ -66,6 +79,10 @@ Nothing is running. `windows-rig` is free.
 - **Context must be `auto` in the kit** (`MAX_CONTEXT=auto`), or a 64K/128K cell is impossible before the KV patch.
 - **Engine log for the server is `strata-qwen36.log`** in the project root, not the server's stdout: that is where
   `MTP block loaded` and `prompt chunk N` are printed.
+- **The judge's timing gate is 600 MiB of idle VRAM, 5% utilisation and no compute processes.** This WSL rig idles
+  at 818-927 MiB, so every baseline fails with `target not ready for timing`. The number is hardcoded in the
+  harness image (`maxIdleMemoryMiB: 600`), not a setting. No API skips a hill climb's baseline, and the planner
+  does not start a round without one.
 
 ## Open questions
 

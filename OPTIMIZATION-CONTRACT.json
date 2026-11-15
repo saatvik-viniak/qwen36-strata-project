@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "campaign": "qwen36-strata-optimization",
+  "version": 1,
+  "title": "Qwen3.6 35B-A3B on Strata: decode speed",
+  "project": {
+    "repo": "qwen36-strata-project",
+    "commit": "94503e4ae92f60b2080ff9c6abec65d7b6c35d8c",
+    "kit": {
+      "repo": "qwen36-strata",
+      "commit": "dd25c45c2178e1c251af9688ae059bc776462e3b"
+    }
+  },
+  "target": {
+    "type": "cuda-gpu",
+    "class": "cuda-gpu"
+  },
+  "models": [],
+  "lanes": {
+    "count": 2,
+    "trials_per_epoch": 3,
+    "limits": {
+      "workspace_mib": 32768,
+      "dev_run_rss_mib": 12288,
+      "dev_run_timeout_s": 900,
+      "trial_minutes": 1440,
+      "processes": 8192
+    },
+    "queue_target": 2,
+    "keep_working": true
+  },
+  "budget": {
+    "wall_hours": 8760,
+    "max_open_attempts": 4
+  },
+  "additional_information": "# Objective\n\nMaximize decode throughput (decode_tps) for Qwen3.6-35B-A3B on the Strata engine, on the fixed workload below, without losing text quality or exceeding the memory guard.\n\nThis campaign is a hill climb: every candidate is built from source and measured by the judge; only a confirmed win becomes the new champion.\n\n# Fixed workload and environment\n\n- Rig: windows-rig, RTX 3070 8 GB, 26 GB RAM, WSL2 Ubuntu, CUDA 12.6, sm_86.\n- Engine: Strata, built from this project with `build_kit.sh` (cmake + ninja). The Qwen3.6 path is `src/qwen35/`; `q36_engine.cu` is the main file.\n- Model: `llmfan46/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q5_K_S.gguf` at `/models/qwen36-heretic/`, architecture `qwen35moe`, 41 blocks (40 trunk + 1 MTP), 2048 embedding, 512 FF, 2 KV heads, head_dim 256. The MTP block is present and drafting works.\n- Cells measured: `ctx0` (prompt 1 token) and `ctx32k` (prompt 32768 tokens). Both use output 2048, concurrency 1, greedy. 64K and 128K are NOT measured here: with fp32 K/V (45,056 B/token) a 64K cache is 2.82 GiB and cannot start beside the model. That is a separate campaign's job.\n- Baseline on record: 21.6 tok/s decode at ctx0, peak 7.26 GiB VRAM, prompt chunk 1024, server context 36864. The judge measures the seed again as the baseline; treat 21.6 as the number to beat.\n\n# What may change\n\nThe engine, its build and its serving flags are the candidate. `src/`, `include/`, `serve/`, `serve.sh`, `cmake/`, `CMakeLists.txt`, `build_kit.sh`, `apps/` and `third_party/` are editable. You may rewrite kernels, add CUDA launches, change quantization handling, thread placement, graph capture and option parsing.\n\nWhat must not change: the model file, the tokenizer, the sampling settings, the prompt format, the output length, the concurrency, the benchmark client, the kit, or the kit's run wrapper. fp32 K/V must stay the default path; a quantised cache must be opt-in behind a flag.\n\n# Guards\n\n- Peak VRAM per GPU must stay below 7.9 GiB (the kit fails a run above it). The card has 8 GiB; do not plan on more.\n- Greedy text on the parity prompts must keep match_rate >= 0.95 against the champion (the kit fails below it). A change that produces plausible but different text is a correctness bug, not a speed win.\n- A context that does not fit must fail loudly. Never run with a truncated cache.\n\n# Prior local measurements to steer by (not this tree)\n\nAnother agent ran exploratory builds on this same rig and model family. These are direction, not a base commit, and some came from a Q4_K file that this campaign cannot use (a different quant changes the text and fails match_rate):\n\n- Raising expert slots helped: 50 slots gave empty-context 45.8 tok/s; ~55 slots was the safe next step, with decode-time scratch already peaking 7.67 GiB at 50.\n- `CPU_THREADS=8` beat the pool default: 48.1 tok/s empty (+4.9%).\n- `MTP=2` beat `MTP=3` (42.3 vs 45.8 empty).\n- With MMQ on, prompt prefill was ~153 tok/s; freeing MMQ's staging for more slots dropped prefill to ~89 tok/s. MMQ is worth keeping for prompts; the trade must be measured, not assumed.\n- Q4_K raised empty-context throughput by about 21%, but that is a different weights file and out of scope here.\n\nSo the promising axes on THIS tree are: expert placement and slot count, CPU threads, MTP drafts, prompt chunk, KV precision, MMQ/kernel switches, CUDA graph and launch overhead.\n\n# Queue of ideas (starting points, not rules)\n\n1. Expert placement: sweep `--expert-vram`, `--expert-slots`, `--hybrid-rows` to keep more experts resident and cut paging. Measure peak VRAM at ctx0 and ctx32k; stop before the guard.\n2. CPU threads and affinity: sweep `CPU_THREADS` 0/6/8/10 and pool affinity for the expert GEMMs.\n3. Drafting: sweep `--mtp` 0..4 and `--batch-mtp`; keep MTP=2 as the reference.\n4. Prompt chunk: sweep `PREFILL` 512/1024/2048 and `STRATA_Q36_CHUNK` / `STRATA_Q36_READ_WINDOWS`; report prefill_tps and ttft_ms as info.\n5. Quantised K/V in `src/qwen35/q36_engine.cu`: add `--kv fp32|f16|int8|int4` with fp32 default. int4 makes 64K 0.35 GiB and frees VRAM for more experts and a bigger chunk. Stage f16, then int8, then int4, and prove each with `STRATA_Q36_VERIFY=1` and the parity gates.\n6. Kernel switches: MMQ / V2K / Q8_PACKED paths, fused QK-norm-rope, anything that cuts a launch or a read.\n7. CUDA graphs: capture the decode step for the shapes used; reduce per-token launch overhead.\n8. KV layout: group size, scale dtype, hot rows kept in fp32, fused dequant into attention.\n\n# How to judge a change\n\nReport decode_tps for ctx0 and ctx32k, prefill_tps, ttft_ms, peak VRAM and match_rate. A win is a change that raises the primary metric beyond the 2% minimum effect on at least one cell without breaking a guard on either cell. Prefer changes that help both cells.\n\n# Definition of done\n\nThe campaign keeps climbing until the wall-time budget is spent or the owner pauses it. Keep the champion buildable and honest: a candidate that only wins by skipping work, changing the workload, or weakening a guard is not a win.",
+  "mode": "hill_climb",
+  "editable_paths": [
+    "src/**",
+    "include/**",
+    "serve/**",
+    "serve.sh",
+    "cmake/**",
+    "CMakeLists.txt",
+    "build_kit.sh",
+    "apps/**",
+    "third_party/**"
+  ],
+  "forbidden_patterns": [],
+  "ideas": [
+    "Expert placement and slot count: sweep --expert-vram, --expert-slots, --hybrid-rows; ~55 slots was safe at 7.67 GiB in an earlier local experiment",
+    "CPU threads and pool affinity: sweep CPU_THREADS 0/6/8/10; 8 won by 4.9% empty in an earlier local experiment",
+    "Drafting: sweep --mtp 0..4 and --batch-mtp; MTP=2 beat MTP=3 earlier",
+    "Prompt chunk: PREFILL 512/1024/2048, STRATA_Q36_CHUNK, STRATA_Q36_READ_WINDOWS; watch prefill_tps and ttft_ms",
+    "Quantised K/V in src/qwen35: --kv fp16|int8|int4, fp32 default, staged and parity-proven",
+    "MMQ / V2K / Q8_PACKED kernel switches and fused QK-norm-rope",
+    "CUDA graph capture for the decode shape; per-token launch overhead",
+    "KV layout: group size, scale dtype, hot rows in fp32, dequant fused into attention"
+  ],
+  "objective": {
+    "policy": "single",
+    "primary": {
+      "metric": "decode_tps",
+      "direction": "max",
+      "min_effect": 0.02
+    },
+    "secondary": []
+  },
+  "guards": [],
+  "hard_constraints": [],
+  "monitor_only": [],
+  "cells": [
+    "ctx0",
+    "ctx32k"
+  ],
+  "acceptance": {
+    "alpha_screen": 0.1,
+    "alpha_confirm": 0.05,
+    "equivalence_band": 0.005,
+    "looks": [3, 6, 9],
+    "confirm_blocks": 5,
+    "runs_per_cell": 1,
+    "audit": {
+      "ratio_to_median": 3,
+      "absolute": 0.15
+    }
+  }
+}
