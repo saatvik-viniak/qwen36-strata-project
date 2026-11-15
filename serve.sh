@@ -46,9 +46,10 @@ TOKENIZER_DIR="${TOKENIZER_DIR:-$(dirname "$GGUF")/tokenizer}"
 }
 
 CFG="$HERE/strata-qwen36.json"
+LOG="${ENGINE_LOG:-$HERE/strata-qwen36.log}"
 MODEL_GGUF="$GGUF" MAX_CONTEXT="$MAX_CONTEXT" PREFILL="$PREFILL" MTP="$MTP" \
 CPU_THREADS="$CPU_THREADS" PORT="$PORT" BIN="$BIN" MODEL_NAME="$MODEL_NAME" CFG="$CFG" \
-TOKENIZER_DIR="$TOKENIZER_DIR" \
+TOKENIZER_DIR="$TOKENIZER_DIR" LOG="$LOG" \
 "$PYTHON" - <<'PY'
 import json, os
 e = os.environ
@@ -65,6 +66,7 @@ cfg = {
     "args": args,
     "model_name": e["MODEL_NAME"],
     "tokenizer": e["TOKENIZER_DIR"],
+    "log": e["LOG"],
     "host": "127.0.0.1",
     "port": int(e["PORT"]),
 }
