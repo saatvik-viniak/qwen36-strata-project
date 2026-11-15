@@ -99,3 +99,6 @@ node_modules/
 # campaign build artifacts
 out/
 strata-qwen36.json
+
+# private cmake/ninja used only when the system one is too old
+.toolchain/

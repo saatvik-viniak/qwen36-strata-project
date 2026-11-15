@@ -18,6 +18,28 @@ strata_find_cuda || {
   exit 1
 }
 
+# CMake 3.24+ is needed and the rig's build user may have the distro's 3.22
+# (Ubuntu 22.04). Fetch a private one instead of touching the system.
+cmake_ok() {
+  v="$(cmake --version 2>/dev/null | head -1 | awk '{print $3}')"
+  [ -n "$v" ] && [ "$(printf '%s\n3.24\n' "$v" | sort -V | head -1)" = "3.24" ]
+}
+if ! cmake_ok; then
+  TC="$ROOT/.toolchain/cmake"
+  if [ ! -x "$TC/bin/cmake" ]; then
+    v=3.31.6
+    mkdir -p "$ROOT/.toolchain"
+    echo "system cmake is too old; fetching cmake $v into .toolchain/"
+    curl -fsSL "https://github.com/Kitware/CMake/releases/download/v${v}/cmake-${v}-linux-x86_64.tar.gz" \
+      -o "$ROOT/.toolchain/cmake.tar.gz"
+    tar -xzf "$ROOT/.toolchain/cmake.tar.gz" -C "$ROOT/.toolchain"
+    mv "$ROOT/.toolchain/cmake-${v}-linux-x86_64" "$TC"
+    rm -f "$ROOT/.toolchain/cmake.tar.gz"
+  fi
+  PATH="$TC/bin:$PATH"
+  export PATH
+fi
+
 cmake -G Ninja -S "$ROOT" -B "$OUT" \
   -DCMAKE_BUILD_TYPE=Release \
   -DSTRATA_ENABLE_CUDA=ON \
