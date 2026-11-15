@@ -36,9 +36,19 @@ PYTHON="${STRATA_PYTHON:-/opt/strata/venv/bin/python}"
 BIN="${STRATA_BIN:-$HERE/strata}"
 [ -x "$BIN" ] || BIN="$HERE/out/strata"
 
+# The server needs a tokenizer folder (vocab.json, merges.txt, token_type.json),
+# not the GGUF's own copy. download_model.sh writes it beside the model.
+TOKENIZER_DIR="${TOKENIZER_DIR:-$(dirname "$GGUF")/tokenizer}"
+[ -f "$TOKENIZER_DIR/vocab.json" ] || {
+  echo "no tokenizer at $TOKENIZER_DIR (no vocab.json)." >&2
+  echo "Build it once:  /opt/strata/venv/bin/python $(dirname "$0")/tools/strata_tokenizer.py --gguf \"$GGUF\" --out \"$(dirname "$GGUF")\"" >&2
+  exit 1
+}
+
 CFG="$HERE/strata-qwen36.json"
 MODEL_GGUF="$GGUF" MAX_CONTEXT="$MAX_CONTEXT" PREFILL="$PREFILL" MTP="$MTP" \
 CPU_THREADS="$CPU_THREADS" PORT="$PORT" BIN="$BIN" MODEL_NAME="$MODEL_NAME" CFG="$CFG" \
+TOKENIZER_DIR="$TOKENIZER_DIR" \
 "$PYTHON" - <<'PY'
 import json, os
 e = os.environ
@@ -54,6 +64,7 @@ cfg = {
     "exe": e["BIN"],
     "args": args,
     "model_name": e["MODEL_NAME"],
+    "tokenizer": e["TOKENIZER_DIR"],
     "host": "127.0.0.1",
     "port": int(e["PORT"]),
 }

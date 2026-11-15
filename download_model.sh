@@ -60,6 +60,19 @@ $HF "$BASE" \
 
 chmod -R a+rX "$DIR" "$TOKDIR"
 
+# Strata's server reads a tokenizer folder, not the GGUF's own copy. The
+# extractor in this repo writes vocab.json / merges.txt / token_type.json and the
+# model's chat template into $DIR/tokenizer.
+GGUF="$DIR/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-${QUANT}.gguf"
+if [ -x /opt/strata/venv/bin/python ]; then
+  echo "extracting the tokenizer from the GGUF"
+  /opt/strata/venv/bin/python "$(dirname "$0")/tools/strata_tokenizer.py" \
+    --gguf "$GGUF" --out "$DIR"
+  chmod -R a+rX "$DIR/tokenizer"
+else
+  echo "SKIP tokenizer extraction: /opt/strata/venv missing; run setup_rig.sh then this script again" >&2
+fi
+
 echo
-echo "GGUF:      $DIR/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-${QUANT}.gguf"
-echo "tokenizer: $TOKDIR"
+echo "GGUF:      $GGUF"
+echo "tokenizer: $DIR/tokenizer"
