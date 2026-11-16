@@ -122,6 +122,9 @@ export KV=int4
 ./serve.sh
 ```
 
+`serve.sh` must pass `--kv "${KV:-fp32}"` to the engine. If it does not, add that as part of the KV
+patch and keep fp32 when `KV` is unset; an env var the script ignores is not a setting.
+
 The cells are the measured workload:
 
 | Cell | prompt tokens | output tokens | concurrency | sampling |
