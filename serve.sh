@@ -12,9 +12,11 @@ PORT="${PORT:-30000}"
 GGUF="${MODEL_GGUF:?set MODEL_GGUF to a qwen35moe GGUF}"
 MODEL_NAME="${MODEL_NAME:-qwen3.6-35b-a3b}"
 
-# Context the engine allocates for at start. Its KV cache is fp32 per token
-# (45 KB/token: 11 attention layers x 2 x 2 KV heads x 256 head dim x 4 bytes),
-# so 32K = 1.4 GB, 64K = 2.9 GB, 128K = 5.8 GB, 262114 = 11.8 GB.
+# Context the engine allocates for at start. Its KV cache dtype follows KV
+# (fp32: 45 KB/token = 11 attention layers x 2 x 2 KV heads x 256 head dim x 4
+# bytes; f16 22.5 KB, int8 11.3 KB, int4 5.7 KB per token with the row scales),
+# so fp32 32K = 1.4 GB, 64K = 2.9 GB, 128K = 5.8 GB, 262114 = 11.8 GB, and int4
+# 262114 = 1.5 GB.
 # The engine refuses a context that does not fit; that is the guard, not a warning.
 # Context: an explicit MAX_CONTEXT wins; otherwise it follows the cell the kit is
 # measuring (prompt + output + room for the chat template, at least 8K). That is
@@ -23,6 +25,10 @@ if [ "${MAX_CONTEXT:-auto}" = "auto" ]; then
   MAX_CONTEXT=$(( ${PROMPT_TOKENS:-0} + ${OUTPUT_TOKENS:-0} + 4096 ))
   [ "$MAX_CONTEXT" -lt 8192 ] && MAX_CONTEXT=8192
 fi
+
+# The KV cache's dtype: fp32 (default, the old path bit for bit), f16, int8 or
+# int4. int4 is the tuned default here (a third of fp32's bytes per token).
+KV="${KV:-int4}"
 
 # Prompt chunk. auto lets the engine pick from free VRAM (512 on this card);
 # 1024 is the default here: bigger chunks feed the expert kernels more rows, and
@@ -34,6 +40,13 @@ MTP="${MTP:-2}"
 
 # CPU expert/gemm threads. 0 leaves the engine's own pool size.
 CPU_THREADS="${CPU_THREADS:-0}"
+
+# Sampling defaults for requests that leave fields out (the config's `sampling` block, JSON).
+# The Qwen thinking model card serves presence_penalty 1.5: the sampler then needs logits, and
+# the engine's MTP speculative steps (a greedy-sampler-only speed-up) stay off - every bench
+# cell measured "drafts accepted 0 of 0" with them. A benchmark or a service that wants the
+# drafting speed-up sets this to {"presence_penalty": 0}; the request's own fields always win.
+SAMPLING="${SAMPLING:-}"
 
 # The interpreter that has Strata's requirements installed (setup_rig.sh).
 PYTHON="${STRATA_PYTHON:-/opt/strata/venv/bin/python}"
@@ -56,7 +69,7 @@ CFG="$HERE/strata-qwen36.json"
 LOG="${ENGINE_LOG:-$HERE/strata-qwen36.log}"
 MODEL_GGUF="$GGUF" MAX_CONTEXT="$MAX_CONTEXT" PREFILL="$PREFILL" MTP="$MTP" \
 CPU_THREADS="$CPU_THREADS" PORT="$PORT" BIN="$BIN" MODEL_NAME="$MODEL_NAME" CFG="$CFG" \
-TOKENIZER_DIR="$TOKENIZER_DIR" LOG="$LOG" \
+TOKENIZER_DIR="$TOKENIZER_DIR" LOG="$LOG" SAMPLING="$SAMPLING" \
 "$PYTHON" - <<'PY'
 import json, os
 e = os.environ
@@ -67,6 +80,11 @@ if e["MTP"]:
     args += ["--mtp", e["MTP"]]
 if e["CPU_THREADS"] not in ("", "0"):
     args += ["--cpu-threads", e["CPU_THREADS"]]
+if e["KV"]:
+    args += ["--kv", e["KV"]]
+EXPERT_SLOTS = e.get("EXPERT_SLOTS", "")
+if EXPERT_SLOTS:
+    args += ["--expert-slots", EXPERT_SLOTS]
 cfg = {
     "arch": "qwen35moe",
     "exe": e["BIN"],
@@ -77,6 +95,8 @@ cfg = {
     "host": "127.0.0.1",
     "port": int(e["PORT"]),
 }
+if e.get("SAMPLING"):
+    cfg["sampling"] = json.loads(e["SAMPLING"])
 with open(e["CFG"], "w") as f:
     json.dump(cfg, f, indent=2)
 PY
