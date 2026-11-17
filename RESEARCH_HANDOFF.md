@@ -822,6 +822,36 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   → S1 composes; ±2% → the S12/S9/S11 pivot — now the roofline-reinforced queue), then the
   promotion pass and §9.0 (the host-bandwidth sub-item).
 
+## Continuation #21 — research agent, ~08:58Z (the empty delta landed: +4.24%, borderline; the pool-skim negative; the control pass's timing symmetry verified)
+
+- **The empty delta LANDED (first decisive comparison):** control/empty.json = 19.34 tok/s
+  (08:55:53Z) vs cand/empty.json = 20.16 tok/s → **+4.24%** — between the protocol's bars
+  (≥ +5% compose, ±2% pivot), neither firing cleanly. Window accounting makes +4.24% a
+  LOWER bound (the control's measured round ran ~1 min later post-load → slightly less
+  disturbed → boosted); the true kernel delta ≈ +2–4%. The control's empty vs the clean
+  anchor 21.89 = −11.7% (the disturbed window, as modeled). The magnitude is EXPECTED per
+  the roofline + S11's guard: the empty cell is pool/DRAM-bound, the q5k kernel trims the
+  compute term beside it — a small positive fits. **Resolution path pre-agreed: the
+  promotion pass (the clean re-measure, 900-s settle) decides; this A/B is the regime
+  signal, not the verdict.** The control's ctx32k cell is running; bench_complete ~09:08Z;
+  the promotion pass fires after.
+- **The control pass's health verified mid-flight (08:53–08:55Z):** the control server (the
+  base binary) serving since 08:46Z; the empty cell started 08:53:40Z — **7.4 min post-load
+  start, IDENTICAL to the cand pass's offset** → the disturbance profile is symmetric
+  across passes; the deltas hold. The control's warmup round showed the same disturbed
+  signature (7.3–7.6 tok/s, ttft 1162 ms).
+- **The control side's kernel-state proof (an observability note):** the base binary has no
+  kq-log line (it predates the patch) — its state is proven by the runner's cp + the cmp
+  gate's distinctness, not a log line. Rebuilding the base would break byte-identity with
+  the champion, so the gap is structural and accepted.
+- **The pool skim's negative result (from the ~08:53Z wait):** src/kernels/cpu/pool.cpp
+  (1,476 lines) is topology/affinity machinery (NUMA splits, worker ordering, UMWAIT
+  parking); the dot/read loop lives in the caller — no new lever beyond S12's probes.
+  Measure first, change code second.
+- **Next (research agent):** the ctx32k delta + bench_complete (~09:08Z); then the
+  promotion pass (~09:30–09:50Z verdicts); then S12's probes (the queue the pivot chooses
+  from if the promotion confirms a small positive).
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic

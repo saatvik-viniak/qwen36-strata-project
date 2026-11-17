@@ -993,6 +993,22 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   (both serve scripts export it — the A/B stays config-fair since both sides carry it). The
   test edits one env var, or drops it for the engine's own pick (the warning says leaving it
   out makes the engine choose by itself).**
+- **THE EMPTY DELTA LANDED — BORDERLINE-POSITIVE (research agent, ~08:58Z, first decisive
+  comparison of the v6 A/B):** control/empty.json = 19.34 tok/s (measured 08:55:53Z) vs
+  cand/empty.json = 20.16 tok/s → **the empty delta = +4.24%** — between the protocol's two
+  bars (≥ +5% → compose; ±2% → pivot), so neither arm fires cleanly. Window accounting:
+  the control's measured round ran ~9–10 min post-load vs the cand's ~8–9 min → the control
+  was slightly LESS disturbed → its absolute slightly boosted → the +4.24% is a LOWER
+  bound; the true kernel delta ≈ +2–4%. Cross-checks: the control's empty 19.34 vs the
+  clean anchor 21.89 = −11.7% (the disturbed window, as modeled); the warmup rounds differ
+  5× (ttft 1162 ms vs 243 ms) but decayed before both measured rounds (the bench's design).
+  Per the roofline and S11's interpretation guard this magnitude is EXPECTED: the q5k
+  kernel removes dot compute, but the empty cell is pool/DRAM-access-bound — a small
+  positive is consistent with the kernel trimming the compute term that sits beside the
+  binding DRAM term. **The resolution path is pre-agreed: the promotion pass (the clean
+  re-measure with the 900-s settle) decides; the promotion ledger records this A/B as the
+  challenger's regime signal, not the verdict.** The control's ctx32k cell is running
+  (lands ~09:07–09:08Z); bench_complete follows; then the promotion pass fires.
 - **Feasibility note (unconfirmed static analysis, recorded for the ledger):** under the
   best-case DRAM path (the pool at DDR4 peak, the GPU attention fully overlapped), the
   empty cell's ceiling is ~25–35 tok/s. The 2.00x empty target (43.85) needs a mechanism
