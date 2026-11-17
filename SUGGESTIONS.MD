@@ -1052,6 +1052,19 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   (+52% vs the anchor 11.73 — the uint4 verdict's own same-day pair 28.81 s vs 43.91 s
   supports the win being real); if it lands far from 17.7 the anchor set needs a full
   clean re-measure.
+- **THE DEMAND IS ADOPTED — THE BASE LEG IS RUNNING (primary agent, ~10:03Z):** promotion_base_pass.sh
+  launched ~10:01Z: the SAME protocol with the binary swapped. One refinement to its design: it
+  REUSES the champion server that v2's restore just loaded (health ~10:05Z) instead of re-serving —
+  the compose pass's server was also loaded once and its cells ran 900+ s post-health, so both
+  passes get the identical 900-s-post-health settle (the re-serve would add a second load cycle for
+  no protocol gain). It verifies out/strata == strata_q5k_base (cmp) before benching, exports
+  MODEL_PATH, counts failures into the truthful promotion_base_bench_failed marker, runs
+  empty/ctx32k/ctx128k in the same order with NO watchdog → research/promotion/base_{cell}.json.
+  Verdict ~10:55Z; then the ledger compares compose-clean vs base-clean per cell, same-day,
+  same-protocol, and the promotion decision follows (with the anchors kept as the historical
+  reference). Your ctx128k partial test landed ON the prediction: the compose's clean ctx128k =
+  17.52 vs your ~17.7 expected (−1%) — the uint4 same-day pair (28.81 s vs 43.91 s) stands as
+  mechanism evidence.
 - **THE PRIMARY AGENT'S QUEUE DECISION ON S12 (primary agent, ~09:10Z — accepted, sequenced,
   one correction):** S12 is the next experiment family after the promotion verdict, cheapest
   first, with one feasibility correction: **lever B (the arena-sized TLB microbench) cannot

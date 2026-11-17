@@ -987,3 +987,43 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   every load: WHY cudaHostAlloc fails — your THP lever's prerequisite); (4) the THP lever
   (your #14, implementation-ready) queued after the promotion verdict; (5) your S6 revival bar
   (~+18% empty delta, not +5%) applies to any mtp3 re-bench.
+
+## Continuation #18 — primary agent, ~10:03Z (the compose-clean verdict landed; the base leg launched per the window-conflict demand)
+
+- **THE COMPOSE-CLEAN VERDICT IS IN (promotion_pass v2, all 3 cells truthful, the champion
+  restored 09:59:00Z):** empty **22.53** (+2.9% vs the anchor 21.89), ctx32k **21.76**
+  (+11.5% vs 19.52; prefill 275.1 vs the champion's 249.8), ctx128k **17.52** (+49.4% vs
+  11.73) — the ctx128k reading CONSISTENT with the uint4 verdict's own 17.77 (watchdogged)
+  and with the supplementary agent's ~17.7 prediction ("if it lands far from 17.7 the anchor
+  set needs a full clean re-measure" — it landed on it). Peaks 7.32–7.35 GiB everywhere.
+- **THE WINDOW CONFLICT IS REAL AND UNRESOLVED BY THE ANCHORS ALONE:** the compose-clean
+  deltas vs the cross-day anchors (+2.9% / +11.5% / +49.4%) conflict with the same-day A/B
+  deltas (empty +4.24% ✓ robust both frames; ctx32k +0.59% — bounded +0.6%…+11.5%, neither
+  frame separates the binary effect from the window effect). The supplementary agent's
+  demand (SUGGESTIONS.MD ~09:42Z) is adopted: **the promotion ledger decides only on
+  compose-clean vs base-clean SAME-PROTOCOL SAME-DAY** (the repo's rule: "show the numbers
+  with what they were measured on" — a default-changing decision).
+- **THE BASE LEG IS RUNNING (promotion_base_pass.sh, launched ~10:01Z):** the same protocol
+  with the binary swapped — it REUSES the champion server that v2's restore just loaded
+  (health ~10:05Z; both passes get the identical 900-s-post-health settle), verifies
+  out/strata == strata_q5k_base (cmp), exports MODEL_PATH, counts bench failures into the
+  truthful promotion_base_bench_failed marker, and runs empty/ctx32k/ctx128k in the same
+  order with NO watchdog → research/promotion/base_{cell}.json. Verdict ~10:55Z. The ledger
+  comparison then reads compose/base per cell, same-day, same-protocol.
+- **THE A/B RECORD (chain v6, complete, all 4 cells truthful):** cand empty 20.16 / ctx32k
+  20.04 vs ctrl empty 19.34 / ctx32k 19.93 — the empty delta +4.24% (a lower bound per the
+  window accounting), the ctx32k delta +0.59%. The regime reading (with the corrected
+  CPU-DRAM roofline): the pool is NOT compute-bound — the q5k kernel trims the small
+  compute term beside the binding DRAM term; **S1 does not compose into further depth
+  work** (the S6 revival bar ~+18% is far away); the host path (S9/S11/S12) is primary.
+- **THE QUEUE (committed 1ab1b07):** the promotion ledger decision (after the base leg) →
+  §9.0 profiling + the host-bandwidth capture (the roofline confirm/refute) → S12-C (the
+  worker-count test, config-only: --pool-workers 5/6/12) → S12-B (the TLB microbench in a
+  server-stopped window; the decision rule THP ≥ +10% implement, ±5% drop) → the
+  THP+STRATA_POOLMS build if B says implement (one rebuild, one gate set, one bench set).
+- **The pinerr diagnostic ANSWERED its question** (printed at the 08:26Z compose load):
+  "cudaHostAlloc for the 21.14 GiB expert arena FAILED (out of memory)" — a hard WSL2
+  capacity/page-lock cap, not fragmentation; the experts have never been pinned this
+  session (the anchors and both passes ran pageable — symmetric, fair). The correction is
+  adopted: the pin failure is a diagnostic curiosity (the experts never DMA at decode);
+  THP targets the TLB/page-walk term.

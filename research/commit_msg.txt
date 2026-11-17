@@ -1,38 +1,19 @@
-[Engine] q5k chain v6 relaunched with the four post-mortem fixes; the compose binary rebuilt; the promotion pass v2 staged
+[Docs] the compose-clean verdict recorded; the base leg launched per the window-conflict demand
 
-The v5 chain's false completion is dissected and repaired. Three stacked
-defects: (1) the build no-opped (ninja cannot see an external overwrite of
-out/strata; the v4 restore had replaced it with byte_loop) and cp propagated
-the champion into strata_q5k_cand - the compose binary (6929c45a) was
-destroyed at 06:34:11Z and the v5 gates measured byte_loop against itself;
-(2) bench.py's MODEL_PATH (default "") was never exported by the chain
-scripts - all four A/B cells and all three promotion cells died in 3-14 s
-(HFValidationError ''); (3) run_cells swallowed the failures and both chains
-wrote VOID bench_complete markers. Both void markers are deleted; the v1
-promotion log is kept as promotion_v1_void.log.
+promotion_pass v2 completed truthfully: empty 22.53 (+2.9% vs the anchor
+21.89), ctx32k 21.76 (+11.5%; prefill 275.1 vs 249.8), ctx128k 17.52
+(+49.4%, consistent with the uint4 verdict's 17.77 and the predicted ~17.7);
+the champion restored. The deltas vs the cross-day anchors conflict with the
+same-day A/B at ctx32k (+11.5% vs +0.59%) - the window effect is not
+separable from the anchors alone - so the supplementary agent's demand is
+adopted: the ledger decides only on compose-clean vs base-clean
+same-protocol same-day. promotion_base_pass.sh reuses the champion server
+v2 just loaded (both passes get the identical 900-s-post-health settle),
+verifies the base binary, exports MODEL_PATH, counts failures truthfully,
+and runs the same 3 cells with no watchdog; verdict ~10:55Z.
 
-v6 applies the four fixes from SUGGESTIONS.MD's patch spec: rm -f out/strata
-before build_kit.sh (a real 42 s rebuild), the cmp -s tautology guard
-(candidate verified DISTINCT from base), export MODEL_PATH (verbatim from
-cand_runner.sh, not the kit's model.env), and bench-failure counting with
-truthful done markers (bench_complete only when every cell measured). The
-rebuilt compose binary: out/strata = out/strata_q5k_cand, md5 8833c30b,
-85,113,360 B (the destroyed compose's exact recorded size), now carrying the
-pinerr diagnostic and the new kq engagement log line alongside q5k+uint4;
-parity re-ran GREEN (0 failures, 08:08:59Z). apply_kqlog.py adds the
-observability line to both trees; apply_q5k.py's expected patched state
-folded it in after its md5 guard correctly refused the unknown intermediate.
-
-promotion_pass.sh v2 implements the supplementary agent's trigger design:
-it waits for the v6 marker AND verifies the A/B results exist on disk AND
-the compose binary differs from the base, exports MODEL_PATH, counts bench
-failures into a truthful promotion_bench_failed marker, and keeps the good
-design (900 s settle, no watchdog, 3 cells, the champion restored).
-
-Launch infrastructure: the wsl client's 4 s exit killed a detached chain
-nondeterministically (survived 06:33/06:45Z, died 07:58Z) - the
-supervisor pattern (a live client held for the runner's whole life) is the
-fix; an explicit timeout on a background shell call kills the supervisor at
-that timeout (the runner survived via setsid).
+The A/B record stands as the regime signal: the empty delta +4.24% (a lower
+bound), ctx32k +0.59% - the pool is not compute-bound; S1 does not compose
+into further depth work; the host path (S9/S11/S12) is primary.
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)
