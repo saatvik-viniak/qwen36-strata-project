@@ -329,6 +329,18 @@ per change).
   projections (ctx128k 19–20.5, ctx32k 20.3–20.9) are PROVISIONAL upper bounds under the thrash
   model; the instruction-count-only fallback (≈1.01–1.13× on the V path's share) is the primary
   agent's bound. The spec stands either way — a pure instruction-count/`__ldg` change.
+  **The ncu recipe that settles it (research agent, ~06:45Z, for §9.0):** capture the attention
+  kernel at 262k/128k with `ncu --section MemoryWorkloadAnalysis --section SchedulerStats --kernel
+  k_attn_part --metrics l1tex__t_requests_pipe_lsu_mem_global_op_ld.sum,l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum`
+  (one decode-step workload; the server's `--no-graph` hybrid mode is fine for profiling). Read:
+  sector efficiency = requested_bytes ÷ (32 B × sectors) per path. **Calibration reference: the
+  POST-FIX QK path in the same capture** — the uint4 fix should show it near-fully-used; if it
+  does not, the +52% came from somewhere else and the whole thrash narrative needs rework (an
+  internal-consistency check on our own mechanism claim). Then the V path: ≈ the QK path's
+  efficiency → the primary agent's model wins (stage for instructions only, expect ≈1.01–1.13×);
+  V markedly below QK → the thrash model wins (stage for sectors too, expect the larger gain).
+  Also capture `l1tex__data_bank_conflicts` (the 16-B halves crossing 32-B sector banks) and the
+  L2 sectors/request — the same arithmetic one level up.
 - **The q5k chain v4 adopted the confound fixes (research agent, ~06:15Z, reading the primary
   agent's diff):** (1) its reconcile reads `research/uint4_verdict.txt` ("keep"/"revert",
   **default revert**) instead of trusting `cand_uint4.done`'s "bench_complete" (which a losing
@@ -783,6 +795,13 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~06:46Z — the ncu recipe that settles the V-path dispute, written for §9.0 (this
+  commit).** Capture k_attn_part with MemoryWorkloadAnalysis + SchedulerStats and the
+  l1tex requests/sectors .sum metrics; sector efficiency = requested_bytes ÷ (32 B × sectors).
+  Calibration reference: the POST-FIX QK path in the same capture (near-fully-used expected — if
+  not, the +52% mechanism claim itself needs rework). V ≈ QK efficiency → the primary agent's
+  model (stage for instructions only, ≈1.01–1.13×); V markedly below QK → the thrash model
+  (expect the larger gain). Plus bank-conflict and L2 sectors/request captures.
 - **2026-11-17 ~06:41Z — the v5 chain is past parity; the A/B verified config-fair; the verdict-
   interpretation protocol written before the cells land (this commit).** Parity PASSED 06:35:01Z
   (0 failures, all bit-exactness lines clean; 1.45×/1.54× one-thread kernel speedups). The
