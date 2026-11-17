@@ -119,15 +119,20 @@ static void pick_slots(unsigned seed_in, int k, int *out){
   }
 }
 
-/* one worker: read its blob list in order, the S12-B reader verbatim */
+/* one worker: read its blob list in order, the S12-B reader verbatim.
+ * Each list entry packs layer*256 + slot (the reader unmaps it — the position
+ * b in the worker's list is NOT the layer; the pre-fix build segfaulted on
+ * b*g_span beyond the arena). */
 typedef struct { int n; const int *slots; uint64_t sink; } task_t;
 
 static void *reader(void *arg){
   task_t *t = (task_t *)arg;
   uint64_t s = 0;
   for (int b = 0; b < t->n; b++){
+    int ls = t->slots[b];
     const volatile unsigned char *p =
-      g_base + (size_t)b * g_span + (size_t)t->slots[b] * g_blob;
+      g_base + (size_t)(ls / SLOTS_PER_LAYER) * g_span
+             + (size_t)(ls % SLOTS_PER_LAYER) * g_blob;
     size_t len = g_blob;
     for (size_t i = 0; i < len; i += 64) s += p[i];  /* real loads: volatile sink */
   }
@@ -165,9 +170,9 @@ static double run_rep(int nthreads, int k, int fixed_sets, unsigned seed_in,
       int cnt = 0;
       for (int L = 0; L < LAYERS; L++){
         if (fixed_sets == 2){
-          for (int j = 0; j < k; j++) lists[w][cnt++] = sets[L][j];
+          for (int j = 0; j < k; j++) lists[w][cnt++] = L * SLOTS_PER_LAYER + sets[L][j];
         } else {
-          for (int j = w; j < k; j += nthreads) lists[w][cnt++] = sets[L][j];
+          for (int j = w; j < k; j += nthreads) lists[w][cnt++] = L * SLOTS_PER_LAYER + sets[L][j];
         }
       }
       tasks[w].n = cnt;
@@ -201,8 +206,8 @@ static double median3(double a, double b, double c){
 static void run_config(const char *name, int nthreads, int k, int fixed_sets,
                        unsigned seed){
   double b[NREPS]; long f[NREPS]; double e[NREPS]; size_t by[NREPS];
-  printf("%s: %d threads, k=%d, %d blobs/worker/step, %.2f GB per rep (%d steps)\n",
-         name, nthreads, k, LAYERS * (k / nthreads),
+  printf("%s: %d threads, k=%d, %d blobs/step total, %.2f GB per rep (%d steps)\n",
+         name, nthreads, k, LAYERS * k,
          (double)STEPS_PER_REP * LAYERS * k * g_blob / 1e9, STEPS_PER_REP);
   fflush(stdout);
   for (int i = 0; i < NWARM; i++){ run_rep(nthreads, k, fixed_sets, seed, NULL, NULL, NULL); }
@@ -230,11 +235,11 @@ int main(int argc, char **argv){
   printf("arena %.2f GiB -> span %.1f MiB, blob %.3f MiB, %d slots/layer, %d layers\n",
          arena_gib, (double)g_span / 1048576.0, (double)g_blob / 1048576.0,
          SLOTS_PER_LAYER, LAYERS);
-  printf("SPLIT: k=%d -> %d blobs/worker/step, %.2f GB/step total\n",
-         K_SPLIT, LAYERS * (K_SPLIT / 8),
+  printf("SPLIT: k=%d -> %d blobs/step total (round-robin over the workers), %.2f GB/step total\n",
+         K_SPLIT, LAYERS * K_SPLIT,
          (double)LAYERS * K_SPLIT * g_blob / 1e9);
-  printf("SHARED: k=%d -> %d blobs/worker/step, %.2f GB/step total\n",
-         K_SHARED, LAYERS * (K_SHARED / 8),
+  printf("SHARED: k=%d -> %d blobs/step total, %.2f GB/step total\n",
+         K_SHARED, LAYERS * K_SHARED,
          (double)LAYERS * K_SHARED * g_blob / 1e9);
   fflush(stdout);
 

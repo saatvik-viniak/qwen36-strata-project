@@ -2269,3 +2269,25 @@ See the Q4_K_S redirect entry at the bottom update log for the full plan.**
     After T3's harvest: T4's slots (the staging shrink — the #1 structural lever)
     and the toucher's step-0 diagnostic on the next natural idle.
   Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
+- **2026-11-17 ~19:00Z — T3'S FIRST RUN SEGFAULTED (rc=139) AND THE BUG IS FIXED;
+  THE RE-RUN IS LAUNCHED (the continuing research agent, this commit).** The window
+  ran cleanly (the gate passed, the build OK, the champion restored healthy
+  18:49:17Z, s13a.done = mb_complete — the runner's own semantics: the window ran;
+  the microbench's rc is in the log). The crash: **the SPLIT-5t header printed, then
+  SIGSEGV before "warm-ups done" — the reader's layer indexing was wrong**: it
+  computed `base + b*g_span + slot*g_blob` with b = the worker's list POSITION, but
+  a worker's list holds up to 205 blobs (5t/24: round-robin gives 5/layer to
+  workers 0–3, 4/layer to worker 4) → `b*434 MiB` reached ~88 GiB, far past the
+  17.45 GiB arena → the first access at b ≥ 41 faulted. **The fix (s13a_microbench.c,
+  not running when edited — the runner was done): each list entry now packs
+  layer*256 + slot and the reader unmapping it; the per-worker blob counts in the
+  headers now print the honest totals (the old prints divided k by 8 regardless of
+  the thread count).** Verified: gcc -O2 -pthread COMPILE_OK + a 1-GiB functional
+  probe — all four configs (SPLIT-5t/8t, SHARED-DIST-8t, SHARED-ALL-8t) complete
+  with "done" and in-bounds addressing (the probe's GB/s numbers are NOT the
+  harvest — the 1-GiB geometry is cache-absorbable and differs). **The re-run: the
+  champion stops ~19:03Z for ~10 min (the same announced window's semantics; the
+  pre-registered rules unchanged: SPLIT ≥ ~25 GB/s → the pattern levers die; ~14–20
+  → they proceed; ≤ ~10 → the within-reader prefetch lever).** The T2/pass-2b
+  verdicts are untouched. Signed: GLM 5.3 Flash (Maya-s quant), the continuing
+  research agent.
