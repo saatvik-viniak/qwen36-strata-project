@@ -11,8 +11,10 @@
 #      uint4 candidate binary) -> out/strata_q5k_base, build via build_kit.sh, keep the
 #      new binary as out/strata_q5k_cand;
 #   3. STOP the server (the parity test allocates a CUDA context beside the champion's
-#      ~7.4 GiB - the 8 GiB card must be free), then build the parity test tree (separate
-#      cmake dir, STRATA_BUILD_TESTS=ON) and run native_expert_parity --synthetic
+#      ~7.4 GiB - the 8 GiB card must be free), then build the parity test tree
+#      (v5: replicating build_kit.sh's toolchain setup - cuda_env.sh + strata_find_cuda,
+#      the private cmake if the system's is too old, ccache launchers; the v4 configure
+#      failed because cmake could not find nvcc) and run native_expert_parity --synthetic
 #      q5_K/q5_K at the model's shapes: bit-for-bit against ggml-cpu's vec_dot for
 #      1..8 tokens + the honest 4-token ratio;
 #   4. gates: solo old (base binary, no env) vs solo new (kernel binary, STRATA_KQ256=1)
@@ -26,10 +28,11 @@
 #      WSL2; this chain's watchdog polls every 25 s for the same reason);
 #   6. leave the champion (base binary) serving; results in research/cand_q5k/.
 # Any failure restores the base binary + champion serving before exiting.
-# v4 (06:05Z): the base binary is out/strata_byte_loop (the true champion - cand_runner
-# left the uint4 candidate on out/strata after its completed bench), the final restore
-# likewise, and the watchdog polls every 25 s (the 3 s poll stole ~1 core on WSL2 and
-# confounded the uint4 empty/ctx32k cells). v3 (05:50Z): the reconcile reads
+# v5 (06:40Z): the parity configure failed in v4 (cmake could not find nvcc) - the step
+# now replicates build_kit.sh's toolchain setup (cuda_env.sh + strata_find_cuda + the
+# private cmake + ccache) and starts parity_build clean. v4 (06:05Z): the base binary is
+# out/strata_byte_loop (cand_runner left the uint4 candidate on out/strata), the final
+# restore likewise, the watchdog polls every 25 s. v3 (05:50Z): the reconcile reads
 # research/uint4_verdict.txt ("keep"/"revert", default revert) instead of trusting
 # cand_uint4.done's "bench_complete" (which a losing bench also writes). v2 (05:25Z)
 # moved the parity run after the server stop and made the control pass serve the base
@@ -41,12 +44,12 @@ GGUF=/models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preser
 C=$WS/research/cand_q5k
 DONE=$WS/research/cand_q5k.done
 LOG=$WS/research/cand_q5k.log
-echo "== cand_q5k_runner v3 up $(date -u +%F_%TZ) ==" > "$LOG"
+echo "== cand_q5k_runner v5 up $(date -u +%F_%TZ) ==" > "$LOG"
 
-restore_champion () {   # the base binary back on the port (the champion config)
+restore_champion () {   # the champion binary back on the port (the champion config)
   bash "$WS/research/stop_server.sh" >> "$LOG" 2>&1
   cp /home/dmin/qwen36-strata-project/out/strata_q5k_base /home/dmin/qwen36-strata-project/out/strata 2>/dev/null \
-    || echo "WARN: could not restore the base binary" >> "$LOG"
+    || echo "WARN: could not restore the champion binary" >> "$LOG"
   setsid nohup bash "$WS/research/serve_262k.sh" > /home/dmin/qwen36-strata-project/serve_262k_launch.log 2>&1 < /dev/null &
   echo "champion restored $(date -u +%F_%TZ)" >> "$LOG"
 }
@@ -74,7 +77,7 @@ rm -f "$DONE"
 
 cd /home/dmin/qwen36-strata-project || exit 1
 
-# 0b. reconcile: the kernel A/B must be kernel-only
+# 0b. reconcile: keep -> the compose build (q5k rides on the uint4 patch); else revert
 if [ "$VERDICT" != "keep" ]; then
   python3 "$WS/research/revert_uint4.py" >> "$LOG" 2>&1 || { echo "uint4 revert FAILED" >> "$LOG"; echo "revert_failed" > "$DONE"; exit 1; }
   echo "uint4 patch reverted (kernel-only A/B) $(date -u +%F_%TZ)" >> "$LOG"
@@ -87,14 +90,9 @@ python3 "$WS/research/apply_q5k.py" >> "$LOG" 2>&1 || { echo "apply_q5k FAILED" 
 echo "kernel applied $(date -u +%F_%TZ)" >> "$LOG"
 
 # 2. preserve the TRUE CHAMPION + build
-if [ -f /home/dmin/qwen36-strata-project/out/strata_byte_loop ]; then
-  cp /home/dmin/qwen36-strata-project/out/strata_byte_loop /home/dmin/qwen36-strata-project/out/strata_q5k_base \
-    || { echo "cannot preserve the champion binary" >> "$LOG"; exit 1; }
-else
-  cp out/strata out/strata_q5k_base || { echo "cannot preserve the base binary" >> "$LOG"; exit 1; }
-  echo "WARN: out/strata_byte_loop missing; preserved out/strata as base" >> "$LOG"
-fi
-echo "base binary preserved (out/strata_q5k_base) $(date -u +%F_%TZ)" >> "$LOG"
+cp /home/dmin/qwen36-strata-project/out/strata_byte_loop /home/dmin/qwen36-strata-project/out/strata_q5k_base \
+  || { echo "cannot preserve the champion binary" >> "$LOG"; exit 1; }
+echo "base binary preserved (out/strata_q5k_base = strata_byte_loop) $(date -u +%F_%TZ)" >> "$LOG"
 if bash build_kit.sh >> "$LOG" 2>&1; then
   echo "build ok $(date -u +%F_%TZ)" >> "$LOG"
 else
@@ -105,14 +103,40 @@ else
 fi
 cp out/strata out/strata_q5k_cand || { echo "cannot keep the candidate binary" >> "$LOG"; exit 1; }
 
-# 3. free the GPU for the parity test's CUDA context, then build + run the parity tree
+# 3. free the GPU for the parity test's CUDA context, then build + run the parity tree.
+# v5: replicate build_kit.sh's toolchain setup (the v4 configure failed without it).
 bash "$WS/research/stop_server.sh" >> "$LOG" 2>&1
 echo "server stopped for the parity run $(date -u +%F_%TZ)" >> "$LOG"
+CCACHE_ARGS=""
+if command -v ccache >/dev/null 2>&1; then
+  CCACHE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CUDA_COMPILER_LAUNCHER=ccache"
+fi
+if . ./cuda_env.sh && strata_find_cuda; then
+  echo "cuda env ok $(date -u +%F_%TZ)" >> "$LOG"
+else
+  echo "CUDA ENV FAILED $(date -u +%F_%TZ)" >> "$LOG"
+  echo "cuda_env_failed" > "$DONE"
+  restore_champion
+  exit 1
+fi
+v="$(cmake --version 2>/dev/null | head -1 | awk '{print $3}')"
+if [ -z "$v" ] || [ "$(printf '%s\n3.24\n' "$v" | sort -V | head -1)" != "3.24" ]; then
+  if [ -x .toolchain/cmake/bin/cmake ]; then
+    PATH="$PWD/.toolchain/cmake/bin:$PATH"; export PATH
+    echo "using the private cmake: $(.toolchain/cmake/bin/cmake --version | head -1)" >> "$LOG"
+  else
+    echo "cmake too old ($v) and no .toolchain/cmake; FAILED" >> "$LOG"
+    echo "cmake_missing" > "$DONE"
+    restore_champion
+    exit 1
+  fi
+fi
+rm -rf parity_build
 mkdir -p parity_build
 if cmake -G Ninja -S . -B parity_build -DCMAKE_BUILD_TYPE=Release -DSTRATA_ENABLE_CUDA=ON \
      -DSTRATA_BUILD_TESTS=ON -DSTRATA_NATIVE_EXPERTS=ON -DSTRATA_PORTABLE=ON \
      -DSTRATA_Q6K_EXPERTS=ON -DSTRATA_MMQ_KQUANTS=ON -DCMAKE_CUDA_ARCHITECTURES=86-real \
-     >> "$LOG" 2>&1 \
+     $CCACHE_ARGS >> "$LOG" 2>&1 \
   && cmake --build parity_build --target native_expert_parity -j "$(nproc)" >> "$LOG" 2>&1; then
   echo "parity build ok $(date -u +%F_%TZ)" >> "$LOG"
 else
@@ -156,8 +180,8 @@ if [ -n "$FAIL" ]; then
   exit 1
 fi
 
-# 5. bench: candidate (STRATA_KQ256=1), then control (the BASE binary, no env)
-watchdog () {   # $1 = the vram.log file
+# 5. bench: candidate (STRATA_KQ256=1), then control (the champion binary, no env)
+watchdog () {   # $1 = the vram.log file; polls every 25 s (the 3 s poll stole ~1 core on WSL2)
   while true; do
     V=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null)
     [ -n "$V" ] && echo "$(date -u +%F_%TZ) $V" >> "$1"
@@ -194,7 +218,7 @@ run_cells () {   # $1 = serve script, $2 = output dir, $3 = watchdog log
 mkdir -p "$C/cand" "$C/control"
 run_cells "$WS/research/serve_262k_q5k.sh" "$C/cand" "$C/vram_cand.log" || { restore_champion; echo "server_failed" > "$DONE"; exit 1; }
 echo "candidate bench complete $(date -u +%F_%TZ)" >> "$LOG"
-# the control pass must serve the BASE binary, not the kernel build
+# the control pass must serve the champion (base) binary, not the kernel build
 cp /home/dmin/qwen36-strata-project/out/strata_q5k_base /home/dmin/qwen36-strata-project/out/strata
 run_cells "$WS/research/serve_262k.sh" "$C/control" "$C/vram_control.log" || { restore_champion; echo "server_failed" > "$DONE"; exit 1; }
 echo "control bench complete $(date -u +%F_%TZ)" >> "$LOG"

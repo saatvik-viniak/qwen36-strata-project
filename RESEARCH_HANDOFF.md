@@ -466,6 +466,17 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   instruction → ~no sector amplification (vs the QK loop's 1 useful byte per sector). The uint4-on-V
   treatment would save instructions/L1 pressure, not bandwidth; the Q4_K decode-once precedent
   (1.01-1.13×) bounds that. The ncu counters settle it in §9.0.
+- **Chain v5 note (~06:40Z):** v4's parity cmake configure FAILED at strata_cuda_toolchain —
+  cmake could not find nvcc because build_kit.sh sources `cuda_env.sh` + runs `strata_find_cuda`
+  before configuring and the chain's parity step did not. The failure path behaved correctly: the
+  champion was restored and served from 06:17Z, and the COMPOSE BINARY survived (out/strata_q5k_cand,
+  85,113,360 B = the champion + ~41 KB of q5k kernel code; the main build had succeeded). v5
+  (pid 90529) replicates build_kit.sh's toolchain setup in the parity step (cuda_env.sh +
+  strata_find_cuda + the private cmake if the system's is too old + the ccache launchers), starts
+  parity_build clean, and re-runs the chain from the top: the verdict file = keep → no revert, the
+  build = cache hits ("no work to do" — the compose binary confirmed), the configure log confirms
+  the AVX2 dot config (-mavx2 GGML_AVX2). Timing: parity build ~06:40-06:55Z → the parity run +
+  gates ~07:15Z → the empty/ctx32k A/B ~08:15Z → then the clean promotion pass.
 - **Next steps (ordered):** (1) harvest the chain v4 A/B (~07:30Z): the parity harness ratio +
   the empty/ctx32k delta + the regime-test verdict (empty ≥ +5% = compute-bound share → S1
   composes; ±2% = latency-bound → pivot to S9/S11's access-path levers); (2) the clean promotion

@@ -1,31 +1,14 @@
-[Engine] Record uint4 verdict (ctx128k +52%, mechanism engaged), chain v4 compose build, trial E deferred
+[Engine] q5k chain v5: the parity configure fixed (cuda env + toolchain replicated)
 
-The uint4 candidate's ctx128k landed 17.77 tok/s (+52% vs the clean anchor
-11.73; measured decode 28.81 s vs 43.91 s) - the QK byte loop's stride-128
-sector thrash throttled the whole attention kernel and the uint4 fix removed
-it, exceeding the S2 prediction. The empty/ctx32k cells carry NO VERDICT: the
-cand_runner bench polled nvidia-smi every 3 s (1-2 s of 100% CPU per call on
-WSL2, ~1 core stolen at the pool-bound empty cell) while the baseline
-reference and trial_runner3 ran without a watchdog (grep-verified), plus a
-post-load disturbance decaying over ~15+ min from the chain's 4-server
-cycling. Bit-parity held everywhere (VERIFY 6103 comparisons 0 mismatches,
-cmp 10/10 bit-identical).
-
-Verdict file = keep: the patch rides into the q5k compose build. Chain v4
-(pid 89941) fixed three defects caught while it still waited: the reconcile
-reads research/uint4_verdict.txt (cand_runner writes bench_complete on ANY
-completed bench and never restores the champion, so out/strata held the uint4
-binary), the A/B's base is out/strata_byte_loop (the true champion), and the
-watchdog polls every 25 s. Bench cells empty+ctx32k; ctx128k runs in the
-clean promotion pass (no watchdog, ~15 min post-load settle, 3 cells vs the
-clean anchors 21.89/19.52/11.73).
-
-Trial E sized and DEFERRED: at 262k MMQ fr ~1.28 GiB, staging ~1.03 GiB eats
-the whole budget (the small-reserve variant gives 0 slots - budget2 < staging
-with the strict >); only the full staging-shrink surgery reaches ~11-12
-slots, but slots cost ctx32k (-4.5% at S=7, -5.4% at S=2) and buy ~+5% empty.
-V-path disagreement recorded: the revised +62-74% conflicts with the sector
-math (adjacent warps' 16-B halves form fully-used sectors); ncu settles in
-the 9.0 profiling pass.
+v4's parity cmake failed at strata_cuda_toolchain: cmake could not find nvcc
+because build_kit.sh sources cuda_env.sh + runs strata_find_cuda before
+configuring and the chain's parity step did not. The failure path behaved
+correctly (the champion restored and serving since 06:17Z; the compose binary
+survived - out/strata_q5k_cand, 85,113,360 B, the champion + the q5k kernel).
+v5 replicates build_kit.sh's toolchain setup in the parity step (cuda_env.sh +
+strata_find_cuda + the private cmake if the system's is too old + ccache),
+starts parity_build clean, and re-runs the chain from the top: verdict file =
+keep (no revert), the build = cache hits (the compose binary confirmed), the
+configure log confirms the AVX2 dot config. Handoff #7 updated.
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)
