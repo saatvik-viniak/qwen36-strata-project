@@ -23,7 +23,12 @@ FILES = {
     "src/kernels/cpu/kq_avx2.cpp":
         ("b19ee460211291e18f0996f80dec4094", "f1984db86e7ed2c442629c985f29a48b"),
     "src/kernels/cpu/native_expert.cpp":
-        ("1af0beaffc7c312da230dc6d236f9243", "5f69908b1bd3961d9f15b6c4764c5ebf"),
+        ("1af0beaffc7c312da230dc6d236f9243", "c608a91eb7b7a146cd197a78266a763c"),
+        # patched state now includes the kq engagement log line (apply_kqlog.py,
+        # 2026-11-17): the md5 guard refuses unknown states by design, so the
+        # observability edit is folded into the expected patched state — the copy
+        # source (the Windows checkout's file) carries both the q5k dispatch and
+        # the log line (md5 verified identical on both trees).
     "src/kernels/native_expert_parity.cpp":
         ("a1dcc814682e75ad37cced209c3ef256", "e9843fc079c8b921567131f2d56c31e6"),
     "include/strata/kernels/cpu/kq_avx2.hpp":

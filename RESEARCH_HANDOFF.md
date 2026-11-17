@@ -682,3 +682,58 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   split, the ncu V-path counters (sectors per request ≈1.0 vs ≈4+ — the dispute decider), S11
   lever-2 (--pool-workers 12 SMT test, config-only) after; (4) the S6 depth re-sweep if S1
   composed (mission C5's re-measure point).
+
+## Continuation #16 — primary agent, ~08:15Z (the recovery executed: the compose binary rebuilt, v6 running with all four fixes, the promotion pass v2 launched)
+
+- **THE VOID MARKERS ARE GONE; the forensics kept:** cand_q5k.done and promotion.done (both
+  "bench_complete", both VOID — the v5 chain and the promotion pass v1 benched NOTHING) deleted;
+  promotion.log preserved as research/promotion_v1_void.log; the empty research/promotion/ dir
+  removed. The box was left idle-safe throughout (byte_loop serving).
+- **THE BINARY FORENSICS RECONCILE with your receipts (check_binaries.sh + mtimes):** all four
+  out/ binaries were 85,072,112 B / 74c5f1f4 = byte_loop — the compose binary (6929c45a,
+  85,113,360 B) was destroyed at 06:34:11Z by the v5 no-op build + `cp out/strata
+  out/strata_q5k_cand`; the v5 gates were tautological (champion vs champion); the promotion
+  pass v1 measured byte_loop as the "compose". The 1.45×/1.54× parity ratios STAND (the parity
+  tree was rebuilt from the patched source).
+- **v6 IS RUNNING (pid 93330, up 08:07:33Z) with your four fixes verbatim:** (1) `rm -f
+  out/strata` before build_kit.sh → a REAL 42 s build (fix 1); (2) the `cmp -s` tautology guard
+  → "candidate binary verified DISTINCT from the base" (fix 2); (3) `export
+  MODEL_PATH=/models/qwen36-tokenizer` at the top, copied verbatim from cand_runner.sh, NOT the
+  kit's model.env (fix 3, per your correction); (4) run_cells counts bench failures (bench.py
+  exit 0 AND the JSON exists with decode_tps) and the chain aborts with truthful markers
+  (bench_failed / server_failed) — "bench_complete" only when every cell measured (fix 4).
+- **TWO SOURCE DIAGNOSTICS RIDE THE REBUILD:** the pinerr line (applied 06:47Z, compiles —
+  `#include <cstdio>` verified present) and your observability fix — the kq engagement log line
+  (apply_kqlog.py: one fprintf at the gate/up dispatch lambda, `strata: q5k multi-token kernel:
+  engaged/disabled (STRATA_KQ256=…)`, once per process). Every future A/B's log proves which
+  kernel the cells measured.
+- **THE APPLIER-GUARD LESSON (yours to know):** apply_q5k.py's md5 guard refused the
+  kqlog-edited native_expert.cpp ("unexpected state c608a91e") — correct behavior. The fix:
+  the observability edit was folded into the applier's expected patched state (both trees
+  md5-verified identical c608a91e; the copy source carries both the q5k dispatch and the log
+  line). A patch applier's state table must include every legitimate intermediate state.
+- **THE COMPOSE BINARY IS BACK:** out/strata = out/strata_q5k_cand = md5 8833c30b, 85,113,360 B
+  — the destroyed compose's exact recorded size, now with pinerr + kqlog; DISTINCT from the
+  base (74c5f1f4). **Parity GREEN again 08:08:59Z** (native_expert_parity: 0 failures, the same
+  bit-exact receipts). The gates (old → new → cmp) run ~08:26Z, then the 2-cell A/B
+  (empty + ctx32k, the 25 s watchdog both sides) → chain done ~09:05Z.
+- **THE LAUNCH-INFRASTRUCTURE LESSON (two):** (1) the 07:58Z launch died at the wsl client's 4 s
+  exit DESPITE setsid nohup — nondeterministic (the identical pattern survived at 06:33Z and
+  06:45Z); the fix is the supervisor pattern (run_v6_sup.sh / run_prom_sup.sh: a live wsl
+  client held for the runner's whole life via a background shell job). (2) An explicit timeout
+  on a background shell call kills the supervisor at that timeout (the first v6 supervisor got
+  SIGTERM at 30 s — the setsid'd runner survived; omit the timeout for long background jobs).
+- **THE PROMOTION PASS v2 IS UP (pid 94113, 08:10:27Z) with your trigger design:** it waits for
+  cand_q5k.done == bench_complete AND verifies the A/B results exist on disk (cand/ and control/
+  each with a non-empty empty.json), verifies the compose binary differs from the base (cmp -s),
+  exports MODEL_PATH, counts bench failures → a truthful promotion_bench_failed marker; the GOOD
+  design kept (serve → wait health → settle 900 s → empty/ctx32k/ctx128k, NO watchdog → the
+  champion restored). Expected verdict ~10:05Z.
+- **Next steps (ordered):** (1) harvest the A/B (~09:05Z) — the regime test reads the empty
+  delta (≥ +5% → S1 composes; ±2% → pivot to S9/S11) and the control's absolute numbers anchor
+  the window per your protocol; (2) harvest the promotion pass (~10:05Z) — the per-cell verdict
+  vs the clean anchors (21.89/19.52/11.73); (3) §9.0 profiling on the restored champion — the
+  ncu V-path sector counters (the dispute decider) and the pinerr line's output (now printed at
+  every load: WHY cudaHostAlloc fails — your THP lever's prerequisite); (4) the THP lever
+  (your #14, implementation-ready) queued after the promotion verdict; (5) your S6 revival bar
+  (~+18% empty delta, not +5%) applies to any mtp3 re-bench.
