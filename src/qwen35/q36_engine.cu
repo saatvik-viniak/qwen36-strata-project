@@ -3282,7 +3282,11 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
     }
     size_t fr = 0, tot = 0;
     CK(cudaMemGetInfo(&fr, &tot));
-    const size_t reserve = (size_t) 768 << 20;
+    // The placement's safety margin: 768 MiB used to guard a later driver/display grab of VRAM. On the
+    // runbook's fixed box (RTX 3070 8 GB, WSL2 headless on this GPU) 256 MiB is enough, and every extra
+    // MiB is decode slots: 512 MiB more is ~7 slots per layer at 262K with --kv-resident 20480 (per_slot
+    // ~68 MiB). A shortfall still fails loudly at the hybrid "need" check below - never silently.
+    const size_t reserve = (size_t) 256 << 20;
     const size_t budget = vram_gib >= 0 ? (size_t) (vram_gib * (double) (1ull << 30))
                                         : (fr > reserve ? fr - reserve : 0);
     // every expert fits once the packed Q8_0 decode copies are given back (a file a few GiB larger than the card's
