@@ -106,21 +106,55 @@ per change).
   implementation: <https://github.com/ggml-org/llama.cpp/commit/d5062b24c107165a1ff9af22339428ecb7758a4b>;
   int4-KV-fused decode attention measured outrunning fp16 by moving 3.2–3.5x fewer bytes (KIVI-style
   fused int4 cache): <https://arxiv.org/html/2605.05699v1>.
+- **Implementation sketch (added ~04:20Z, composes with the pending uint4 candidate):** per
+  (layer, kv_head, slice) CTA: slice the cell range into 8–16 slices — at ctx128k one slice of 16k
+  cells is ~2.1 MB of packed K per CTA; one CTA cannot hide 1.4 GB of KV latency, but 11 layers ×
+  2 KV heads × 8 slices = **176 CTAs** is enough parallelism to pull ~100+ GB/s from a 448 GB/s
+  card. Each CTA computes a partial online-softmax (m, l, acc[256 fp32]) over its slice with the
+  uint4 candidate's `__ldg(uint4)` read + fused dequant as the inner loop, double-buffering 2–4 KB
+  packed tiles with `cp.async`; a small merge kernel reduces the S partials per q-head (GQA: 16
+  q-heads over 2 KV heads → 8 q-heads share a KV head). Scratch: 16 × 8 × 258 fp32 ≈ 132 KB.
+  **Verification-contract note:** split-K changes the softmax reduction order, so the result is NOT
+  bit-identical to the old kernel — the parity gate must be the tolerance form the mission already
+  allows ("per-kernel counts and magnitude where rounding legitimately differs"), plus greedy text
+  parity vs the fp32 reference at 32k and needle correctness at 128k. Do not carry the uint4
+  candidate's bit-identical claim onto this kernel.
+- **External precedent for reading quantized KV in place** (researched ~04:20Z): llama.cpp has
+  shipped quantized-KV flash-attention CUDA kernels since PR #7527 (q4_0/q5_0/q5_1/q8_0 K/V read
+  and dequantized in-kernel; "quantizing K makes the performance slightly better"), its
+  vector-kernel refactor PR #16208 decouples threads from head size specifically to support
+  **head dim 256** with a quantized KV (our head_dim), and the 2026 MMA-path work (ggml-org PR
+  #31802; unslothai PR #303) dequantizes q4_0/q8_0 K/V **tiles as they load** on Ampere+ — the
+  same fused-dequant pattern as the uint4 candidate, measured +8–20% tok/s with KLD-0 validation.
+  The Metal path's separate dequant-to-f16 pass (PR #27390 style) is the shape to avoid: it
+  materializes a full f16 window every step, which mission A7 explicitly rejects.
 
 ## S3 — Make the slot mechanism non-blocking (compose trial A's +5.1% empty without its 32k loss)
 
 **Status: PROPOSED** (the primary agent's composition recipe in RESEARCH_HANDOFF.md #3 — here are
 the literature-backed options to fix the churn).
 
-- **Change:** `src/qwen35/q36_engine.cu` slot rebalance + swap sites (`cudaMemcpy2DAsync`).
-  Today a rebalance every 32 rows does ≤8 blocking 2.06 MB H2D copies + a sync (~2–3 ms/step at 7
-  slots) — trial A's 32k cost. Three graduated options, cheapest first:
-  1. **Async swap stream:** issue the swaps on a second stream with an event the decode waits on only
-     at the use point; overlap with the attention kernel of the same step.
-  2. **CPU fallback execution (HybriMoE):** when an expert is not in its slot, run that expert's
-     rows on the CPU pool instead of blocking on a swap — the swap is then advisory, not a stall.
-  3. **Context-scaled rebalance:** `kRebalanceEvery` scales with context (32k churns much more per
-     step than empty); weaker decay or score-hysteresis avoids the ping-pong the 32k cell showed.
+- **Change:** `src/qwen35/q36_engine.cu` — the rebalance (line 2583) and its sync. Three graduated
+  options, cheapest first, all composable with the MMQ staging shrink (PLAN.md item 6):
+  1. **Make the rebalance non-blocking (F1):** the swaps already run on the engine's stream
+     (`cudaMemcpyAsync(..., st)`, line 2616), but line 2629 ends with an **unconditional**
+     `cudaStreamSynchronize(st)` — it stalls even with zero swaps, and its own comment states why:
+     `H.slot_of`'s host copy is pageable ("the upload is done before it changes"). Fix: pinned
+     double-buffered slot_of host memory (two buffers; CPU writes the one not in flight), a
+     dedicated swap stream, and a `cudaStreamWaitEvent` on the decode stream instead of the full
+     sync; make the sync conditional on `changed`.
+  2. **CPU fallback for misses (F2, HybriMoE):** on a router miss (expert not slotted), route that
+     expert's rows to the CPU pool batch — which already computes the other misses — instead
+     of swapping it in; promote only the score-selected top-S at rebalance boundaries. Kills the
+     swap stall AND the churn; trial A's empty hit-saving is preserved.
+  3. **Weaker decay / context-scaled cadence (F3):** line 2627 halves all 256 scores every 32 rows
+     (`v *= 0.5`) — an expert unused for ~32 rows falls under the residents and ping-pongs, which
+     is trial A's 32k mechanism. Try ×0.9, or `kRebalanceEvery` 32 → 64/128 scaled with context, or
+     freeze the decay during prompts.
+- **Trial D decision tree (mmqslots2, running when this was written):** win on empty with no ctx32k
+  regression → promote slots+MMQ as champion, then F3/F1 to scale slots up (the staging shrink
+  frees VRAM for 7 slots). Wash or ctx32k loss → slots at the VRAM edge don't pay at S=2, and
+  F3 → F2 is the path to make trial A's 7-slot empty win survive 32k.
 - **Mechanism:** trial A proved 7 slots help empty (+5.1%) but the blocking swaps cost 32k (−4.5%).
   Remove the stall and the composition (MMQ staging shrink ~4x → more slots + fast MMQ prefill) is
   the single largest decode lever for both empty and 32k.
@@ -301,7 +335,7 @@ the int8 trade is opt-in and lossy-labelled).
   S6 is the direction that gains acceptance without the sequential depth cost. Next checks: ctx32k +
   mtp3 verdict, then runner3's trial D (mmqslots2) and the uint4 candidate's build/bench results —
   S2's sequencing depends on the uint4 outcome, S3's options on trial D's churn sign.
-- **2026-11-17 ~04:35Z — S1 sharpened + trial C verdict annotated (this commit).** (1) The primary
+- **2026-11-17 ~04:35Z — S1 sharpened + trial C verdict annotated (commit 2a70ddf).** (1) The primary
   agent ADOPTED S1 as research/hillclimb/PLAN.md item 7 ("pending") — I corrected S1's type number
   (Q5_K = **13** in this fork's enum, verified in third_party/strata-ggml/ggml/src/
   ggml-cuda-tq/include/ggml.h; my first draft said 14) and replaced the sketch with the exact
@@ -312,3 +346,19 @@ the int8 trade is opt-in and lossy-labelled).
   refined with PLAN.md's wall 3: graphs are disabled in hybrid mode, so the launch/sync tax is real.
   Live queue: mtp3/ctx128k running (03:56Z) → trial D (mmqslots2) → champion restore → cand_runner
   builds + verifies + benches the uint4 candidate (S2's sequencing follows those verdicts).
+- **2026-11-17 ~04:45Z — S2 and S3 sharpened (this commit), path question answered.** The user asked
+  where this file lives: `C:\Users\Admin\Auto-research-agent\Runtime\projects\saatvik-viniak\qwen36-strata-project\SUGGESTIONS.MD`
+  (repo root, branch main, committed locally, never pushed). New content: (1) S2 gained an
+  implementation sketch (8–16 slices → 176 CTAs at ctx128k ≈ 2.1 MB packed K per CTA; partial
+  online-softmax + merge; 132 KB scratch; cp.async double-buffer) and a **verification-contract
+  note** — split-K changes the softmax reduction order, so bit-identity does NOT carry over from the
+  uint4 candidate; the gate must be the mission's tolerance form + greedy text parity. Added the
+  external precedent: llama.cpp has shipped in-kernel-dequant quantized-KV FA kernels since PR
+  #7527, its PR #16208 decouples threads from head size specifically for head dim 256, and the 2026
+  MMA work (ggml-org #31802, unslothai #303) dequantizes K/V tiles as they load (+8–20% tok/s,
+  KLD-0). (2) S3's three options now carry exact code anchors: the swaps run on the engine's stream
+  with an UNCONDITIONAL `cudaStreamSynchronize(st)` at line 2629 (stalls even with zero swaps;
+  pageable slot_of is the stated reason — pinned double-buffer fixes it), the ×0.5 score decay at
+  line 2627 (the ping-pong mechanism), and the HybriMoE CPU-fallback for misses. Added the trial D
+  decision tree. Pipeline state at writing: mtp3/ctx128k landed ~04:18Z expected; trial D next;
+  uint4 chain ~05:45Z.
