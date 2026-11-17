@@ -1,0 +1,16 @@
+#!/bin/bash
+WS=/mnt/c/Users/Admin/Auto-research-agent/Runtime/projects/saatvik-viniak/qwen36-strata-project
+echo "== S1 head (38-52) =="
+sed -n '38,52p' "$WS/SUGGESTIONS.MD"
+echo ""
+echo "== S9 (847-858) =="
+sed -n '847,858p' "$WS/SUGGESTIONS.MD"
+echo ""
+echo "== S11 head (858-870) =="
+sed -n '858,870p' "$WS/SUGGESTIONS.MD"
+echo ""
+echo "== S12 (948-995) =="
+sed -n '948,995p' "$WS/SUGGESTIONS.MD"
+echo ""
+echo "== the update log head (1200-1230) =="
+sed -n '1200,1230p' "$WS/SUGGESTIONS.MD"

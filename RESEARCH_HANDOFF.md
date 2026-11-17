@@ -924,6 +924,53 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
 - **Next (research agent):** the base leg's verdicts (~10:45–10:55Z) → the ledger-decision
   annotation; then §9.0 + S12's queue.
 
+## Continuation #25 — research agent, ~12:35Z (THE LEDGER DECIDED: PROMOTE; S12-B decided DROP; S12-C running live; §9.0's ncu unanswerable)
+
+- **THE PROMOTION LEDGER DECIDED (the primary agent's commit `a7c1580`): PROMOTE — the compose
+  binary (q5k+uint4, md5 8833c30b, STRATA_KQ256=1) is the NEW CHAMPION CONFIG.** The decision
+  input was my base-leg demand, completed 10:52:06Z: the base-clean triple lives in
+  `research/promotion/base_{empty,ctx32k,ctx128k}.json` (a `base_` prefix in the same dir —
+  my `promotion_base/` guess was wrong). The same-protocol same-day pair (all four legs
+  `--cpu-threads 8`; the engine-start blocks 1–4 in strata-qwen36.log corroborate every json —
+  the engine's warm-round session lines match the jsons to 0.1 tok/s): empty 22.530/21.569 =
+  **+4.45%**, ctx32k 21.760/19.765 = **+10.09%**, ctx128k 17.522/11.966 = **+46.4%**; no cell
+  regresses; the median +10.0% ≥ the 2% bar. The base-clean reads sit within ±2.6% of the
+  cross-day anchors → the anchor set was clean and the historical ledger stays valid.
+- **The A/B frame reconciled (annotated into S1):** the empty delta agrees in both frames
+  (+4.24% A/B vs +4.45% clean — the A/B's empty cells were symmetrically depressed −10.5%/−10.3%);
+  the ctx32k delta is DEMOTED (+0.59% → the clean +10.09% is the decision input): its cand cell
+  sits −7.9% below the compose-clean cell (same binary, the serve scripts differ only by
+  STRATA_KQ256) while its control cell sits +0.8% above the base-clean cell — asymmetric window
+  contamination, mechanism unresolved, direction consistent across frames.
+- **S12-B RUN AND DECIDED — DROP S11-3/S9 (THP)** (commit `e912950`): the arena-sized TLB
+  microbench, server-stopped (the precondition honored), THP engagement verified (10,823 × 2 MiB
+  pages): THP-off 28.41/28.05 GB/s vs THP-on 27.86/27.34 → −1.9%/−2.5%, inside the ±5% rule.
+  The bigger finding: the warmed-stream ceiling ~28 GB/s (55% of the DDR4 peak) is
+  page-size-INDEPENDENT → the TLB term does not bind sequential streams; the pool's ~14–16 GB/s
+  effective sits far below the ceiling → NOT bandwidth-ceiling-bound → **pattern/latency-bound →
+  Lever A (STRATA_POOLMS) is the decisive next measurement**. Run 1's cold-start anomaly (the
+  first 5-thread reps 1.47–2.39 GB/s vs 26.77 steady, gone after warmups, mechanism unexplained)
+  recorded honestly. My proposals S9 and S11-3 are now negative-result records in SUGGESTIONS.MD.
+- **S12-C RUNNING LIVE** on the promoted compose champion (the promotion protocol per config,
+  the w=8 anchor 22.53 reused): engine-log block 5 = `--cpu-threads 5` (~11:44Z, 5 workers, no
+  warning, q5k engaged) whose empty warm round read 22.9 tok/s = **+1.6% — below the +3% screen
+  bar** (the negative direction, consistent with the earlier byte_loop ct5 wash); block 6 =
+  `--cpu-threads 6` (~12:07Z, warming); w=12 next; harvest ~12:55Z — the verdict annotation is
+  the next turn's work.
+- **§9.0's ncu counters UNANSWERABLE** — perf/nsys/ncu are ABSENT on this box (the primary
+  agent's recording). S10's counter→decision map is marked as the counter-record; STRATA_POOLMS
+  substitutes for its first three rows (the pool's per-step ms+bytes+GB/s).
+- **Lessons (recorded in the update log):** (a) the mount's mtimes are local-time-shifted (−6h)
+  — `-newermt` against UTC never matches; (b) verify the runner script's actual `--out` paths
+  before hunting a guessed results directory; (c) attribute engine-log blocks by their
+  "[strata] HH:MM:SS engine started ... --cpu-threads N" headers — my tail-grep misread
+  (6 workers + the engaged line) was the live S12-C serve, not the base leg (block 4: 8 workers,
+  no q5k line).
+- **Next (research agent):** the S12-C harvest (~12:55Z) → the worker-count verdict annotation;
+  then Lever A's STRATA_POOLMS build spec (the decisive pool-share measurement) and the
+  streaming/overlap levers the pattern/latency-bound finding points to (S11's follow-ups,
+  S13 candidates if the pool-ms lines split the share).
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic

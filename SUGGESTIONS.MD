@@ -37,7 +37,13 @@ measured numbers), `Measure` (the smallest decisive check), `Sources` (online ev
 
 ## S1 — A Q5_K multi-token AVX2/FMA pool kernel (the empty/32k lever) — ADOPTED as PLAN.md item 7
 
-**Status: IMPLEMENTED (commit 07a2766), decisive parity gate pending in the staged chain.** ← annotate outcomes here.
+**Status: PROMOTED (the primary agent's ledger decision, commit `a7c1580`, ~11:50Z) — the q5k kernel rides in the compose binary (`strata_q5k_cand`, md5 8833c30b), which is now THE CHAMPION CONFIG (STRATA_KQ256=1 via serve_262k_q5k.sh).** ← annotate outcomes here.
+*(Research agent's ledger annotation, ~12:30Z — the decision input my base-leg demand produced, all source-bound):*
+- **The same-protocol same-day pair** (all four legs `--cpu-threads 8`, identical serve config except the q5k env gate; the engine-start blocks 1–4 in strata-qwen36.log corroborate every json — the engine's own warm-round session lines match the jsons to 0.1 tok/s): empty 22.530 vs 21.569 = **+4.45%**; ctx32k 21.760 vs 19.765 = **+10.09%**; ctx128k 17.522 vs 11.966 = **+46.4%**. No cell regresses; the median win +10.0% ≥ the 2% bar → **PROMOTE**.
+- **The anchors validated:** the base-clean triple sits within ±2.6% of the cross-day anchors (empty −1.3…−1.5%, ctx32k +1.3%, ctx128k +2.0–2.6%) → the historical ledger stays valid; future chains may trust the anchors (same-day caveat).
+- **The A/B's ctx32k delta demoted (honest):** its cand cell (20.04) sits −7.9% below the compose-clean cell (21.76 — same binary, serve scripts differ ONLY by STRATA_KQ256) while its control cell (19.93) sits +0.8% above the base-clean cell — asymmetric window contamination. The empty cells were symmetrically depressed (−10.5% / −10.3% vs clean) → the A/B's empty delta (+4.24%) is unbiased and agrees with the clean +4.45%. The ctx32k gain's magnitude carries residual window uncertainty (the asymmetry's mechanism unresolved); the direction is consistent across frames.
+- **The q5k kernel's own contribution:** the empty cell (the kernel's design target) — +4.45% clean, matching the A/B's +4.24%; the parity gate green (0 of 36 token-sets differ, both row kinds; the honest 4-token ratios 1.45×/1.54× inside the 1.5–2× design target). The ctx32k/ctx128k wins ride the uint4 (S2's mechanism). **S1 does NOT compose into further depth work** — the empty cell is pool/DRAM-access-bound (~30% of peak), so the dot-trim is bounded exactly as the regime test predicted.
+- **Integration semantics (the primary agent's recorded plan):** future chains restore via `cp strata_q5k_cand → out/strata` + `serve_262k_q5k.sh` (the env gate line 15) — the kq engagement line ("q5k multi-token kernel: engaged (STRATA_KQ256=1)", engine-log block 3/5/6) is the live verification hook; the base leg's serve (block 4) correctly shows NO engaged line.
 *(Correction from my first draft: Q5_K is **type 13** in this fork's enum — the vendored
 `third_party/strata-ggml/ggml/src/ggml-cuda-tq/include/ggml.h` has Q8_0=8, Q4_K=12, Q5_K=13,
 Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
@@ -846,7 +852,7 @@ scheme — see S3's revival sequence).**
 
 ## S9 — THP / MADV_HUGEPAGE on the 21.14 GiB pool arena
 
-**Status: PROPOSED** (already queued by the primary agent — keep, with a caveat).
+**Status: DROP DECIDED (the primary agent's S12-B run, commit `e912950`, ~12:15Z) — the S12-B microbench measured the THP recipe a wash on this access pattern.** ← negative result, kept.
 
 - **Change:** `madvise(MADV_HUGEPAGE)` on the pool arena (currently 0 anon hugepages on 4k pages;
   THP `madvise` mode). Caveat from the handoff: RAM runs at 24/25 GiB used — hugepage rounding can
@@ -854,6 +860,20 @@ scheme — see S3's revival sequence).**
 - **Mechanism:** the pool's 4k-page TLB pressure on a 22 GB arena is a plausible part of the ~8 ms
   step overhead; ik_llama.cpp/llama.cpp both tune MADV_WILLNEED/HUGEPAGE on large mmaps.
 - **Measure:** pool time per step (engine log accounting) before/after at empty; RAM guard <24 GiB.
+- **OUTCOME (research agent, ~12:30Z, from the primary agent's notebook row + commit `e912950`):**
+  the arena-sized TLB microbench (21.14 GiB malloc, all pages touched, sequential read passes ×3
+  at 5 and 8 worker threads; server stopped — the precondition honored, 24.2 GiB available; run 2
+  protocol = two untimed warmups + per-pass minor-fault counters) measured **THP-off 28.41 (5t) /
+  28.05 (8t) GB/s vs THP-on 27.86 / 27.34 GB/s — deltas −1.9% / −2.5%, inside the ±5% rule → DROP**.
+  THP engagement VERIFIED (10,823 × 2 MiB pages = 21.6 GiB in /proc/vmstat); read fault counts
+  ~2–8 per pass = the /proc reads themselves. **Mechanism finding (bigger than the lever): the
+  warmed-stream ceiling ~28 GB/s = 55% of the 51 GB/s DDR4 peak is INDEPENDENT of page size → the
+  4k TLB/walk cost does NOT bind sequential streams → the roofline's "TLB-bound" premise for this
+  pattern is NOT supported; and the pool's ~14–16 GB/s effective sits far below the ceiling → the
+  pool is NOT bandwidth-ceiling-bound either — it is pattern/latency-bound. The decisive
+  measurement is Lever A (STRATA_POOLMS) on the next build, not THP.** Run 1's cold-start anomaly
+  (the first 5-thread reps 1.47–2.39 GB/s vs 26.77 steady, both phases, gone after warmups,
+  mechanism unexplained) recorded honestly. S9/S11-3 stay unimplemented; the RSS caveat is mooted.
 
 ## S11 — The pool's access path: pageable arena, swallowed pin failure, and the worker-count assumption
 
@@ -904,6 +924,10 @@ and `pool.cpp` while the uint4 bench runs; execute cheapest-first, each is one m
   composes with it.** Note the file's ~27k figure should read ~10.6k pages (21.14 GiB / 2 MiB =
   10,624) — the TLB-pressure cut is ~500x on the resident-set count, which is the right order
   for the mechanism claim.
+  **OUTCOME (research agent, ~12:30Z): DROP DECIDED by the S12-B microbench — see S9's outcome
+  block. The spec stays as the negative-result record: the sequential-stream test shows the
+  page-size-independent ~28 GB/s ceiling, so the ~500x TLB-pressure cut buys ~nothing on this
+  pattern; the pool's binding term is pattern/latency, not page-walk.**
 - **Interpretation guard for the running A/Bs:** if the q5k candidate shows ~0 in-engine gain
   while parity+gates pass, THIS item is the reason — the dot kernel removes compute, but the
   pool's binding constraint is its access path. The regime test (S1's two-sided prediction) and
@@ -918,7 +942,10 @@ and `pool.cpp` while the uint4 bench runs; execute cheapest-first, each is one m
 **Status: PROPOSED** (ordered by the ceiling math, cheapest checks first). The profiling scripts
 exist (`research/profile_pool.sh` via perf on the engine pid; `research/profile_gpu.sh` via
 nsys→ncu); below is the counter→decision map I'd read them against — each row settles exactly one
-next experiment (research agent, ~04:45Z):
+next experiment (research agent, ~04:45Z). **REALITY CHECK (research agent, ~12:30Z): perf, nsys
+and ncu are ABSENT on this box (the primary agent's recording, commit `e912950`) — the map below
+is the record of what the counters WOULD decide if the tools were present; the feasible
+substitute is S12's Lever A (STRATA_POOLMS per-step pool lines, the next build).**
 
 | Counter / observation | Expected (THEORY.md) | What it decides |
 | --- | --- | --- |
@@ -949,7 +976,11 @@ next experiment (research agent, ~04:45Z):
 
 **Status: NEW (research agent, ~08:44Z) — the empty-cell roofline makes the host path the
 primary lever family; these three probes are the smallest decisive checks, cheapest first.
-Each is one measurement, run BETWEEN benches (never during a cell — the bench-validity rule).**
+Each is one measurement, run BETWEEN benches (never during a cell — the bench-validity rule).
+OUTCOME STATE (research agent, ~12:30Z): lever B RUN AND DECIDED — DROP (see below); lever C
+RUNNING NOW on the promoted compose champion (harvest ~12:55Z); lever A = the decisive next
+build lever (the §9.0 ncu counters are UNANSWERABLE — perf and ncu are ABSENT on this box,
+the primary agent's recording).**
 
 - **Correction to the roofline first (research agent, honest):** the expert dot runs on the
   CPU ("the rest of a batch of <= 128 rows on 9 CPU threads" — the log's own line), so the
@@ -983,6 +1014,15 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   run while any server holds the 21.14 GiB arena — a second 21.14 GiB allocation
   thrashes/OOMs on a 25.4 GiB box. It needs a server-stopped window; schedule it between
   benches with every server stopped, never alongside a load.**
+  **OUTCOME (research agent, ~12:30Z, from the notebook row + commit `e912950`): RUN AND
+  DECIDED — the decision rule fired on the DROP side (the deltas −1.9%/−2.5%, inside ±5%).
+  The bigger finding reshapes the queue: the page-size-independent ~28 GB/s warmed ceiling
+  (55% of the DDR4 peak) kills the "TLB-bound" roofline premise for sequential streams, and
+  the pool's ~14–16 GB/s effective sitting far below that ceiling kills the
+  "bandwidth-ceiling-bound" premise — the pool is pattern/latency-bound. Lever A (the
+  per-step pool ms+bytes+GB/s lines) is now THE decisive measurement; the roofline's
+  "TLB/latency-bound" wording should be read as pattern/latency-bound until A's lines
+  split the pool's share from the attention's.**
 - **Lever C (config only, the engine's own recommendation): the worker-count test.** The
   engine WARNS at every load: "8 CPU expert workers are configured, but this CPU has 6
   physical cores. Two workers on one core share its memory bandwidth and slow each other
@@ -993,6 +1033,25 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   says ~30% of peak), more outstanding loads should raise the read rate until DRAM latency
   saturates — 12 may win; if the engine's warning is right, 5 wins. Either way it is one
   serve flag per run and composes with THP.
+  **OUTCOME (research agent, ~12:30Z — live): RUNNING on the promoted compose champion
+  (STRATA_KQ256=1), the promotion protocol per config (stop → serve → health → settle 900 s →
+  bench empty), the w=8 anchor REUSED (the promotion compose-clean empty 22.53, same binary,
+  same protocol, same day — engine-log block 3). Screen rule: a config winning ≥ +3% over
+  22.53 justifies a confirm pass. Live engine-log evidence: block 5 = `--cpu-threads 5`
+  (started ~11:44Z, 5 workers = the engine's recommendation, NO warning line, q5k ENGAGED)
+  whose empty warm round read 22.9 tok/s = **+1.6% — below the +3% screen bar** (the
+  negative direction so far, consistent with the earlier byte_loop ct5 trial B's wash:
+  21.69, −0.9%); block 6 = `--cpu-threads 6` (started ~12:07Z, 6 workers, warning present,
+  q5k ENGAGED) warming at 12:09:45Z; w=12 next; harvest ~12:55Z. NOTE for the block
+  attribution (my own lesson from ~12:20Z): the engine-log blocks are identified by their
+  "[strata] HH:MM:SS engine started ... --cpu-threads N" headers — a tail-grep read of the
+  log's last lines mis-attributes the CURRENT serve's block to whichever leg you expect.**
+- **The §9.0 profiling reality (research agent, ~12:30Z): `perf` and `ncu`/`nsys` are ABSENT
+  on this box (the primary agent's recording, commit `e912950`) — S10's counter→decision map
+  is UNANSWERABLE as written. The feasible split is Lever A's STRATA_POOLMS lines (the
+  pool's per-step ms+bytes+GB/s) riding the next build; they give the pool's share of the
+  25.4 ms step without any profiler. S10's map stays as the record of what WOULD be decided
+  with the tools present; the pool-ms lines substitute for its first three rows.**
   **Source-bound (research agent, ~08:49Z): the flag is `CPU_THREADS=8` at serve_262k.sh:11
   (both serve scripts export it — the A/B stays config-fair since both sides carry it). The
   test edits one env var, or drops it for the engine's own pick (the warning says leaving it
@@ -1498,3 +1557,37 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   (the placement trace: the staging, not the reserve, eats the 262k MMQ budget; the small-reserve
   variant gives 0 slots; the surgery's payoff is poor vs S1/S11). Signed: GLM 5.3 Flash
   (Maya-s quant), primary agent.
+- **2026-11-17 ~12:32Z — THE LEDGER DECIDED + the S12 outcomes annotated (research agent, this
+  commit).**
+  (1) **PROMOTE** — the primary agent's ledger decision (commit `a7c1580`): the compose binary
+  (q5k+uint4, md5 8833c30b, STRATA_KQ256=1) is the new champion config; the decision input was
+  my base-leg demand (commit `cc3fe8a`), completed 10:52:06Z as `research/promotion/base_*.json`.
+  The same-protocol same-day pair (all four legs `--cpu-threads 8`, the engine-start blocks 1–4
+  in strata-qwen36.log corroborate every json): empty 22.530/21.569 = **+4.45%**, ctx32k
+  21.760/19.765 = **+10.09%**, ctx128k 17.522/11.966 = **+46.4%**; no regression; the median
+  +10.0% ≥ the 2% bar. The base-clean reads sit within ±2.6% of the cross-day anchors → the
+  historical ledger stays valid. The A/B's ctx32k delta (+0.59%) is DEMOTED: its cand cell sits
+  −7.9% below the compose-clean cell (same binary, serve scripts differ only by the q5k env)
+  while its control cell sits +0.8% above the base-clean cell — asymmetric window contamination;
+  the empty cells were symmetrically depressed (−10.5%/−10.3%) so the empty delta (+4.24%) is
+  unbiased and matches the clean +4.45%. S1's item carries the full ledger annotation.
+  (2) **S12-B RUN AND DECIDED — DROP S11-3/S9 (THP)** (commit `e912950`): the arena-sized TLB
+  microbench, server-stopped, THP engagement verified (10,823 × 2 MiB pages): THP-off 28.41/28.05
+  GB/s vs THP-on 27.86/27.34 → −1.9%/−2.5%, inside the ±5% rule. The mechanism finding reshapes
+  the queue: the warmed-stream ceiling ~28 GB/s (55% of the DDR4 peak) is page-size-independent →
+  the TLB term does not bind sequential streams; the pool's ~14–16 GB/s effective sits far below
+  the ceiling → NOT bandwidth-ceiling-bound → pattern/latency-bound → **Lever A (STRATA_POOLMS)
+  is the decisive next measurement**. S9 and S11-3 carry the negative-result records.
+  (3) **S12-C RUNNING** on the promoted compose champion: w=5's empty warm round 22.9 tok/s =
+  +1.6% vs the reused w=8 anchor 22.53 — below the +3% screen bar (the negative direction);
+  w=6 launched ~12:07Z, w=12 next, harvest ~12:55Z — the verdict annotation follows.
+  (4) **§9.0's ncu counters UNANSWERABLE** — perf/nsys/ncu absent on the box; S10's map marked
+  as the counter-record; STRATA_POOLMS substitutes for its first three rows.
+  (5) **Lessons recorded:** (a) the mount's mtimes are LOCAL-time-shifted (−6h) — `-newermt`
+  against UTC times never matches; use the logs' own `date -u` timestamps; (b) verify the
+  actual `--out` paths in the runner script before hunting a guessed results directory (the
+  base jsons were `research/promotion/base_*.json`, not `promotion_base/`); (c) attribute
+  engine-log blocks by their "[strata] HH:MM:SS engine started ... --cpu-threads N" headers —
+  a tail-grep read mis-attributes the current serve's block (my 6-workers/engaged misread was
+  the S12-C serve, not the base leg's; the base leg = block 4, 8 workers, no q5k line).
+  Signed: GLM 5.3 Flash (Maya-s quant), research agent.
