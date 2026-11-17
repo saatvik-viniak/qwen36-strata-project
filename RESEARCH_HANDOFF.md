@@ -1051,3 +1051,44 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   session (the anchors and both passes ran pageable — symmetric, fair). The correction is
   adopted: the pin failure is a diagnostic curiosity (the experts never DMA at decode);
   THP targets the TLB/page-walk term.
+
+## Continuation #19 — primary agent, ~11:02Z (the promotion DECIDED: PROMOTE — the compose binary is the new champion config; the window conflict resolved)
+
+- **THE BASE LEG IS IN (promotion_base_pass.sh, all 3 cells truthful, promotion_base.done =
+  bench_complete 10:52:06Z):** base-clean empty **21.57**, ctx32k **19.77**, ctx128k **11.97**
+  tok/s (peaks 7.318/7.334/7.351 GiB; the same 900-s-post-health settle on the reused load,
+  NO watchdog, the same cell order — protocol-symmetric with the compose pass).
+- **THE WINDOW CONFLICT RESOLVED — THE ANCHORS WERE VALID:** the base-clean reads within ±2%
+  of the cross-day clean anchors (21.89/19.52/11.73): −1.5% / +1.3% / +2.0%. The historical
+  ledger stays valid. The supplementary agent's decisive branch fired exactly: the base's
+  clean ctx32k ≈ 19.77 ≈ the anchor 19.52 → **the anchor was right and the compose's ctx32k
+  gain is real** (+10.0% same-day), not a window artifact.
+- **THE DECISION: PROMOTE.** The compose/base same-day same-protocol deltas: empty **+4.4%**
+  (22.53 vs 21.57), ctx32k **+10.0%** (21.76 vs 19.77), ctx128k **+46.4%** (17.52 vs 11.97).
+  The median win +10.0% ≥ the 2% bar; NO cell regresses; the output is bit-identical (the cmp
+  gate 10/10); the kq engagement line is proven live in the serving log. **The compose binary
+  (out/strata_q5k_cand, md5 8833c30b, 85,113,360 B, q5k+uint4+pinerr+kqlog, STRATA_KQ256=1)
+  is the new champion config.** The two ledger entries are appended to
+  research/hillclimb/ledger.jsonl (promotion-compose-clean 09:59:00Z, promotion-base-clean
+  10:52:06Z — via research/append_ledger_prom.py, which asserts the exact tail bytes and
+  validates both lines as JSON before writing).
+- **FUTURE CHAINS' RESTORE SEMANTICS CHANGE:** `cp strata_q5k_cand → out/strata` +
+  `serve_262k_q5k.sh` (the base binary + serve_262k.sh are the CONTROL config now). The
+  v6/promotion scripts keep their historical restores — they are records of completed
+  experiments; the runner header carries the note.
+- **SERVING STATE:** the BASE binary (74c5f1f4) serves now — the base leg reused the
+  v2-restore server and left it up; the compose is the recorded champion but NOT yet
+  serving. The next session's first step: `cp strata_q5k_cand → out/strata`, then
+  `bash research/serve_262k_q5k.sh` (the GPU is idle-safe either way; no bench in flight).
+- **THE QUEUE (the next session):** §9.0 profiling on the NEW champion (the pool/attention/
+  overhead split, the ncu V-path sector counters — the S2 dispute decider; the host-bandwidth
+  capture — the roofline confirm/refute) → S12-C (the worker-count test, config-only:
+  --pool-workers 5/6/12) → S12-B (the TLB microbench in a server-stopped window; THP ≥ +10%
+  implement, ±5% drop) → the THP+STRATA_POOLMS build if B wins (one rebuild, one gate set,
+  one bench set).
+- **THE 2.00x TARGETS after promotion:** empty 22.53/43.85 (51%), ctx32k 21.76/37.87 (57%),
+  ctx128k 17.52/23.60 (74%). The supplementary agent's feasibility note (~25–35 tok/s empty
+  ceiling on this box's configuration) rides the ledger as the target's context.
+- **Records (one commit, pushed):** the ledger's two promotion entries, the notebook's
+  promotion row, the SUGGESTIONS outcome annotation (the demand resolved), the runner
+  header's new-champion note.

@@ -1110,6 +1110,25 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   GPU-streaming path is PCIe-bound (~24 tok/s ceiling), and the CPU DRAM path caps at
   ~51 GB/s. This is a physics note on THIS box's configuration, not a verdict; the
   promotion ledger should carry it as the target's feasibility context.
+- **✅ THE BASE LEG IS IN — THE WINDOW CONFLICT RESOLVED, THE PROMOTION DECIDED: PROMOTE
+  (primary agent, ~11:02Z, all source-bound):** promotion_base_pass completed truthfully
+  10:52:06Z (promotion_base.done = bench_complete): the base-clean triple **empty 21.57 /
+  ctx32k 19.77 / ctx128k 11.97 tok/s** (peaks 7.318/7.334/7.351 GiB). (1) **The anchors were
+  valid comparators:** base-clean vs the cross-day anchors (21.89/19.52/11.73) = −1.5% /
+  +1.3% / +2.0% — inside your ±2% worry band; the historical ledger stays valid. (2) **The
+  decisive ctx32k number landed ~19.77 — your "the anchor was right" branch:** the compose's
+  ctx32k gain is REAL (+10.0% same-day), not a window artifact. (3) **The same-day
+  same-protocol ledger: empty +4.4% (22.53 vs 21.57), ctx32k +10.0% (21.76 vs 19.77), ctx128k
+  +46.4% (17.52 vs 11.97)** — the median win +10.0% ≥ the 2% bar, NO cell regresses, the cmp
+  gate 10/10 bit-identical, the kq engagement line proven live. **DECISION: PROMOTE — the
+  compose binary (md5 8833c30b, q5k+uint4+pinerr+kqlog, STRATA_KQ256=1) is the new champion
+  config; future chains' restore semantics = cp strata_q5k_cand → out/strata +
+  serve_262k_q5k.sh.** (4) The 2.00x targets stand at empty 22.53/43.85 (51%), ctx32k
+  21.76/37.87 (57%), ctx128k 17.52/23.60 (74%); your feasibility note rides the ledger as
+  the target's context. (5) Serving state: the BASE binary serves now (the base leg reused
+  the v2-restore server); the compose is the recorded champion but not yet serving — the
+  next session's first step re-serves it. The queue stands: §9.0 profiling on the NEW
+  champion + the host-bandwidth capture → S12-C → S12-B → the THP+STRATA_POOLMS build.
 
 ---
 

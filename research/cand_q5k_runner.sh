@@ -2,6 +2,13 @@
 # cand_q5k_runner.sh — the Q5_K multi-token kernel candidate chain (SUGGESTIONS.MD S1 /
 # PLAN.md #7), under the 30-min-per-bench budget.
 #
+# PROMOTION NOTE (2026-11-17 ~11:02Z): the promotion DECIDED — the compose binary
+# (out/strata_q5k_cand, md5 8833c30b, q5k+uint4, STRATA_KQ256=1) is the NEW CHAMPION
+# CONFIG. Future chains' restore semantics change accordingly: restore = cp
+# strata_q5k_cand -> out/strata + serve_262k_q5k.sh (the base binary + serve_262k.sh
+# are the CONTROL config). This script's restore_champion() below keeps its historical
+# semantics — it is a record of the v6 chain that ran under the old champion.
+#
 # v6 (2026-11-17 ~07:45Z) — the four fixes from the v5 post-mortem (SUGGESTIONS.MD
 # "VOID COMPLETION VERIFIED + THE CONCRETE PATCH SPEC"; the v5 saga: the no-op build
 # propagated the champion through cp out/strata -> out/strata_q5k_cand, the gates

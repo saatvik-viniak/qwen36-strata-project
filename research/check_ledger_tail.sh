@@ -1,0 +1,3 @@
+#!/bin/bash
+F=/mnt/c/Users/Admin/Auto-research-agent/Runtime/projects/saatvik-viniak/qwen36-strata-project/research/hillclimb/ledger.jsonl
+tail -c 120 "$F" | od -c | head -10
