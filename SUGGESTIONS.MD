@@ -170,6 +170,52 @@ per change).
   allows ("per-kernel counts and magnitude where rounding legitimately differs"), plus greedy text
   parity vs the fp32 reference at 32k and needle correctness at 128k. Do not carry the uint4
   candidate's bit-identical claim onto this kernel.
+- **BENCH-VALIDITY CAVEAT (research agent, ~05:38Z, written as the cells land):** the empty cell
+  landed **18.08 tok/s (−17.4% vs the champion's 21.89)** with TTFT 983 ms (vs 370 ms at trial D)
+  — but the candidate is BIT-IDENTICAL (cmp gate 10/10) and at empty the changed kernel touches
+  ~nothing, and the ctx32k PREFILL also runs ~199 tok/s vs the champion's 249.8 (−20%) — a path
+  the uint4 change never executes. A uniform slowdown across unrelated paths = environment drift
+  or binary-layout effects from the rebuild, NOT the kernel. The champion reference numbers date
+  from 21:30Z–02:25Z (ledger), 6–8 h before this bench, on a box under sustained load since
+  18:21Z. Consequences: (1) the empty cell is INCONCLUSIVE as a champion comparison — do not
+  reject the uint4 candidate on it; (2) the decisive cells are ctx32k/ctx128k decode, and EVEN
+  those compare against a stale reference; (3) the same-day reference the chain needs is the
+  q5k chain's CONTROL bench (base binary, champion config, same hour — its protocol already
+  says "promotion only after control-candidate-control re-measure"). If the control's empty also
+  lands ~18, the champion reference itself drifted and BOTH chains' verdicts must be re-based on
+  the control cells; if the control's empty is ~21.9, the candidate's empty regression is real
+  and needs a mechanism explanation (check the SASS/layout before blaming the kernel).
+  RAM check at bench time: engine RSS 23.8 GiB on a 25.4 GiB box, 235 MB free, swap 56 MB/7 GiB
+  (no swap thrash), one server process, no strays — RAM pressure is the same footprint the
+  champion era had, so RAM alone does not explain the gap.
+- **THE CONFOUND FOUND (research agent, ~05:47Z): the bench carries a watchdog the baseline never
+  had.** `cand_runner.sh` line 102 polls `nvidia-smi` every 3 s during the bench — and on WSL2 each
+  call burns 1–2 s of 100% CPU (live evidence during the ctx128k cell: pid 84008 `nvidia-smi` at
+  100% CPU, the engine at 208%, the pool's other workers idle). `run_baseline_cells.sh` and
+  `trial_runner3.sh` have NO watchdog — the champion's 21.89/19.52 and the trials' 20.11–20.81 ran
+  clean. At empty the pool is the bottleneck and CPU-thread-limited, so losing ~1 of 6 physical
+  cores is exactly the observed −17.4%; ctx32k (−8.2%) is equally contaminated. **Verdict
+  implication: the empty/ctx32k cells are INVALID as comparisons against the historical champion —
+  do not reject the uint4 candidate on them.** The valid same-day reference is the q5k chain's
+  CONTROL bench (base binary, champion config, same watchdog, same hour): if its control empty
+  lands ≈ 18 and ctx32k ≈ 17.9, the watchdog explains both chains' regressions and the
+  candidate-vs-control A/B (same interference on both sides) decides the uint4/q5k verdicts; if
+  the control runs ≈ 21.9/19.5, the candidate's regression is real and needs a mechanism (check
+  the SASS/layout before blaming the kernel). **Infrastructure fix for all future benches: poll
+  nvidia-smi every 10–30 s, or sample once per cell — the 3 s loop costs the box a core.**
+- **uint4 verdict decision rule (research agent, ~05:50Z, before the ctx128k cell lands):** the
+  ctx128k cell is the one the kernel actually touches — judge it against the champion's 11.73
+  PLUS the watchdog penalty the champion never paid. **If ctx128k lands ≥ ~13.5** (+15% over the
+  champion), the QK-half gain is real despite the contamination → promote pending a clean
+  re-measure. **If it lands ~11.7–12.5**, the gain is either absent or fully masked by the
+  watchdog — INCONCLUSIVE, and the clean re-measure is mandatory: a champion-config control (the
+  byte-loop binary, 3 cells, same watchdog) or the same bench with the watchdog lightened
+  (10–30 s polling). **If it lands < 11.7**, the candidate likely loses — but the same confound
+  applies in reverse, so still re-measure clean before rejecting. Also note for the q5k chain: on
+  a `bench_complete` verdict it preserves `out/strata` (the uint4 candidate binary) as its "base",
+  so its control bench measures the uint4 config, NOT the champion config — after the q5k chain,
+  the frontier still needs a same-day champion-config re-measure to re-base every historical
+  comparison on this box.
 - **Pre-bench static verification + prediction (research agent, ~05:02Z, commit dd9fee1 read
   line-by-line):** the candidate's parity claim checks out statically. (1) `k_attn_part` has
   `constexpr int HD = 256` (q36_engine.cu:391) — both loops fully unroll at compile time, so the
@@ -391,6 +437,44 @@ scheme — see S3's revival sequence).**
 - **Mechanism:** the pool's 4k-page TLB pressure on a 22 GB arena is a plausible part of the ~8 ms
   step overhead; ik_llama.cpp/llama.cpp both tune MADV_WILLNEED/HUGEPAGE on large mmaps.
 - **Measure:** pool time per step (engine log accounting) before/after at empty; RAM guard <24 GiB.
+
+## S11 — The pool's access path: pageable arena, swallowed pin failure, and the worker-count assumption
+
+**Status: NEW (research agent, ~05:40Z) — three cheap levers surfaced by reading `place_experts`
+and `pool.cpp` while the uint4 bench runs; execute cheapest-first, each is one measurement.**
+
+- **What the code and logs show:** (1) the arena tries `cudaHostAlloc` (pinned) first and falls
+  back to `malloc` on failure (q36_engine.cu:3279-3287) — and the failure error is DISCARDED
+  (line 3281's `cudaGetLastError()` is `(void)`'d, never logged). The engine log says "all
+  21.14 GiB in **pageable** host memory", so the pin has been failing silently the whole session.
+  (2) The pool reads ~0.6 GB/step of expert weights through 4k pageable pages at 6.2 GB/s
+  effective — 12% of a dual-channel DDR4's ~51 GB/s peak, while the dot computes at 17% of CPU
+  peak (THEORY.md): NEITHER compute nor bandwidth is saturated → the pool is latency-bound
+  (page faults + TLB pressure + pageable-path overhead), not bandwidth- or compute-bound.
+  (3) The worker plan pins ONE worker per physical core (pool.cpp:272-273: "two workers on each
+  physical core [would] halve the bandwidth the expert kernel is bound by") — a bandwidth-bound
+  assumption this box's numbers now contradict.
+- **Lever 1 (one line, do first): log the swallowed error.** `std::fprintf(stderr, "cudaHostAlloc
+  failed: %s", cudaGetErrorString(...))` at q36_engine.cu:3281 — reveals WHY the pin fails on
+  WSL2 (a page-locked cap, a driver limit, or fragmentation). If it is a WSL2 page-locked cap,
+  pinned is impossible for 21.14 GiB and levers 2-3 carry; if it is fixable (e.g. reserve),
+  pinned memory removes the pageable-path penalty entirely.
+- **Lever 2 (config, no code): the SMT worker test.** `--pool-workers 12` on a 6C/12T box (the
+  flag exists, q36_engine.cu:4096; verify pool_plan accepts SMT siblings rather than clamping to
+  physical cores). If the pool is latency-bound, 12 workers ≈ 2x the outstanding loads → the
+  read rate rises; if the bandwidth-bound assumption holds, it does nothing (a decisive cheap
+  A/B either way). Measure empty-cell decode + the engine log's pool ms.
+- **Lever 3 (S9, already queued): THP/madvise on the malloc'd arena.** 21.14 GiB / 4k pages =
+  5.5M pages vs ~27k at 2 MiB pages — a ~200x cut in TLB pressure for exactly the access path
+  the pool is stuck on. Composes with levers 1-2.
+- **Interpretation guard for the running A/Bs:** if the q5k candidate shows ~0 in-engine gain
+  while parity+gates pass, THIS item is the reason — the dot kernel removes compute, but the
+  pool's binding constraint is its access path. The regime test (S1's two-sided prediction) and
+  this item's levers answer the same question from opposite sides; sequence the q5k verdict's
+  pivot through here, not through more dot-kernel work.
+- **Measure:** per lever — empty-cell decode tok/s + the engine log's pool accounting (the
+  "hybrid experts ... on the CPU pool in N ms" line), before/after, same server-warmup state
+  (the bench-validity caveat above applies to every comparison on this box now).
 
 ## S10 — Post-profiling items (do §9.0 first; these are where the profiler should point)
 
