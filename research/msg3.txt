@@ -1,0 +1,8 @@
+Record the 262k baseline pass 1 and the hill-climb bookkeeping
+
+Baseline pass 1 (server ctx 262144, int4 KV, MTP 2 + greedy sampler, CT 8):
+empty 21.92, ctx32k 18.94, ctx128k 11.80 decode tok/s; peaks 7.35-7.38 GiB.
+The 2x targets: 43.85 / 37.87 / 23.60. Placement at 262k: 0 expert slots
+(free 1.28 GiB - MMQ staging 1.03 GiB - reserve 0.77 GiB < 0). Drafting
+engaged in every cell (68-75% acceptance). research/ holds the raw JSONs,
+the lab notebook, the carry-forward notes and the scripts.

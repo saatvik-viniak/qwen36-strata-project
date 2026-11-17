@@ -1,0 +1,100 @@
+# RESEARCH_HANDOFF — qwen36-strata hill climb (262k int4 KV, 2x decode target)
+
+Status at handoff: **in progress — Phase 2 (262k baseline) mid-measurement**.
+Session date: 2026-11-16/17 (rig local CST is UTC-6; bench timestamps UTC).
+
+## What this run is
+
+The instruction file is `auto-research.md` at the repo root (mirrored on origin/main as
+`RESEARCH-Q4-KV.md` since ad6ac1f). Mission: (1) land a compatible int4 KV cache, (2)
+record the 262k baseline (empty / 32k / 128k prompts, 512-token greedy decode, server
+context 262144), (3) climb to 2.00x decode on every cell, (4) hand back a reproducible
+tree, numbers, failures and the wall. Work in that order; no speed tuning before the
+baseline exists.
+
+## Where things are
+
+| Thing | Value |
+| --- | --- |
+| Canonical checkout (this workspace) | `C:\Users\Admin\Auto-research-agent\Runtime\projects\saatvik-viniak\qwen36-strata-project` (Windows) |
+| Rig | this machine: RTX 3070 8 GB (WDDM), Ryzen 5 3600X, 26 GB RAM, WSL2 Ubuntu `Ubuntu` (user `dmin`, host `Spooky`) |
+| Build/serve clone on the rig | `~/qwen36-strata-project` in WSL (its `out/strata`, 85,072,112 B, is the verified final binary; its tree content equals main's 29299a4) |
+| Lane clone (pre-existing, PRESERVE) | `~/agent-1-lane` in WSL, commit a64a20b (the int4 KV work, identical content) |
+| Kit | `~/qwen36-strata-kit` in WSL at b478ed5; `run/bench.py` is the benchmark client |
+| Model | `/models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q5_K_S.gguf` (+ tokenizer/ beside it) |
+| Bench tokenizer | `/models/qwen36-tokenizer` |
+| Python | `/opt/strata/venv/bin/python` |
+| Profiling | nsys at /usr/local/bin, ncu in /usr/local/cuda-12.6/bin (WSL) |
+| origin | https://github.com/saatvik-viniak/qwen36-strata-project (main) |
+
+## What landed this session (commits on origin/main)
+
+| commit | what |
+| --- | --- |
+| 29299a4 | the int4 KV cache (packed K/V, per-(kv_head,cell) `__half` scales, opt-in `--kv fp32\|f16\|int8\|int4`, fp32 default bit-for-bit; all paths incl. batch tables, slot copies with scales, MTP block; att_rows uniform 256 rows which is what let 262114 start). Applied from the lane's a64a20b (author preserved: GLM 5.3 Flash (Maya-s quant)); serve.sh conflict resolved (PREFILL 1024 kept, MAX_CONTEXT auto kept) |
+| 9f4dac7 | docs/KVNOTE.md + docs/Q4KNOTE.md (the prior sessions' lab notes, source-bound) + PROGRESS.md (the live hill-climb ledger and chart) |
+| b81319b | serve.sh: KV default fp32 when unset (mission §4 requires `--kv "${KV:-fp32}"`; the lane's copy defaulted to int4) |
+
+## Measurements so far (see PROGRESS.md and research/NOTEBOOK.md for the full tables)
+
+- 262k server context starts and serves: engine log line `context 262144 cells, prompt
+  chunk 1024, KV cache int4, MTP block loaded, 1.28 GiB of VRAM free`; warmed up in
+  155.9 s. Placement line: `hybrid experts: 0 of 256 per layer in VRAM (0.00 GiB), all
+  21.14 GiB in pageable host memory ... on 9 CPU threads`.
+- Baseline cells (empty / ctx32k / ctx128k): see `research/baseline/*.json` and the
+  table in PROGRESS.md — filled as they complete.
+- Engine warning during baseline: `8 CPU expert workers are configured, but this CPU
+  has 6 physical cores ... Recommended: --pool-workers 5`.
+
+## Knowledge that took time to learn this session (do not rediscover)
+
+- The cmd-based shell tool splits on spaces and passes double quotes LITERALLY: never
+  quote multi-word args; use single-word tokens or script files. Bash word processing
+  also strips double quotes inside an unquoted word: `export SAMPLING={"presence_penalty":0}`
+  loses the quotes → JSON parse error; write `SAMPLING='{"presence_penalty":0}'`.
+- The write tool produces LF files; bash scripts run via
+  `wsl -d Ubuntu bash /mnt/c/.../script.sh` directly.
+- WSL-side: `sed -i s/\r//g` arrives as `s/r//g` (one backslash eaten) and deletes every
+  letter r — do NOT edit files that way.
+- The server binds the port only AFTER the engine finishes loading; connection-refused
+  during `still starting (N s)` is normal (262k start ≈ 280-300 s total).
+- At 262k with MMQ on, the engine places 0 expert slots (free VRAM 1.28 GiB − MMQ
+  staging 1.03 GiB − reserve 0.77 GiB < 0). `STRATA_Q36_NO_MMQ=1` frees the staging pair
+  and should raise the slot cap — trial A, scripted in `research/serve_262k_nommq.sh`.
+- GPU peaks observed: 6397 MiB after load, 7520 MiB during warmup (guard 7.9 GiB; the
+  prompt staging at 128k adds ~0.64 GiB — inside the guard by the engine's own fit math).
+
+## Prior-session facts carried forward (source-bound; see docs/KVNOTE.md, docs/Q4KNOTE.md)
+
+- int4 KV verified: VERIFY=1 0/6103 mismatches (all dtypes), pinned-placement fp32 gate
+  10/10 bit-identical to the old binary, cache-content dumps within envelope (int4 worst
+  K 8.3% / V 6.9% relative), needle answers correct at 32k/64k/128k prompts.
+- Serving at 32k ctx (NOT the 262k protocol): fp32 21.4 / int4 28.8 empty; with the
+  greedy-sampler config (SAMPLING presence_penalty 0 → MTP drafting engages; was 0 of 0
+  accepted under the model card's presence_penalty 1.5 default) fp32 26.1 / int4 34.0
+  empty; MTP 2 beats MTP 4 (34.0 vs 32.0); CT 12 harmful; CT 8 with MMQ off best
+  (48.1 tok/s on the Q4_K_M file at 32k).
+- Q4_K files load since the X(12) patch (Q4K-DOWN-PROMPT.md); the model file is FIXED
+  for this mission (Q5_K_S), so Q4_K weights are a new-baseline exploration, not a
+  candidate for the 2x target.
+
+## Open obligations (next steps)
+
+1. Finish the 262k baseline (3 cells), fill PROGRESS.md + NOTEBOOK.md, commit, push.
+2. Trial A: STRATA_Q36_NO_MMQ=1 (scripted) — expert slots at 262k. Measure all cells.
+3. Trial B: CPU_THREADS 0 vs 8 (the engine recommends 5 pool workers on this 6-core CPU).
+4. Trial C: MTP depth 3/4 and batch-mtp at 262k (acceptance changes with context).
+5. §9.0 wall profiling with nsys/ncu once the GPU is free (never while measuring).
+6. Parity evidence per cell (fp32 reference is unattainable at 262k by design — report
+   the gates at 32k + needle correctness + state that plainly; do NOT claim a 0.95 ratio
+   that was not measured).
+7. Keep the lab notebook appended after EVERY run, including failures.
+8. Commit sign-off: all commits authored GLM 5.3 Flash (Maya-s quant), no co-author line.
+
+## Guard status
+
+- Peak VRAM < 7.9 GiB: watching (7520 MiB seen in warmup; cell peaks in the JSONs).
+- System RAM < 24 GiB: 26 GB box, model 24.6 GB mmap'd — watch `free -m` during runs.
+- No OOM, no truncated cache: the engine refuses loudly (never bypass it).
+- Text parity: gates at 32k done (prior session); per-cell evidence = needle answers +
+  the fixed prompt set; the fp32@262k reference does not exist (11 GiB cache).

@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 4096,
+  "prompt_tokens_actual": 3892,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 45930.65373599529,
+      "decode_ms": 68039.29069801234,
+      "output_tokens": 1773,
+      "text": "You've pasted a highly repetitive block of text that defines **Autoresearch** as a simple optimization loop:\n\n> `change one thing \u2192 measure it \u2192 keep if better \u2192 undo if not`  \n> `The judge owns the clock and the check.`\n\nThis is a clean, algorithmic description of **hill climbing** (or coordinate ascent) in optimization, search, or A/B testing. Here's a quick breakdown of the metaphor:\n\n- **`change one thing`**: Perturb a single parameter or variable (coordinate-wise update).\n- **`measure it`**: Evaluate the new state against a metric or objective function.\n- **`keep/undo`**: Accept if the metric improves; reject otherwise (greedy local search).\n- **`The judge owns the clock and the check`**: The evaluation function (\"judge\") dictates when to stop (\"clock\" = time/resource budget) and what counts as valid (\"check\" = termination/validation criteria).\n\nYour message cuts off mid-sentence at the end (`keep the`). Did you want me to:\n- Complete or format the definition?\n- Map it to a specific algorithm or domain (e.g., chess engines, AutoML, hyperparameter tuning)?\n- Generate a code implementation of this loop?\n- Something else?\n\nJust let me know how you'd like to proceed!",
+      "first": 138372.462782313,
+      "last": 138440.502073011
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 13951.074420998339,
+      "decode_ms": 27865.349400002742,
+      "output_tokens": 992,
+      "text": "You've shared a highly repetitive loop that perfectly mirrors the concept it describes: **Autoresearch**. At its core, it's an iterative optimization process:\n1. **Change** one variable\n2. **Measure** the outcome\n3. **Keep** if it improves the metric\n4. **Undo** if it doesn't\n\nThe line `\"The judge owns the clock and the check\"` reinforces that objective measurement, controlled evaluation, and strict accountability are the foundation of the loop.\n\nYour message cuts off mid-sentence at `\"keep the\"`. If you're testing context handling, sharing a working mantra, or setting up a prompt, I'm ready to:\n- Continue the pattern\n- Expand or formalize the Autoresearch framework\n- Apply it to a specific domain (code, research, design, hyperparameters, etc.)\n- Or simply acknowledge the loop is complete and await your next instruction\n\nJust let me know how you'd like to proceed.",
+      "first": 138454.621422366,
+      "last": 138482.486771766
+    }
+  ],
+  "decode_tps": 35.599768937399446,
+  "prefill_tps": 278.9749292815749,
+  "ttft_ms": 13951.074420998339,
+  "warmup_ttft_ms": 45930.65373599529,
+  "peak_gib": 7.5048828125
+}

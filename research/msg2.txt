@@ -1,0 +1,4 @@
+serve.sh: fp32 stays the default when KV is unset
+
+The mission requires --kv "${KV:-fp32}"; the lane's copy defaulted to int4.
+The engine's own default is unchanged (fp32); the wrapper now follows.

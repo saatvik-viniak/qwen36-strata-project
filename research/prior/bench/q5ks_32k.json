@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 32768,
+  "prompt_tokens_actual": 31130,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 218502.61651701294,
+      "decode_ms": 43489.51840901282,
+      "output_tokens": 909,
+      "text": "You've pasted a highly repetitive block of text. The core idea is:\n\n> *\"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"*\n\nThis describes a disciplined, iterative optimization process:\n- **Change one thing**: Isolate a single variable or parameter to avoid confounding effects.\n- **Measure it**: Quantify the impact using a clear metric.\n- **Keep/Undo**: Retain improvements, revert regressions.\n- **The judge owns the clock and the check**: An objective, automated, or impartial system controls timing, validation, and decision-making.\n\nSince this exact pair of sentences is repeated hundreds of times, I assume you might be:\n- Testing how I handle large repetitive inputs\n- Looking for a clean summary or structural breakdown\n- Wanting me to apply this framework to a specific domain (e.g., software, hardware, marketing, ML)\n- Or simply sharing a mantra you want preserved\n\nLet me know what you'd like me to do with it!",
+      "first": 131866.487732743,
+      "last": 131909.977251152
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 215662.7677869983,
+      "decode_ms": 37644.91224201629,
+      "output_tokens": 825,
+      "text": "It looks like your message got cut off at the end. To complete the thought:  \n*Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.*\n\nWould you like me to format this, analyze the concept, generate more variations, or help you with something specific?",
+      "first": 132125.75572934,
+      "last": 132163.400641582
+    }
+  ],
+  "decode_tps": 21.9153120797875,
+  "prefill_tps": 144.345731622743,
+  "ttft_ms": 215662.7677869983,
+  "warmup_ttft_ms": 218502.61651701294,
+  "peak_gib": 6.9052734375
+}

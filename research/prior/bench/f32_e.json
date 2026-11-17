@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 563.8540469954023,
+      "decode_ms": 23969.594915004564,
+      "output_tokens": 490,
+      "text": "It looks like you started typing **\"Aut\"** but didn't finish. Could you clarify what you're referring to? For example, are you asking about:\n\n- **Automatic** (e.g., automatic transmission, automation, auto-correct)?\n- **Autumn** (the season)?\n- **Author** or **Autobiography**?\n- **AUT** as an acronym (e.g., University of Technology, Automatic Unit Test, Autonomous)?\n- Something else entirely?\n\nJust let me know the context or finish the word, and I\u2019ll give you a precise answer!",
+      "first": 107333.975362321,
+      "last": 107357.944957236
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 301.3754799903836,
+      "decode_ms": 19604.268240000238,
+      "output_tokens": 419,
+      "text": "It looks like your message might have been cut off! Did you mean **Auto**, **Author**, **Automatic**, **Autumn**, or something else? Just let me know how I can help! \ud83d\ude0a",
+      "first": 107358.296875526,
+      "last": 107377.901143766
+    }
+  ],
+  "decode_tps": 21.372896701396844,
+  "prefill_tps": 3.3181199745643153,
+  "ttft_ms": 301.3754799903836,
+  "warmup_ttft_ms": 563.8540469954023,
+  "peak_gib": 7.00390625
+}

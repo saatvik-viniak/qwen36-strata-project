@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 16384,
+  "prompt_tokens_actual": 15566,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 99785.8109989902,
+      "decode_ms": 65509.30166299804,
+      "output_tokens": 687,
+      "text": "It looks like you've pasted a highly repetitive block that repeats the same two sentences over and over, ending abruptly with `...and undo`.\n\nThe core message is:\n> *\"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"*\n\nHow would you like me to handle this? For example, I can:\n- Clean up or compress the repetition\n- Analyze or expand on the \"Autoresearch\" concept\n- Continue the text from where it cuts off\n- Format it into a specific structure (e.g., markdown, JSON, etc.)\n\nJust let me know what you need!",
+      "first": 109507.805194398,
+      "last": 109573.314496061
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 95521.1644230003,
+      "decode_ms": 89261.42513299419,
+      "output_tokens": 730,
+      "text": "It looks like you've pasted a highly repetitive block of text that centers around two core sentences:\n\n> *\"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not.\"*  \n> *\"The judge owns the clock and the check.\"*\n\nYour input cuts off at the very end with `...and undo`. \n\nHow would you like me to help? I can:\n- Clean up and format the text\n- Expand on the autoresearch concept or explain its applications\n- Generate a structured version (e.g., for documentation, a presentation, or code comments)\n- Continue the thought from where it cuts off\n\nJust let me know your goal!",
+      "first": 109668.94433604,
+      "last": 109758.205761173
+    }
+  ],
+  "decode_tps": 8.178224792090688,
+  "prefill_tps": 162.95864999162325,
+  "ttft_ms": 95521.1644230003,
+  "warmup_ttft_ms": 99785.8109989902,
+  "peak_gib": 6.93359375
+}

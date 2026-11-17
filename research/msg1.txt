@@ -1,0 +1,5 @@
+Land the KV and Q4_K lab notes; add the hill-climb progress tracker
+
+docs/KVNOTE.md: the int4/f16/int8 KV cache record (layout, VERIFY, gates, dumps,
+262114 fit). docs/Q4KNOTE.md: the Q4_K expert down-projection record (X(12),
+parity, speed). PROGRESS.md: the live hill-climb ledger and chart.

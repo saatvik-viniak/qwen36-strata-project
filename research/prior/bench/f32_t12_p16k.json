@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 16384,
+  "prompt_tokens_actual": 15566,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 94113.50615999254,
+      "decode_ms": 117679.47162600467,
+      "output_tokens": 1082,
+      "text": "It looks like you've pasted the same core statement many times:\n\n> *\"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"*\n\nThis describes a highly disciplined, iterative optimization process. Here's a quick breakdown of what it implies:\n\n\ud83d\udd39 **Change one thing** \u2192 Isolate variables so you know exactly what caused any result.  \n\ud83d\udd39 **Measure it** \u2192 Quantify performance against a clear metric (latency, accuracy, cost, etc.).  \n\ud83d\udd39 **Keep if better / Undo if not** \u2192 Strict improvement threshold; no attachment to ideas that don't outperform the baseline.  \n\ud83d\udd39 **\"The judge owns the clock and the check\"** \u2192 The evaluation system is authoritative over both pacing (`clock`) and validation/approval (`check`). Decisions are driven by data, not intuition or momentum.\n\nThis is essentially a formalized version of controlled A/B testing, hyperparameter search, or lean engineering loops, but framed with a strong emphasis on accountability and empirical rigor.\n\n**How would you like to use this?** I can:\n- Format it into a clean framework or workflow diagram\n- Expand it into an algorithm/pseudocode for implementation\n- Apply it to a specific domain (ML training, software perf, product iteration, etc.)\n- Or just confirm if the repetition was intentional\n\nLet me know your goal!",
+      "first": 110207.088063372,
+      "last": 110324.767534998
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 94111.26442499517,
+      "decode_ms": 124752.81427500886,
+      "output_tokens": 1127,
+      "text": "It looks like you've pasted the same definition many times! To confirm, your core message is:\n\n**Autoresearch** = an iterative optimization loop:\n1. Change one variable/parameter  \n2. Measure the outcome  \n3. Keep the change if it improves results  \n4. Revert if it doesn't  \n\n...with the added principle that *\"the judge owns the clock and the check,\"* implying an impartial, authoritative evaluator overseeing both performance/timing (`clock`) and validation/verification (`check`).\n\nIf you're testing how I handle repetition, I'm ready for whatever comes next. If you'd like to dive deeper into this framework, apply it to a specific domain, or clarify where \"the judge\" reference comes from, just let me know!",
+      "first": 110418.987557836,
+      "last": 110543.740372111
+    }
+  ],
+  "decode_tps": 9.033864338447767,
+  "prefill_tps": 165.39996667886442,
+  "ttft_ms": 94111.26442499517,
+  "warmup_ttft_ms": 94113.50615999254,
+  "peak_gib": 7.015625
+}

@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 32768,
+  "prompt_tokens_actual": 31130,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 189405.6170309923,
+      "decode_ms": 44220.44571800507,
+      "output_tokens": 1008,
+      "text": "You've pasted a highly repeated definition of **Autoresearch**. At its core, it describes a minimal iterative optimization strategy:\n\n1. **Change one thing** \u2192 Perturb a single parameter, variable, or rule.\n2. **Measure it** \u2192 Run the system and collect performance/correctness data.\n3. **Keep if better, undo if not** \u2192 Accept the change only if it improves the target metric; otherwise, revert.\n4. **The judge owns the clock and the check** \u2192 The evaluation engine (\"judge\") controls both timing/performance (`clock`) and correctness/validation (`check`).\n\nThis is essentially a **coordinate descent** or **hill-climbing** loop, commonly used in hyperparameter tuning, algorithmic optimization, or automated system tuning. It's deliberately simple, deterministic, and easy to reason about, but it can get stuck in local optima if not paired with broader search strategies.\n\n**What would you like to do with this?**\n- Implement the loop in a specific language/framework?\n- Design the \"judge\" (metrics, thresholds, timing windows, rollback logic)?\n- Extend it to handle multiple parameters or stochastic perturbations?\n- Something else entirely? Just let me know your goal and I'll tailor the next step.",
+      "first": 130720.412881228,
+      "last": 130764.633326946
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 188511.06751800398,
+      "decode_ms": 35217.13573299348,
+      "output_tokens": 797,
+      "text": "It looks like you've pasted a highly repetitive definition of **Autoresearch**. At its core, the concept describes a closed-loop optimization process:\n\n1. **Change** one variable at a time  \n2. **Measure** the outcome  \n3. **Keep** the change if it improves performance  \n4. **Revert** it if it doesn't  \n5. **Repeat**\n\nThe line `\"The judge owns the clock and the check\"` implies that an automated or strict evaluator controls both the timing (`clock`) and the validation/acceptance criteria (`check`) for each iteration.\n\nSince the text repeats dozens of times, would you like me to:\n- Clean/format it into a concise definition or documentation snippet?\n- Explain how to implement this loop in code (Python, shell, etc.)?\n- Expand it into a workflow, pseudocode, or system design?\n- Something else? Just let me know what you need!",
+      "first": 130953.147232299,
+      "last": 130988.364368032
+    }
+  ],
+  "decode_tps": 22.631028430098123,
+  "prefill_tps": 165.13619284993382,
+  "ttft_ms": 188511.06751800398,
+  "warmup_ttft_ms": 189405.6170309923,
+  "peak_gib": 6.91015625
+}

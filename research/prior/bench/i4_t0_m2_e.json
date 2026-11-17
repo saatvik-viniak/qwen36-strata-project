@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 673.9864429982845,
+      "decode_ms": 13310.14030300139,
+      "output_tokens": 318,
+      "text": "It looks like your message got cut off! Did you mean **\"Auto\"**, **\"Author\"**, **\"Austin\"**, **\"Austria\"**, or something else? Let me know what you're looking for and I'll gladly help! \ud83d\ude0a",
+      "first": 110810.982025021,
+      "last": 110824.292165324
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 330.27607599797193,
+      "decode_ms": 17962.715828005457,
+      "output_tokens": 518,
+      "text": "It looks like your message got cut off at **\"Aut\"**. Did you mean:\n- **Auto** (automotive, automatic, or AI assistant)?\n- **Author** (writer, creator, or legal originator)?\n- **Automatic**?\n- **Autumn** (the season)?\n- Or something else entirely?\n\nLet me know what you're looking for and I'll jump right in!",
+      "first": 110824.66238101,
+      "last": 110842.625096838
+    }
+  ],
+  "decode_tps": 28.837510149350152,
+  "prefill_tps": 3.0277700162761425,
+  "ttft_ms": 330.27607599797193,
+  "warmup_ttft_ms": 673.9864429982845,
+  "peak_gib": 6.91796875
+}

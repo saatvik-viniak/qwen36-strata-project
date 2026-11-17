@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 16384,
+  "prompt_tokens_actual": 15566,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 106776.63652300544,
+      "decode_ms": 62497.54841100366,
+      "output_tokens": 985,
+      "text": "It looks like you pasted the same core definition many times! At its heart, you're describing a disciplined, data-driven optimization loop:\n\n\ud83d\udd01 **Autoresearch Loop**\n1. **Change one thing** \u2192 Isolate variables to avoid confounding results.\n2. **Measure it** \u2192 Collect objective, reproducible data.\n3. **Keep if better, undo if not** \u2192 Let the data decide; no ego, no guesswork.\n4. **The judge owns the clock and the check** \u2192 The person/team evaluating the change also measures the time/cost and bears the responsibility. This ensures accountability, prevents vanity metrics, and aligns incentives with real outcomes.\n\nThis is a well-established principle in performance engineering, A/B testing, and continuous optimization. It\u2019s often used to avoid \"optimizing the wrong thing\" or relying on biased or noisy measurements.\n\nWould you like:\n- A practical template for running this loop in code, product, or research?\n- Examples of where it's applied (e.g., algorithm tuning, UI testing, hardware benchmarking)?\n- Clarification on how to handle edge cases like noise, regression, or multi-variable changes?\n\nJust let me know your focus area!",
+      "first": 120728.463057606,
+      "last": 120790.960606017
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 101661.30480299762,
+      "decode_ms": 106242.20222400618,
+      "output_tokens": 1722,
+      "text": "You\u2019ve pasted a highly repetitive block, but the core idea is clear and powerful. Let\u2019s break it down:\n\n### \ud83d\udd01 The Autoresearch Loop\n1. **Change one thing** \u2192 Isolate a single variable, parameter, or architectural tweak.\n2. **Measure it** \u2192 Quantify the impact against a well-defined metric (latency, cost, accuracy, throughput, etc.).\n3. **Keep if better, undo if not** \u2192 Only commit changes that demonstrably improve your target. This prevents regression, avoids optimization drift, and keeps the process scientific.\n\n### \u2696\ufe0f \u201cThe judge owns the clock and the check.\u201d\nThis is a well-established principle in performance engineering and optimization. It means:\n- **The judge** = the person/team responsible for measuring outcomes.\n- **Owns the clock** = they decide what \u201ctime\u201d or performance metric actually matters.\n- **Owns the check** = they decide what trade-offs are worth the cost (compute, money, engineering effort, complexity).\n\nIn practice: **Don\u2019t optimize based on intuition, vanity metrics, or external pressure. Let the person who measures and pays for the result decide what\u2019s truly valuable.** This keeps optimization grounded, efficient, and aligned with real-world impact.\n\n### \ud83d\udca1 Why This Works\n- Prevents over-optimization and premature tuning\n- Creates a tight, data-driven feedback loop\n- Aligns engineering effort with measurable value\n- Reduces noise by isolating variables and enforcing rollback\n\nIf you're designing or refining an autoresearch system, I can help with:\n- Choosing what to isolate per iteration\n- Designing robust measurement & rollback logic\n- Avoiding common pitfalls (metric gaming, confounding variables, cold-start noise)\n- Scaling the loop across code, ML models, infra, or product features\n\nJust share your context and I\u2019ll tailor it.",
+      "first": 120892.633108556,
+      "last": 120998.87531078
+    }
+  ],
+  "decode_tps": 16.208248360376153,
+  "prefill_tps": 153.1162720187811,
+  "ttft_ms": 101661.30480299762,
+  "warmup_ttft_ms": 106776.63652300544,
+  "peak_gib": 7.0263671875
+}

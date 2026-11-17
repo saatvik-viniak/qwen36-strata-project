@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 1634.2619700008072,
+      "decode_ms": 24077.28044097894,
+      "output_tokens": 414,
+      "text": "It looks like your message might be cut off! Did you mean:\n- **Autism**?\n- **Autumn**?\n- **Auto/Automated/Autonomous**?\n- Or something else entirely?\n\nLet me know and I\u2019ll gladly help!",
+      "first": 138611.375151818,
+      "last": 138635.452432259
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 497.87210300564766,
+      "decode_ms": 8705.776930990396,
+      "output_tokens": 368,
+      "text": "It looks like your message might be incomplete! Did you mean **Auto**, **Author**, **Automatic**, **Autism**, or something else? Let me know how I can help! \ud83d\ude0a",
+      "first": 138635.952438646,
+      "last": 138644.658215577
+    }
+  ],
+  "decode_tps": 42.27078213892797,
+  "prefill_tps": 2.0085479663612653,
+  "ttft_ms": 497.87210300564766,
+  "warmup_ttft_ms": 1634.2619700008072,
+  "peak_gib": 7.4287109375
+}

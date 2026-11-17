@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 794.4060500012711,
+      "decode_ms": 26326.299117004965,
+      "output_tokens": 607,
+      "text": "It looks like you typed **\"Aut\"**. Could you clarify what you're referring to? For example:\n\n\ud83d\udd39 **AUT** as in `Austria` (ISO country code)  \n\ud83d\udd39 **AUT** as in `Automatic` or `Autonomous`  \n\ud83d\udd39 **AUT** as in `Application Under Test` (common in software testing)  \n\ud83d\udd39 Or did you mean a word like *Auto*, *Author*, *Austin*, *Autumn*, or something else?\n\nJust let me know the context or finish the word, and I\u2019ll give you a precise answer! \ud83d\ude0a",
+      "first": 122431.325981195,
+      "last": 122457.652280312
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 403.63110399630386,
+      "decode_ms": 12316.071220004233,
+      "output_tokens": 394,
+      "text": "It looks like your message might have been cut off! Did you mean:\n- **AUT** (the ISO country code for Austria)?\n- **Automatic** or **Autonomous**?\n- Something else entirely?\n\nLet me know what you're looking for and I'll jump right in!",
+      "first": 122458.059051003,
+      "last": 122470.375122223
+    }
+  ],
+  "decode_tps": 31.99072114490944,
+  "prefill_tps": 2.4775097610147436,
+  "ttft_ms": 403.63110399630386,
+  "warmup_ttft_ms": 794.4060500012711,
+  "peak_gib": 6.927734375
+}

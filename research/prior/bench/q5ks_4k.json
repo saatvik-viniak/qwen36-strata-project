@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 4096,
+  "prompt_tokens_actual": 3892,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 29972.166370018385,
+      "decode_ms": 72231.75087798154,
+      "output_tokens": 1465,
+      "text": "You've pasted a highly repetitive block, but the core idea is clear and well-crafted. Here's a clean breakdown of what you've defined, along with a few practical insights:\n\n### \ud83d\udd0d Core Concept\n**Autoresearch** as you've described it is a **greedy, single-variable optimization loop**:\n1. `Change one thing` \u2192 Perturb a single parameter, feature, or rule.\n2. `Measure it` \u2192 Run an evaluation against a defined metric.\n3. `Keep if better, undo if not` \u2192 Greedy acceptance criterion (no backtracking).\n4. `The judge owns the clock and the check` \u2192 The evaluation system controls both **timing** (latency, throughput, iteration speed) and **validation** (accuracy, cost, success threshold).\n\n### \ud83e\udde0 What This Actually Is\nThis is essentially **coordinate-wise greedy search** (a form of coordinate descent) commonly used in:\n- Hyperparameter tuning\n- A/B testing & feature flag rollouts\n- AutoML pipeline optimization\n- Rule-based system refinement\n\n**Strengths:** Low overhead, easy to implement, deterministic, minimal state management.  \n**Limitations:** Blind to parameter interactions, can get stuck in local optima, inefficient in high-dimensional spaces.\n\n### \u2699\ufe0f If You're Building or Scaling This\n- **Statistical rigor:** Add confidence intervals or significance testing to the \"judge\" so minor metric fluctuations don't trigger false keeps.\n- **Beyond single changes:** Once the loop matures, consider Bayesian optimization, CMA-ES, or multi-armed bandits to explore parameter interactions.\n- **Judge design:** Make the \"clock\" (timing/latency) and \"check\" (accuracy/cost) explicit, weighted, and versioned. Consider early stopping or caching to reduce evaluation cost.\n- **Rollback safety:** Ensure the \"undo\" step is idempotent and doesn't leave the system in a degraded state.\n\nIf you're sharing this as a definition, it's concise and accurate. If you're looking to implement, extend, or critique it, tell me your context (e.g., ML tuning, web A/B testing, rule engines, etc.) and I'll tailor the next steps.",
+      "first": 131375.782848503,
+      "last": 131448.014599381
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 27274.179614993045,
+      "decode_ms": 31001.137859013397,
+      "output_tokens": 726,
+      "text": "It looks like you've pasted a highly repetitive definition of **Autoresearch**. The core concept is clear:\n\n\ud83d\udd01 **Autoresearch** is an iterative loop:  \n`Change one thing \u2192 Measure it \u2192 Keep if better \u2192 Undo if not`  \n\u23f1\ufe0f\ud83d\udcca **The judge owns the clock and the check** \u2192 The evaluation metric (the \"judge\") controls both timing and validation, ensuring changes are only kept when they demonstrably improve the measured outcome.\n\nYour message cuts off at the end (`keep the`). Would you like me to:\n- Clean up or format the repetition?\n- Expand this into a step-by-step workflow or pseudocode?\n- Apply it to a specific domain (e.g., ML hyperparameter tuning, A/B testing, engineering optimization)?\n- Something else? Just let me know your goal!",
+      "first": 131475.298513564,
+      "last": 131506.299651423
+    }
+  ],
+  "decode_tps": 23.418495259809305,
+  "prefill_tps": 142.69906757747194,
+  "ttft_ms": 27274.179614993045,
+  "warmup_ttft_ms": 29972.166370018385,
+  "peak_gib": 6.8935546875
+}

@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 65536,
+  "prompt_tokens_actual": 62260,
+  "output_tokens_requested": 256,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 389006.6917160002,
+      "decode_ms": 13804.86860498786,
+      "output_tokens": 256,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text block.\n   - The core phrase repeated is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This phrase is repeated dozens of times (looks like ~100+ repetitions).\n   - There's no explicit question or prompt. It's just the repeated text.\n\n2.  **Identify Key Elements:**\n   - **Concept:** \"Autoresearch\" - described as an iterative optimization loop.\n   - **Steps:** Change one thing -> Measure it -> Keep if better -> Undo if not.\n   - **Key Principle:** \"The judge owns the clock and the check.\" This implies an objective, automated, or strict evaluation mechanism that controls timing (clock) and validation/verification (check).\n   - **Format:** Repetitive, almost like a mantra or a system prompt being pasted multiple times.\n\n3.  **Determine User Intent:**\n   - Since there's no explicit question, the user might be",
+      "first": 153256.617420394,
+      "last": 153270.422288999
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 380082.83698098967,
+      "decode_ms": 13801.599372003693,
+      "output_tokens": 256,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text block.\n   - The core phrase repeated is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This phrase is repeated dozens of times (looks like hundreds of times).\n   - There's no explicit question or prompt at the end. It just ends abruptly with \"keep the\".\n\n2.  **Identify Key Elements:**\n   - **Concept:** \"Autoresearch\" - described as an iterative optimization loop.\n   - **Mechanism:** Change one variable -> Measure outcome -> Keep if better, undo if worse.\n   - **Key Principle:** \"The judge owns the clock and the check.\" This implies an objective, automated, or strict evaluation mechanism that controls timing (clock) and validation/verification (check).\n   - **Format:** Repetitive, almost like a mantra or a prompt injection/test.\n\n3.  **Determine the Goal:**\n   - Since there's no explicit question, I need to:\n",
+      "first": 153650.513253385,
+      "last": 153664.314852757
+    }
+  ],
+  "decode_tps": 18.548574922359478,
+  "prefill_tps": 163.8063967700652,
+  "ttft_ms": 380082.83698098967,
+  "warmup_ttft_ms": 389006.6917160002,
+  "peak_gib": 7.0107421875
+}

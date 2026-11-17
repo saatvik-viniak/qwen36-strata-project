@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 800.3122259979136,
+      "decode_ms": 14785.357625994948,
+      "output_tokens": 438,
+      "text": "It looks like your message might be incomplete. Did you mean:\n\n- **AUT** (the ISO country code for Austria)?\n- **Autumn** (the season)?\n- **Autonomous** or **Automatic**?\n- Or something else entirely?\n\nLet me know what you're looking for and I\u2019ll gladly help!",
+      "first": 129139.817951281,
+      "last": 129154.603308907
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 354.57994700118434,
+      "decode_ms": 20264.967540002544,
+      "output_tokens": 781,
+      "text": "It looks like your message might be cut off! Could you clarify what you mean by **Aut**? For example, are you referring to:\n\n- **Automation** or **Autonomous** systems?\n- **AUT** (the Olympic/ISO country code for Austria)?\n- **Autumn**, **Author**, **AutoCAD**, **Autism**, or another term?\n- Something else entirely?\n\nLet me know the context or finish your thought, and I\u2019ll gladly help!",
+      "first": 129155.006517843,
+      "last": 129175.271485383
+    }
+  ],
+  "decode_tps": 38.53941529678374,
+  "prefill_tps": 2.8202384496285684,
+  "ttft_ms": 354.57994700118434,
+  "warmup_ttft_ms": 800.3122259979136,
+  "peak_gib": 6.896484375
+}

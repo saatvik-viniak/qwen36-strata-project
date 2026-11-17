@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 740.9470500133466,
+      "decode_ms": 13009.63158797822,
+      "output_tokens": 404,
+      "text": "It looks like your message got cut off! Did you mean to type something like **Auto**, **Author**, **August**, **AUT** (e.g., University of Technology, Austria, or Automatic), or something else? Let me know what you're looking for and I'll gladly help! \ud83d\ude0a",
+      "first": 132629.936307282,
+      "last": 132642.94593887
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 343.4845040028449,
+      "decode_ms": 10318.655070004752,
+      "output_tokens": 464,
+      "text": "It looks like your message got cut off! Did you mean:\n\n- **Auto** (automatic, automotive, or AI auto-features)?\n- **Autism** (neurodevelopmental condition)?\n- **Autumn** (the season)?\n- **AUT** (University of Auckland, American University of Beirut, or another acronym)?\n- Or something else entirely?\n\nLet me know what you had in mind and I\u2019ll jump right in!",
+      "first": 132643.293219319,
+      "last": 132653.611874389
+    }
+  ],
+  "decode_tps": 44.96710054286041,
+  "prefill_tps": 2.9113394879430063,
+  "ttft_ms": 343.4845040028449,
+  "warmup_ttft_ms": 740.9470500133466,
+  "peak_gib": 7.4599609375
+}

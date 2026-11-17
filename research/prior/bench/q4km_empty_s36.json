@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 809.5988249988295,
+      "decode_ms": 20428.954609989887,
+      "output_tokens": 642,
+      "text": "It looks like your message might be cut off or using an abbreviation. Could you clarify what you mean by **\"Aut\"**? For example, are you referring to:\n\n\ud83d\udd39 **AUT** as in *University of Technology* (e.g., Auckland University of Technology, Vienna University of Technology)  \n\ud83d\udd39 **Automatic / Autonomous** (e.g., autonomous systems, automation)  \n\ud83d\udd39 **Autism** or **Autumn**  \n\ud83d\udd39 A specific technical term, software, or acronym in a particular field?  \n\nLet me know the context and I\u2019ll give you a precise answer!",
+      "first": 137967.179378438,
+      "last": 137987.608333048
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 374.2997560184449,
+      "decode_ms": 17131.672527000774,
+      "output_tokens": 729,
+      "text": "It looks like you typed **\"Aut\"** \u2013 could you clarify what you're referring to? Depending on the context, it could mean:\n\n\ud83d\udd39 **University of Texas at Austin**  \n\ud83d\udd39 **Automatic / Automated** (e.g., in tech, engineering, or testing)  \n\ud83d\udd39 **Autonomous** (e.g., vehicles, systems, or AI)  \n\ud83d\udd39 **Autism** (sometimes abbreviated in medical/educational contexts)  \n\ud83d\udd39 **Audio Unit** (in music production or software development)  \n\ud83d\udd39 **Aut** as a prefix or shorthand in programming, gaming, or regional usage\n\nLet me know the context or finish the word, and I\u2019ll give you a precise, tailored answer!",
+      "first": 137987.984965776,
+      "last": 138005.116638303
+    }
+  ],
+  "decode_tps": 42.55276295125549,
+  "prefill_tps": 2.6716554951500466,
+  "ttft_ms": 374.2997560184449,
+  "warmup_ttft_ms": 809.5988249988295,
+  "peak_gib": 7.53515625
+}

@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 32768,
+  "prompt_tokens_actual": 31130,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 209995.6461249967,
+      "decode_ms": 42898.87776802061,
+      "output_tokens": 994,
+      "text": "You've pasted a highly repetitive version of a concise optimization principle. At its core, your statement describes a **greedy iterative search loop**:\n\n1. **Change one thing** \u2192 Perturb a single parameter, feature, or configuration.\n2. **Measure it** \u2192 Run an evaluation against a defined metric.\n3. **Keep if better, undo if not** \u2192 Apply a hill-climbing or delta-check strategy.\n4. **\"The judge owns the clock and the check.\"** \u2192 A poetic way of saying the evaluation system controls both *performance timing* (\"clock\") and *validation/accuracy* (\"check\"). It emphasizes that objective, automated measurement, not human intuition, drives the process.\n\nThis is the foundation of many automated tuning systems (A/B testing, hyperparameter optimization, reinforcement learning reward loops, or even CI/CD performance gates).\n\n**How would you like to proceed?**\n- \ud83d\udee0\ufe0f Turn this into a concrete algorithm or code structure?\n- \ud83d\udcca Discuss how to handle measurement noise, local optima, or multi-objective trade-offs?\n- \ud83d\udcd0 Define what \"better\" means (statistical significance, confidence intervals, latency vs. accuracy, etc.)?\n- \ud83d\udd0d Something else entirely?\n\nJust let me know your goal and I'll tailor the next step.",
+      "first": 145840.506589048,
+      "last": 145883.405466816
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 179810.38548299694,
+      "decode_ms": 251491.1543019989,
+      "output_tokens": 1541,
+      "text": "It looks like you've pasted a definition of **Autoresearch** many times, ending mid-sentence. To complete the thought naturally:\n\n> *\"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"*\n\n### What This Means\nThis describes a **greedy, single-variable optimization loop** widely used in algorithm tuning, chess engine development, and competitive programming. Here's a breakdown:\n\n| Step | Meaning |\n|------|---------|\n| **Change one thing** | Isolate a single parameter, rule, or heuristic. |\n| **Measure it** | Run a controlled benchmark or test suite. |\n| **Keep if better** | If the metric improves, commit the change. |\n| **Undo if not** | If it degrades or stays the same, revert it. |\n| **The judge owns the clock and the check** | The testing system (the \"judge\") strictly controls both the time budget and the evaluation metric. No subjective calls; results are deterministic and time-bound. |\n\n### Why It Works\n- **Prevents overfitting**: By testing one change at a time against a fixed benchmark, you avoid compounding errors.\n- **Reproducible**: The \"judge\" ensures every iteration is measured under identical conditions.\n- **Fast convergence**: Greedy single-parameter sweeps are computationally cheap and often find local optima quickly.\n\n### Common Pitfalls\n- **Parameter coupling**: Changing one thing in isolation might miss synergies with other parameters.\n- **Benchmark drift**: If the test suite isn't stable, \"better\" becomes meaningless.\n- **Local optima**: Greedy loops can get stuck; sometimes you need simulated annealing or coordinate descent with backtracking.\n\nWould you like help implementing this loop in a specific language, designing a robust benchmarking harness, or extending it to multi-parameter optimization?",
+      "first": 146063.220911623,
+      "last": 146314.712065925
+    }
+  ],
+  "decode_tps": 6.127452093800151,
+  "prefill_tps": 173.12681865610975,
+  "ttft_ms": 179810.38548299694,
+  "warmup_ttft_ms": 209995.6461249967,
+  "peak_gib": 7.6396484375
+}

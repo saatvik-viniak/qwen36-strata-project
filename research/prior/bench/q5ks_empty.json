@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 978.287776990328,
+      "decode_ms": 25536.02552402299,
+      "output_tokens": 607,
+      "text": "It looks like you typed **\"Aut\"**. Could you clarify what you're referring to? For example:\n\n\ud83d\udd39 **AUT** as in `Austria` (ISO country code)  \n\ud83d\udd39 **AUT** as in `Automatic` or `Autonomous`  \n\ud83d\udd39 **AUT** as in `Application Under Test` (common in software testing)  \n\ud83d\udd39 Or did you mean a word like *Auto*, *Author*, *Austin*, *Autumn*, or something else?\n\nJust let me know the context or finish the word, and I\u2019ll give you a precise answer! \ud83d\ude0a",
+      "first": 131166.247324904,
+      "last": 131191.783350428
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 398.83478300180286,
+      "decode_ms": 19361.566865001805,
+      "output_tokens": 618,
+      "text": "It looks like you typed **\"Aut\"**. Could you clarify what you're referring to? For example, are you asking about:\n\n\ud83d\udd39 **AUT** \u2013 The ISO country code for Austria  \n\ud83d\udd39 **Automatic** or **Autonomous** (e.g., self-driving cars, AI, robotics)  \n\ud83d\udd39 **Autumn** \u2013 The fall season  \n\ud83d\udd39 A specific tool, name, or abbreviation (like AutoCAD, AutoHotkey, etc.)\n\nJust let me know the context or finish your thought, and I\u2019ll give you a precise answer! \ud83d\ude0a",
+      "first": 131192.19142192,
+      "last": 131211.552988785
+    }
+  ],
+  "decode_tps": 31.918904307125267,
+  "prefill_tps": 2.507303882759593,
+  "ttft_ms": 398.83478300180286,
+  "warmup_ttft_ms": 978.287776990328,
+  "peak_gib": 6.888671875
+}

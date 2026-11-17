@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 4096,
+  "prompt_tokens_actual": 3892,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 26804.894378990866,
+      "decode_ms": 44041.25203299918,
+      "output_tokens": 1146,
+      "text": "You've shared a highly repetitive statement that defines **Autoresearch**. Stripped of the repetition, the core idea is:\n\n> **Autoresearch is a single-variable optimization loop:**  \n> 1. Change one parameter/variable  \n> 2. Measure the outcome  \n> 3. Keep the change if it improves the result, revert it if it doesn't  \n> 4. *\"The judge owns the clock and the check\"* \u2192 The evaluation system controls both performance/timing metrics (`clock`) and correctness/validation metrics (`check`).\n\nThis is essentially a **greedy coordinate descent** or **hill-climbing** algorithm applied to experimentation. It mirrors:\n- Iterative A/B testing\n- Single-factor scientific experimentation\n- Parameter tuning in ML/engineering (when done sequentially rather than in parallel)\n- The \"measure \u2192 hypothesize \u2192 test \u2192 accept/reject\" cycle\n\nThe heavy repetition emphasizes the mechanical, self-correcting, and iterative nature of the process.\n\n**How would you like to proceed?** I can:\n- Expand this into a full methodology or workflow\n- Map it to a specific domain (software, hardware, research, product, etc.)\n- Convert it into a diagram, checklist, or pseudocode\n- Or simply acknowledge it and wait for your next prompt.",
+      "first": 132388.453513214,
+      "last": 132432.494765247
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 23227.473638020456,
+      "decode_ms": 49541.65976299555,
+      "output_tokens": 1332,
+      "text": "You've shared a tight, iterative definition of **Autoresearch**. Here's a clean breakdown of what it describes:\n\n### \ud83d\udd01 Core Loop\n1. **Change one thing** \u2192 Perturb a single parameter, config, or hypothesis.\n2. **Measure it** \u2192 Run an evaluation against a defined metric.\n3. **Keep if better, undo if not** \u2192 Greedy acceptance criterion (no backtracking, no lookahead).\n4. **The judge owns the clock and the check** \u2192 The evaluation system controls both:\n   - `Clock` \u2192 Performance, latency, throughput, or resource usage.\n   - `Check` \u2192 Correctness, accuracy, validation, or business logic.\n\n### \ud83d\udcd0 What This Actually Is\nThis is a **single-variable hill-climbing** or **greedy local search** process. It's widely used in:\n- Hyperparameter tuning (when done one-at-a-time)\n- A/B testing or feature flag rollouts\n- Automated config optimization (CI/CD pipelines, infrastructure tuning)\n- Simple reinforcement learning or policy search\n\n### \u26a0\ufe0f Known Limitations\n- **Local optima**: Can get stuck if the landscape isn't convex.\n- **No parallelism**: Changes are sequential by definition.\n- **Metric sensitivity**: \"Better\" is only as good as the judge's metric design.\n- **Noise vulnerability**: Requires stable measurements or multiple runs to avoid false positives.\n\n### \ud83d\udd0d Where to Go Next?\n- Implement this loop in code (Python, Bash, CI/CD, etc.)?\n- Extend it to multi-parameter search (coordinate descent, Bayesian optimization)?\n- Design a robust \"judge\" (metric aggregation, confidence intervals, rollback strategies)?\n- Something else?\n\nJust say the word and I'll tailor the next step.",
+      "first": 132455.724690327,
+      "last": 132505.26635009
+    }
+  ],
+  "decode_tps": 26.88646295606993,
+  "prefill_tps": 167.56019447716798,
+  "ttft_ms": 23227.473638020456,
+  "warmup_ttft_ms": 26804.894378990866,
+  "peak_gib": 6.896484375
+}

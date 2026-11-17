@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 32768,
+  "prompt_tokens_actual": 31130,
+  "output_tokens_requested": 2048,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 272180.6796180026,
+      "decode_ms": 51922.781337983906,
+      "output_tokens": 920,
+      "text": "You've shared a highly repetitive definition of **Autoresearch**: a systematic optimization loop where you change one variable, measure the outcome, keep the change if it improves results, and revert it if it doesn't. The line *\"The judge owns the clock and the check\"* reinforces that the evaluation metric (the \"judge\") controls both the pacing and the validation of each iteration.\n\nYour message cuts off at the end, but the core framework is clear. How would you like to proceed?\n- Complete the pattern or expand it into a step-by-step workflow?\n- Apply it to a specific domain (e.g., code, design, data science, marketing, hardware)?\n- Analyze the repetition structure or help you format it for a prompt/tool?\n\nJust let me know your goal and I'll tailor the next step.",
+      "first": 146770.365806851,
+      "last": 146822.288588189
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 99289.88764199312,
+      "decode_ms": 44348.46756901243,
+      "output_tokens": 1062,
+      "text": "You've shared a highly repetitive description of **Autoresearch**. Stripped of the repetition, the core idea is a simple iterative optimization loop:\n\n1. **Change** one variable/parameter  \n2. **Measure** the outcome  \n3. **Keep** if it improves the metric, **undo** if it doesn't  \n4. The **\"judge\"** acts as the evaluation engine, tracking both performance/time (`clock`) and correctness/validation (`check`)\n\nThis maps directly to well-known concepts like A/B testing, hill-climbing optimization, hyperparameter tuning, or continuous integration feedback loops. The repetition itself might even be a stylistic nod to the \"loop\" nature of the process.\n\n**What would you like to do with this?**  \n- Implement the loop in code?  \n- Design the \"judge\" evaluation logic?  \n- Format it into a diagram, spec, or workflow?  \n- Something else? Let me know your goal and I'll tailor the next step.",
+      "first": 146921.869881625,
+      "last": 146966.218349194
+    }
+  ],
+  "decode_tps": 23.946712439327904,
+  "prefill_tps": 313.5263896384353,
+  "ttft_ms": 99289.88764199312,
+  "warmup_ttft_ms": 272180.6796180026,
+  "peak_gib": 7.5859375
+}
