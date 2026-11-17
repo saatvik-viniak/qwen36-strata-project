@@ -253,3 +253,36 @@ baseline exists.
   trial_runner3.done; then cand_runner (pid 46326) runs the uint4 chain (build →
   VERIFY → gates → 3-cell bench) → cand_uint4.done. Estimated all-done ~05:45Z.
   SUGGESTIONS.MD still absent (checked every turn).
+
+## Session 2026-11-17 continuation #4 (supplementary research agent: SUGGESTIONS.MD posted, S1 adopted)
+
+**Who:** the additional AI agent whose sole purpose is deep research into kernel-optimization
+techniques from online papers/literature/repositories and proposing changes into SUGGESTIONS.MD.
+I do not build, bench, or push; the primary agent acts and annotates outcomes back into the file.
+All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
+
+- **SUGGESTIONS.MD now EXISTS** (correction to the stale line above — it was written ~03:58Z, the
+  file landed at ~04:12Z): commits ad4ef96 (S1–S10 with sources) + 141e6f1 (trial C partial).
+  The primary agent should read it; item statuses carry the annotation protocol.
+- **Adoption confirmed:** S1 (Q5_K multi-token AVX-2 pool kernel) is PLAN.md item 7 and was
+  independently grounded in commits f06ddaf/51cd764/c2716e1 (type 13 confirmed against the vendored
+  ggml.h; the AVX1-generic bit-reference point and the ~54 GFLOPS effective figure are the primary
+  agent's additions — both correct and both sharper than my draft). My same-turn S1 rewrite (now
+  committed) replaces the sketch with the exact kernel spec read from the vendored
+  ggml_vec_dot_q5_K_q8_K AVX2 branch (quants.c:2216-2310): what hoists per block (scale/min unpack,
+  8 scale shuffles, the full 5-bit decode incl. the hbits shift chain = ~16 of ~21 integer ops per
+  pair), what stays per token (2 maddubs + 2 madd + 1 add per pair, q8 loads, summs chain, tail),
+  plus two-token interleave + dual accumulators for ILP. One integration note for the implementer:
+  the AVX2 branch's `_mm256_fmadd_ps` tail rounds differently from the GENERIC path's separate
+  mul+add — if the bit reference is the generic dot, keep the tail as mul-then-add (the integer
+  maddubs/madd chain is order-insensitive exact int, so SIMD freedom there is safe).
+- **Trial C verdict (mtp3 chain depth 3): empty 20.81 (−5.1%), ctx32k 18.55 (−5.0%); ctx128k
+  started 03:56Z** → reject on both landed cells; acceptance gains don't pay the extra sequential
+  draft cost. This confirms S6's direction (tree drafting: more candidates per sequential step, not
+  more depth) and closes C5's "depth 3" branch at these two cells.
+- **Next checks from my side (after the pipeline lands ~05:45Z):** (1) uint4 candidate verdicts →
+  S2 sequencing (split-K flash-decoding next, or the V-path loads if uint4 underdelivers); (2) trial
+  D (mmqslots2) churn sign → which S3 option (async swap stream / CPU fallback / context-scaled
+  rebalance) gets written up first; (3) annotate every outcome into SUGGESTIONS.MD statuses.
+- **Failure recorded this turn:** none new from my side; the runner2 mid-run-edit death (03:30Z) is
+  already documented in the ledger — I respect it and never touch running scripts.

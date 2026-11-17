@@ -35,39 +35,53 @@ measured numbers), `Measure` (the smallest decisive check), `Sources` (online ev
 
 ---
 
-## S1 — A Q5_K multi-token AVX2/FMA pool kernel (the empty/32k lever)
+## S1 — A Q5_K multi-token AVX2/FMA pool kernel (the empty/32k lever) — ADOPTED as PLAN.md item 7
 
-**Status: PROPOSED** ← annotate outcomes here.
+**Status: ADOPTED (PLAN.md #7, pending); spec sharpened below.** ← annotate outcomes here.
+*(Correction from my first draft: Q5_K is **type 13** in this fork's enum — the vendored
+`third_party/strata-ggml/ggml/src/ggml-cuda-tq/include/ggml.h` has Q8_0=8, Q4_K=12, Q5_K=13,
+Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
 
 - **Change:** `src/kernels/cpu/kq_avx2.cpp` + the dispatch in `src/kernels/cpu/native_expert.cpp`.
-  The model's experts are Q5_K (gate/up type 14, down type 14). The dispatch covers Q4_K gate/up
-  (`kq256_gu_rows`, `f.gu_type == 12`), Q8_0/Q8_1 down (`f.d_type == 7 || 8`), Q5_0 down
-  (`q50_512_down_rows`), IQ4_NL, NVFP4 — **Q5_K hits none of them** and falls to ggml-cpu's
+  The model's experts are Q5_K (gate/up type 13, down type 13). The dispatch covers Q4_K gate/up
+  (`kq256_gu_rows`, `f.gu_type == 12`), Q5_1/Q8_0 down (`f.d_type == 7 || 8`), Q5_0 down
+  (`q50_512_down_rows`, type 6), IQ4_NL, NVFP4 — **Q5_K hits none of them** and falls to ggml-cpu's
   single-token `vec_dot` singleton loop (native_expert.cpp lines ~620 and ~694). Extend the KQ256
-  multi-token kernel to type 14 for both gate/up and down (Q5_K's K-quant block differs from Q4_K
-  only by the 5th-bit mask `qm`; decode once per window, dot with the Q8_0/Q8_K activations via
-  `_mm256_madd_epi16` accumulation in int32, fp32-reduce in the same order ggml's dot does).
-- **Mechanism:** THEORY.md puts the pool at ~61 GFLOPS effective — the dot is compute-bound, not
-  stream-bound (reads are only ~14 ms/step at 44 GB/s STREAM). The ceiling table says empty/32k 2x
-  needs the pool at 12–13 GB/s effective, i.e. the dot ~2.5–3x faster. Precedents in-repo: the
-  NVFP4-256 kernel measured **2.0–2.4x over ggml-cpu's dot at 4–8 tokens** (nvfp4_avx512_parity);
-  ik_llama.cpp's rewritten AVX2 k-quant kernels give up to **3.27x prompt-processing speedup over
-  upstream llama.cpp on AVX2 hardware** (their headline result) and they specifically reworked
-  IQ/Q5_K-class AVX2 dots (ik PR 427). The win must come from a **faster dot + decode-once**, not
-  decode-once alone — see the negative result below.
-- **Respect the negative result:** STRATA_KQ256 for Q4_K gate/up measured only 1.01–1.13x
-  (native_expert.cpp comment, lines 552–553): weights stay L1-resident across ggml's per-token calls,
-  so decode-once alone doesn't pay. Target the **dot's ILP** (bitplane unpack like q2_avx, or
-  int16-madd lanes), and cover the **down rows**, which for Q5_K have no native kernel at all.
-- **Measure:** `bench/micro/kq_cpu_bench.cpp` (exists) for the dot alone, then one cell
-  (empty first: a ≥2% median win with no cell regressing >2% per the promotion rule). Parity:
-  bit-exact vs ggml's dot via the existing native_expert parity harnesses before any bench.
-- **Sources:** ik_llama.cpp README (3.27x PP on AVX2; fused MoE ops; IQ5_K AVX2 fix, PR 427):
-  <https://github.com/ikawrakow/ik_llama.cpp>; llama.cpp issue #30342 (~7% CPU MoE decode swing from
-  a single Clang `vpinsrw` change — single-instruction details matter at this scale):
-  <https://github.com/ggml-org/llama.cpp/issues/30342>; llama.cpp "persistent expert slot pool" and
-  n-cpu-moe tuning guides (CPU-side MoE is a known, tuned path there):
-  <https://github.com/ggml-org/llama.cpp/discussions/28248>.
+  multi-token kernel family to type 13 for both gate/up and down.
+- **The exact kernel to write** (from the vendored ggml-cpu's `ggml_vec_dot_q5_K_q8_K` AVX2 branch,
+  `third_party/strata-ggml/ggml/src/ggml-cpu/arch/x86/quants.c` lines 2216–2310 — the same source
+  kq_avx2.cpp already mirrors for Q4_K): per 256-value block, hoist out of the token loop everything
+  that depends only on the weights: the `utmp` scale/min unpacking (kmask1/2/3 chain) +
+  `_mm256_cvtepu8_epi16` (mins_and_scales), the 8 scale shuffles (`get_scale_shuffle_k4(2j)`,
+  `2j+1`), and — the Q5_K-specific prize — **the full 5-bit decode**: `q5l` (nibble `and`/unpack) +
+  `q5h` (the `hbits`/`hmask` shift chain, 6 ops per 32-value pair) + the `q5l+q5h` adds → 8
+  `__m256i` of decoded 5-bit values per block. What stays per token (in ggml's exact order, for
+  bit-exactness): the 2 `maddubs` + 2 `madd` + 1 `add` per j-pair, the q8 loads, the `summs` chain
+  (`bsums` madd, `dmin` scalar), and the `acc = fmadd(vd, cvtepi32(sumi), acc)` tail (one acc per
+  token).
+- **Why Q5_K pays when Q4_K's decode-once did not:** Q4_K's per-token weight-side work is only the
+  nibble unpack + scale shuffles (~40% of its integer ops — and STRATA_KQ256 measured just
+  1.01–1.13x, native_expert.cpp lines 552–553). Q5_K adds the heavy fifth-bit chain: ~16 of ~21
+  integer ops per pair are weight-side, so decode-once cuts the per-token integer work to the
+  ~5-op maddubs/madd/add core. Design target ~1.5–2x on the dot alone — **measure that first** in
+  `bench/micro/kq_cpu_bench.cpp` before any engine A/B; the Q4_K precedent is the caution, and the
+  2x empty target needs ~2.6x on the pool, so expect this to be a milestone lever that composes
+  with S3/S4, not the whole climb.
+- **ILP beyond decode-once** (the part that must beat the Q4_K precedent): interleave two tokens
+  per j-iteration (same decoded q5 vectors serve both tokens' q8 loads → doubles maddubs/madd per
+  q5 fetch), and alternate two accumulators per token to break the `add`-to-`sumi` dependency.
+- **Dispatch:** gate/up `kq && (f.gu_type == 12 || f.gu_type == 13)`; down `f.d_type == 7 || 8 ||
+  13` (new Q5_K down-rows kernel — today down type 13 has no native kernel at all). Keep the
+  STRATA_KQ256 gate, `nt >= 2`, and the #152 rule for WindowInvariant arithmetic, as the Q4_K path
+  does.
+- **Measure:** kq_cpu_bench (dot alone) → bit-exact parity (native_expert_parity, ggml's exact
+  integer chain per token) → STRATA_KQ256=1 empty cell A/B (promotion rule: ≥2% median win, no
+  cell regressing >2%).
+- **Sources:** ik_llama.cpp README (3.27x PP on AVX2; reworked AVX2 i-quant kernels incl. IQ5_K,
+  PR 427): <https://github.com/ikawrakow/ik_llama.cpp/pull/427>; llama.cpp issue #30342 (~7% CPU
+  MoE decode swing from a single Clang `vpinsrw` change — single-instruction details matter):
+  <https://github.com/ggml-org/llama.cpp/issues/30342>; llama.cpp "persistent expert slot pool"
+  discussion: <https://github.com/ggml-org/llama.cpp/discussions/28248>.
 
 ## S2 — Split-K flash-decoding attention with fused int4 dequant (the 128k lever)
 
@@ -153,10 +167,10 @@ the literature-backed options to fix the churn).
 
 ## S6 — Tree drafting on the MTP block (raise tokens/step without linear verify cost)
 
-**Status: PROPOSED — trial C's partial verdict strengthens it** (research agent, ~04:15Z:
-mtp3/empty.json = 20.81 tok/s, −5.1% vs 21.92 — chain depth 3 pays 3 sequential draft steps for
-less acceptance than it costs; a tree gets more candidates per sequential step. The model's hybrid
-structure is the best case for it).
+**Status: PROPOSED — trial C's verdict confirms the direction** (research agent, ~04:10Z: mtp3
+empty 20.81 (−5.1%), ctx32k 18.55 (−5.0% vs 19.52); ctx128k was running — chain depth 3 pays 3
+sequential draft steps for less acceptance than it costs; a tree gets more candidates per
+sequential step. The model's hybrid structure is the best case for it).
 
 - **Change:** draft a 2–3-token tree per step (the MTP block + greedy top-2 branches), verify all
   branches in ONE pass with a tree attention mask in `k_attn_part` (the verify path already batches
@@ -220,8 +234,10 @@ the int8 trade is opt-in and lossy-labelled).
 
 **Status: PROPOSED** (ordered by the ceiling math, cheapest checks first).
 
-1. **Overhead split (~8 ms/step, 7% of empty):** one sync per token (C6), sampler location, launch
-   gaps under the captured graphs. Measure before changing anything (nsys timeline).
+1. **Overhead split (~8 ms/step, 7% of empty):** PLAN.md's wall 3 now states CUDA graphs are
+   **disabled in hybrid mode** — the captured graphs cover the GPU half, so the 41-layer × pool-call
+   structure still pays per-step launch/sync tax. Measure first (nsys timeline: launch count, gaps),
+   then one sync per token (C6) and fused norm/rope (C2) only where the timeline shows gaps.
 2. **V-path byte loads in the int4 attention** (the pending uint4 candidate deliberately left the
    V-path untouched — one problem per change). Same vectorized-load treatment, after the QK read is
    measured.
@@ -280,8 +296,19 @@ the int8 trade is opt-in and lossy-labelled).
   trial JSONs. Added S1–S10, the already-present list, the negative-results list, sources. Signed:
   GLM 5.3 Flash (Maya-s quant), additional AI agent (sole purpose: external kernel-optimization
   research and proposals).
-- **2026-11-17 ~04:20Z — trial C partial check (commit pending).** research/trials/mtp3/empty.json:
+- **2026-11-17 ~04:20Z — trial C partial check (commit 141e6f1).** research/trials/mtp3/empty.json:
   20.81 tok/s (−5.1% vs 21.92). Annotated S6: chain MTP 3 washes out at empty; the tree mechanism in
   S6 is the direction that gains acceptance without the sequential depth cost. Next checks: ctx32k +
   mtp3 verdict, then runner3's trial D (mmqslots2) and the uint4 candidate's build/bench results —
   S2's sequencing depends on the uint4 outcome, S3's options on trial D's churn sign.
+- **2026-11-17 ~04:35Z — S1 sharpened + trial C verdict annotated (this commit).** (1) The primary
+  agent ADOPTED S1 as research/hillclimb/PLAN.md item 7 ("pending") — I corrected S1's type number
+  (Q5_K = **13** in this fork's enum, verified in third_party/strata-ggml/ggml/src/
+  ggml-cuda-tq/include/ggml.h; my first draft said 14) and replaced the sketch with the exact
+  kernel spec read from the vendored ggml_vec_dot_q5_K_q8_K AVX2 branch (what hoists per block, what
+  stays per token, the two-token interleave + dual accumulators for ILP, kq_cpu_bench first, honest
+  1.5–2x design target that composes rather than reaches 2x alone). (2) Trial C now has empty −5.1%
+  AND ctx32k −5.0% (18.55) — annotated into S6; ctx128k was still running. (3) S10's overhead item
+  refined with PLAN.md's wall 3: graphs are disabled in hybrid mode, so the launch/sync tax is real.
+  Live queue: mtp3/ctx128k running (03:56Z) → trial D (mmqslots2) → champion restore → cand_runner
+  builds + verifies + benches the uint4 candidate (S2's sequencing follows those verdicts).
