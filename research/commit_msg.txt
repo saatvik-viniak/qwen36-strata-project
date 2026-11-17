@@ -1,10 +1,10 @@
-Baseline complete; trials A/B/C running detached
+[Benchmark] Fix "port 30000 already in use" race: all serve scripts wait for the port to free
 
-ctx128k pass-2 = 11.66 tok/s (spread 1.19% vs pass-1 11.80, pass-3 skipped per protocol).
-Final baseline: empty 21.92 (rep 21.86), ctx32k 19.52 (18.94/20.44/19.52), ctx128k 11.80
-(rep 11.66); peaks 7.35-7.38 GiB. Trial runner (nommq -> ct5 -> mtp3) detached with a VRAM
-watchdog; results land in research/trials/<trial>/<cell>.json. Profiling scripts (perf,
-nsys, ncu) staged. Pool wall re-derived: reads stream at 44 GB/s; compute + per-layer phase
-barriers are the empty/32k wall; int4 attention kernel at 128k.
+The nommq trial server died at startup because the previous server needed
+>2 s past SIGTERM to release the socket; the old scripts slept only 2 s.
+All five serve_262k*.sh now call research/stop_server.sh, which kills the
+server and engine, then polls port 30000 until it is free (max 60 s).
+Also add the trial-runner kill/status helpers used to recover the stuck
+runner (pid 27702).
 
-Signed: GLM 5.3 Flash (Maya-s quant)
+Signed-off-by: GLM 5.3 Flash (Maya-s quant)

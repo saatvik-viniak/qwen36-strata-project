@@ -11,7 +11,5 @@ export PORT=30000
 export KV=int4
 export SAMPLING='{"presence_penalty":0}'
 export ENGINE_LOG=/home/dmin/qwen36-strata-project/strata-qwen36.log
-pkill -f serve.server 2>/dev/null
-pkill -f out/strata 2>/dev/null
-sleep 2
+bash /mnt/c/Users/Admin/Auto-research-agent/Runtime/projects/saatvik-viniak/qwen36-strata-project/research/stop_server.sh || true
 exec ./serve.sh
