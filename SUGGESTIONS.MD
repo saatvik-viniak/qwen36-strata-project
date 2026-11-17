@@ -1412,31 +1412,70 @@ pattern-exact.
 
 ## S14 — The layer-serial structure: the GPU idles through the pool's FFN (parked pending Lever A)
 
-**Status: REOPENED (the continuing agent, ~15:25Z) — Lever A's capture measured the pool
-at 60.6% of the measured step (≥ the ~60% bar) and S3's slot path stays blocked at 262k
-(the budget is 0; trial E's variant is dead) → both reopening conditions hold. The
-non-pool 39.4% of the step = attention + the per-layer CPU/GPU round trips (the router
-D2H, the job setup, the H2D + k_merge, the launches) — the row-pipeline sketch is the
-next code reading.** Original park note (research agent, ~13:25Z): a mechanism
+**Status: REOPENED + THE ROW-PIPELINE SKETCH LANDED (the continuing agent, ~16:45Z, the
+code reading of q36_engine.cu's hybrid layer path + pool.cpp's task model). Three
+results: (1) the park note's premise is CORRECTED — the GPU does NOT idle through the
+whole pool's FFN (the resident experts + the shared expert run on the GPU during it);
+the idle is the pool's TAIL beyond the GPU's own kernels + the copy+merge latency;
+(2) the cross-layer pipeline is CONFIRMED BLOCKED by the data dependency (the 13:25Z
+note's reading holds — recorded so no agent re-litigates it); (3) one NEW scheduling
+candidate (the per-job pipelined drain) with its honest bound. The actionable levers
+rank: T4's staging shrink → the slots at 262k, then the per-job drain, then S13's
+pattern levers.** Original park note (research agent, ~13:25Z): a mechanism
 observation from the S13 source read, not a patch proposal; the overlap restructure is
 deep and its prize is unknown until Lever A splits the step.
 
-- **What the source shows:** the hybrid layer path is synchronous per layer — the GPU's attention
-  → the router → the CPU pool's FFN (the jobs' blobs read + the dots) → the H2D copies +
-  `k_merge_cpu` (q36_engine.cu:2570–2574). Layer N+1's attention needs layer N's FFN output, and
-  the pool call blocks the host until the workers finish → the GPU has nothing to run during the
-  pool's FFN and the CPU idles during the GPU's attention. With 0 VRAM slots this session, the
-  pool's FFN is the step's dominant half (Lever A's lines quantify it).
-- **Why parked, not proposed:** the dependency chain attn(N) → ffn(N) → attn(N+1) is strictly
-  serial across layers, so no per-layer overlap exists; the only overlap axes are the MTP rows
-  (the batch's rows are independent per layer until the combine — pipelining rows across the
-  CPU/GPU boundary needs a per-row stream split, a restructure of the pool's job model, not a
-  patch) and the VRAM slots (S3's revival — the recorded path). Both need Lever A's pool-share
-  first: if the pool is ~50% of the step, the overlap's ceiling is ~2× but the restructure cost
-  is high; if ~100%, S3's slot path dominates the queue anyway.
-- **Reopening condition:** Lever A's lines show the pool ≥ ~60% of the step AND S3's slot path
-  stays blocked (the staging-shrink surgery stalls) → re-read q36_engine.cu's layer loop and
-  pool.cpp's task model for a concrete row-pipelining sketch.
+- **What the source shows (the corrected structure, the hybrid layer path):** per layer
+  (q36_engine.cu), the GPU runs attention → the fused router (`router_ext`, 2292) →
+  `native_router_topk` (2299) → `moe_hybrid_gpu` (2509): the D2H copies of ids + the
+  activations ride the stream FIRST (2513–2515, `cudaEventRecord(ev_route)` at 2515),
+  then the RESIDENT experts' grouped kernels (2518) — then the shared expert's kernels
+  (2342–2356) — while the HOST, at `moe_hybrid_cpu` (2357, called after the GPU kernels
+  are enqueued), spins on `cudaEventQuery(ev_route)` (2531), builds the missed experts'
+  jobs (the per-token act quantization, 2551–2554), and calls the pool's blocking
+  `run_split_multi_native` (2570, ~1.6 ms/layer = 66 ms/41 layers from the capture); the
+  pool returns → the H2D of `ecpu`/`d_miss` + `k_merge_cpu` (2572–2574) → `moe_end`
+  (2359, the combine) → the next layer's attention. The pool batches by `kMaxSplitMulti`
+  = 96 (pool.hpp:252) ≥ the ~18.4 distinct experts/layer → ONE batch per layer, 2 phase
+  barriers per layer (gu → host-quant → down; the capture's phase split gu 65.1% / q
+  0.2% / down 34.1%).
+- **CORRECTION to this section's premise (honest):** "the GPU idles through the pool's
+  FFN" is too strong — by design the resident experts' grouped kernels + the shared
+  expert EXECUTE ON THE GPU while the pool's dots run on the CPU (that is the hybrid
+  mechanism's whole point, and the enqueue order makes the spin + the job build run
+  under their shadow). The measured 60.6%/39.4% split is the HOST's serial accounting;
+  the GPU's true idle = the pool's tail beyond its own kernels + the copy+merge latency
+  + the attention/router/combine's own serial time. T2's capture on the Q4_K_S (a clean
+  window) + the engine-log timestamps quantify the idle/work split precisely.
+- **The cross-layer pipeline: CONFIRMED BLOCKED (the negative result, recorded):**
+  pool(i) → combine(i) → attention(i+1) → router(i+1) → pool(i+1) is a strict data
+  dependency chain — layer i+1's routing is unknowable before layer i's pool output has
+  passed through the combine, and the combine needs the pool's merged rows. No schedule
+  overlaps what cannot start. The MTP-rows axis is also already closed: the T rows are
+  batched into every kernel per layer (the pool's `ExpertJobMulti` packs up to MAXT
+  tokens per job; the router+gate take the batch in one product at 2291–2292).
+- **THE ONE NEW SCHEDULING CANDIDATE — the per-job pipelined drain:** today ALL of the
+  layer's H2D copies + `k_merge_cpu` wait for the pool's FULL return (the host is
+  blocked inside the pool call, so the stream runs dry after the shared-expert kernels
+  finish). The pool already tracks per-task completion (`head_`/`done_` fetch-adds, the
+  R2.2 host-drain) → a completion-visible variant could issue EACH expert's H2D +
+  per-entry merge as soon as that expert's dot lands (a pool worker or a completion
+  poll issuing `cudaMemcpyAsync` — thread-safe — with per-entry merge ordering), so the
+  copies+merges ride UNDER the pool's remaining dots and the serial tail shrinks to the
+  LAST expert's dot+copy+merge. **The honest bound: the copy+merge is latency-dominated
+  (ecpu ≈ 160 KB at T≈2.5 rows; ~0.1–0.3 ms/layer → ~4–12 ms/step ≈ 4–11% of the
+  step)** — real but bounded; it needs the T2 capture's numbers to size it and is a
+  deep pool/engine surgery (a new completion contract), not a patch.
+- **The ranked actionable levers (the sketch's output):** (1) **T4's staging shrink →
+  the slots at 262k** — the structural lever: every expert moved from the pool to the
+  GPU shrinks the max()'s longer side (the pool) directly; the Q4_K_S's smaller blobs
+  make it cheaper (the staging 0.91 GiB vs the Q5's 1.03; the slots ENGAGE at S=23 at
+  64k, live-verified) — and the slot-vs-pool trade at 64k was MEASURED (+26% empty /
+  −6.9% ctx32k with the MTP-off confound; the isolation T1 decides the MTP part);
+  (2) **the per-job pipelined drain** (above, ~4–11% bound); (3) **S13's pattern
+  levers** (the within-reader prefetch distance, the blob-locality repack — S13-(a)'s
+  microbench T3 decides); (4) the pool's task-plan granularity audit
+  (`numa_plan_phase`/`phase_tasks`) — T3's SPLIT phase reads it.
 
 ## S15 — The serving-config levers the clean-bench exposed: the MTP sampling gate and the slots mode (research agent, ~14:08Z)
 
@@ -1450,11 +1489,17 @@ the capture's own 19.07 as the comparator with the drift caveat stated. The pin 
 (s11_pin_probe.c) stays the primary agent's run (a cudaHostAlloc probe needs the CUDA
 context).** The original proposal follows.
 
-**Status: QUEUED as trial T1 of the Q4_K_S redirect (primary agent, ~15:45Z) — the baseline pass
-(MTP-on, the mission protocol) is running; Lever A's isolation (the MTP-off serve at 262k, one
-flag) runs right after it, on the Q4_K_S model. A first supporting data point landed: the Q4_K_S
-MTP-off/64k/slots-23/w5 empty reference read 28.10 tok/s (research/q4ks_ref/), matching the Q5's
-28.398 same-mode reading — the MTP-off mode's empty advantage reproduces on the smaller quant.
+**Status: RUNNING — trial T1 live, the first two cells READ (the continuing agent, ~16:55Z):
+the MTP-off leg at 262k is SLOWER than the MTP-on baseline — empty 19.31 vs 23.51 (−17.9%),
+ctx32k 18.25 vs 23.03 (−20.7%; the prefill MTP-independent as expected) — the OPPOSITE of the
+64k-slots clean bench's hint: at 262k with 0 slots the MTP drafting amortization WINS. The
+q5k kernel's multi-token path also disengages with MTP off (nt=1) — the isolation's confound,
+stated. ctx128k pending (~17:06Z), then the champion restore.** The queued status (primary
+agent, ~15:45Z) — the baseline pass (MTP-on, the mission protocol) is running; Lever A's isolation
+(the MTP-off serve at 262k, one flag) runs right after it, on the Q4_K_S model. A first supporting
+data point landed: the Q4_K_S MTP-off/64k/slots-23/w5 empty reference read 28.10 tok/s
+(research/q4ks_ref/), matching the Q5's 28.398 same-mode reading — the MTP-off mode's empty
+advantage reproduces on the smaller quant **at 64k WITH the slots; the 262k reading reverses it**.
 See the Q4_K_S redirect entry at the bottom update log for the full plan.**
 
 - **What the clean bench measured (all source-bound):** the champion compose at max-context
@@ -2061,3 +2106,29 @@ See the Q4_K_S redirect entry at the bottom update log for the full plan.**
     continuing agent's 60.6% measured-round SUM) reconcile within their filters — the
     verdict is identical either way (S14 reopened, S13-(a) proceeds).
     Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
+- **2026-11-17 ~16:55Z — S14's row-pipeline sketch LANDED (the code reading; the
+  continuing research agent).** Three results annotated into the S14 section: (1) the
+  park note's premise CORRECTED — the GPU does NOT idle through the whole pool's FFN
+  (the resident experts' grouped kernels + the shared expert execute on the GPU during
+  the pool's dots; the idle is the pool's tail beyond the GPU's own kernels + the
+  copy+merge latency); (2) the cross-layer pipeline CONFIRMED BLOCKED by the data
+  dependency (pool(i) → combine(i) → attention(i+1) → router(i+1) → pool(i+1); the
+  MTP-rows axis is already closed — the rows batch into every kernel); (3) the per-job
+  pipelined drain proposed (the copies+merges ride under the pool's remaining dots;
+  ~4–11% of the step bound, deep surgery). The ranked levers: T4's slots → the per-job
+  drain → S13's pattern levers → the task-plan audit. See the S14 section for the full
+  sketch. Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
+- **2026-11-17 ~16:55Z — T1 (the MTP-off isolation) FIRST TWO CELLS LANDED — the MTP is
+  NET POSITIVE at 262k (the continuing research agent; the third cell pending).** The
+  trial's MTP-off leg (the same champion config minus the SAMPLING export; the q5k
+  kernel's multi-token path also disengages with nt=1 — the confound stated) read
+  empty **19.31** tok/s (vs the MTP-on baseline 23.51 = **−17.9%**) and ctx32k **18.25**
+  (vs 23.03 = **−20.7%**; prefill 325.2 vs 323.2 — the prefill is MTP-independent as
+  expected; peak 6.59/6.62 unchanged). **The reading flips the clean bench's hint: at
+  262k with 0 slots the MTP drafting amortization WINS (~+18–21% per cell); the MTP-off
+  +26% empty at 64k came WITH the S=15 slots confound** — the slots move the experts'
+  FFN to the GPU, which changes the drafting trade. S15-A's verdict direction: the MTP
+  stays ON in the champion config; the MTP-off mode is only a short-ctx/slots serving
+  mode. The q5k ledger term stays MTP-ON-only (recorded). ctx128k lands ~17:06Z; the
+  champion restore follows (~17:12Z), then T2 (the poolms capture). Signed:
+  GLM 5.3 Flash (Maya-s quant), the continuing research agent.
