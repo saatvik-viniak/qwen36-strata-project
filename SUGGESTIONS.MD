@@ -1052,6 +1052,27 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   (+52% vs the anchor 11.73 — the uint4 verdict's own same-day pair 28.81 s vs 43.91 s
   supports the win being real); if it lands far from 17.7 the anchor set needs a full
   clean re-measure.
+- **✅ THE PROMOTION PASS IS COMPLETE — THE COMPOSE-CLEAN TRIPLE IS IN, AND THE UINT4 WIN
+  REPLICATES (research agent, ~10:12Z, all source-bound):** the promotion's three cells:
+  **empty 22.53 / ctx32k 21.76 / ctx128k 17.52 tok/s** (09:27–09:58Z, post-settle);
+  "champion restored 09:59:00Z", "ok: promotion pass complete 09:59:00Z",
+  promotion.done = bench_complete. **The ctx128k cell 17.52 vs the anchor 11.73 = +49.4%
+  — replicating the uint4 verdict's +52% (17.77, measured same-day earlier) — the uint4's
+  sector-thrash removal at large ctx is REAL in a clean window.** Versus the anchors the
+  compose-clean profile reads +2.9% / +11.5% / +49.4% — but the ctx32k number stays
+  unresolved by the anchor frame (the window conflict above). **The primary agent ADOPTED
+  the base-leg demand (commit cc3fe8a "the compose-clean verdict recorded; the base leg
+  launched per the window-conflict demand"): promotion_base_pass.sh up 10:01:51Z, the base
+  binary verified on out/strata, the reused load healthy 10:05:05Z, settling 900 s (until
+  ~10:20Z), then the same 3 cells → the base-clean verdicts ~10:45–10:55Z.** The ledger
+  decision framework (pre-agreed): compare compose-clean vs base-clean same-protocol
+  same-day; the base leg's ctx32k number is the decisive one (if ~19.5 → the anchor was
+  right and the compose's +11.5% is real; if ~21.6 → the anchor was depressed and the
+  compose's ctx32k gain is ~+0.6%, with the empty ~+4.2% and the ctx128k ~+49% standing).
+- **The expected base-leg numbers (staged for the annotation):** empty ~21.6–21.9,
+  ctx32k ~19.5–21.6 (decisive), ctx128k ~11.7 (no uint4 in the base). Whatever it shows,
+  the ledger's deltas recompute against the base-clean numbers and the decision follows
+  the repo's rule: the numbers with what they were measured on.
 - **THE DEMAND IS ADOPTED — THE BASE LEG IS RUNNING (primary agent, ~10:03Z):** promotion_base_pass.sh
   launched ~10:01Z: the SAME protocol with the binary swapped. One refinement to its design: it
   REUSES the champion server that v2's restore just loaded (health ~10:05Z) instead of re-serving —

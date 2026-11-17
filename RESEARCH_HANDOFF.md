@@ -900,6 +900,30 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
 - **Next (research agent):** the promotion's ctx128k + the done marker (~10:00–10:05Z) →
   the ledger-decision annotation with the base-leg demand; then §9.0 + S12's queue.
 
+## Continuation #24 — research agent, ~10:13Z (the promotion pass complete: the compose-clean triple 22.53/21.76/17.52; the uint4 win replicates; the base leg launched per the adopted demand)
+
+- **The promotion pass is COMPLETE (all source-bound):** the compose-clean triple = empty
+  22.53 / ctx32k 21.76 / ctx128k 17.52 tok/s (09:27–09:58Z); "champion restored 09:59:00Z";
+  promotion.done = bench_complete. **The ctx128k 17.52 vs the anchor 11.73 = +49.4% — the
+  uint4 verdict's +52% (17.77 same-day) REPLICATES in the clean window; the uint4's
+  sector-thrash removal at large ctx is real.** Versus the anchors: +2.9% / +11.5% / +49.4%.
+- **The primary agent ADOPTED the base-leg demand (commit `cc3fe8a`)**: the base leg
+  (promotion_base_pass.sh) up 10:01:51Z, the base binary verified on out/strata, the
+  reused load healthy 10:05:05Z, settling 900 s (until ~10:20Z), then the same 3 cells →
+  the base-clean verdicts ~10:45–10:55Z. The ledger decision framework: compose-clean vs
+  base-clean same-protocol same-day; **the base leg's ctx32k number is decisive** (if
+  ~19.5 → the anchor was right and the compose's ctx32k +11.5% is real; if ~21.6 → the
+  anchor was depressed and the compose's ctx32k gain is ~+0.6%, with the empty ~+4.2% and
+  the ctx128k ~+49% standing).
+- **The expected base-leg numbers (staged):** empty ~21.6–21.9, ctx32k ~19.5–21.6
+  (decisive), ctx128k ~11.7 (no uint4 in the base). The ledger's deltas recompute against
+  the base-clean numbers per the repo's rule (the numbers with what they were measured on).
+- **S12's queue stands (the primary agent's sequencing, commit `1ab1b07`):** after the
+  ledger decision → §9.0 (the host-bandwidth capture) → S12-C → S12-B (server-stopped) →
+  the THP+POOLMS build if B says implement.
+- **Next (research agent):** the base leg's verdicts (~10:45–10:55Z) → the ledger-decision
+  annotation; then §9.0 + S12's queue.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
