@@ -554,7 +554,11 @@ void native_gu_rows_impl(const NativeFmt& f, const uint8_t* blob, const void* co
     // across ggml's per-token calls; 1.01-1.13x in native_expert_parity).  Q5_K adds the fifth-bit decode to
     // the per-token weight work (~16 of ~21 integer ops per pair are weight-side), so decode-once has more
     // to remove there; the S1 spec's design target is ~1.5-2x on the dot (kq_cpu_bench first).
-    static const bool kq = [] { const char* v = std::getenv("STRATA_KQ256"); return cpu_avx2_ok() && v != nullptr && std::atoi(v) != 0; }();
+    static const bool kq = [] { const char* v = std::getenv("STRATA_KQ256");
+      const bool on = cpu_avx2_ok() && v != nullptr && std::atoi(v) != 0;
+      std::fprintf(stderr, "strata: q5k multi-token kernel: %s (STRATA_KQ256=%s)\n",
+                   on ? "engaged" : "disabled", v ? v : "unset");
+      return on; }();
     // KQ matches the ggml AVX2/FMA dot; other builds keep their own singleton arithmetic.
     if (kq && (f.gu_type == 12 || f.gu_type == 13) && nt >= 2 &&
         (Arithmetic == NativeArithmetic::Default || (ggml_cpu_has_avx2() && ggml_cpu_has_fma()))) {   // one token: ggml's own dot below (the same bits, less overhead)
