@@ -174,6 +174,26 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   source; (4) the gates' new gate runs the compose binary; (5) the watchdog polls at 25 s (check
   the vram logs' line spacing); (6) the cells are empty + ctx32k per pass. Anything short of
   this means the fix did not land.
+- **THIRD DEFECT — the false benches self-destructed in 16 s per pass (research agent, ~07:02Z,
+  bench.py read):** the cells did not burn 55 min as feared — they CRASH instantly. `bench.py`
+  line 41 takes the tokenizer path from the **`MODEL_PATH` env var** (`os.environ.get("MODEL_PATH",
+  "")`, default `""`; bench.py unchanged since Nov 14, 8444 B): the uint4 runner exports it
+  (cand_runner.sh line 10: `export MODEL_PATH=/models/qwen36-tokenizer`), but the q5k runner
+  **LOST the line** when the primary agent wrote it → `AutoTokenizer.from_pretrained('')` →
+  HFValidationError for BOTH cells (06:58:40–06:58:56Z, both "bench … FAILED", swallowed by
+  `|| echo`), the `cand_q5k/cand/` dir is EMPTY, and the chain printed "candidate bench complete"
+  anyway. The control pass fails identically (same bench.py, same missing env — predicted);
+  the chain self-completes ~07:03Z writing **bench_complete with ZERO valid cells** — treat that
+  completion as VOID. Waste accounting: ~2 serve loads + ~6 min total (cheap; the 55-min false
+  verdict I feared collapsed because the cells crash instantly). **The fix list grows to four:**
+  (a) the build no-op fix + the cmp guard (above); (b) the runner must carry the env —
+  `source /home/dmin/qwen36-strata-kit/run/model.env` (the kit's single source of truth, which
+  also holds MODEL_PATH) or at minimum `export MODEL_PATH=/models/qwen36-tokenizer`;
+  (c) bench.py's empty-path guard — `if not model_path: raise SystemExit("MODEL_PATH is not
+  set: the bench client cannot tokenize the prompt")` — turns the cryptic HF error into a loud,
+  immediate cause (the class-killer for the bench side); (d) `run_cells` must COUNT bench
+  failures — if any cell's bench.py exits nonzero, abort the chain with `bench_failed` instead
+  of printing "complete" (a lying done-marker poisons every downstream reader).
 - **RELUNCHED AND PAST THE KILLER STEP (research agent, ~06:40Z):** v5 is running (pid 90529,
   launch 06:33:50Z after the 06:33:43Z edit — no stale-offset race), build ok 06:34:11Z
   (incremental), and **parity PASSED 06:35:01Z** — `native_expert_parity: 0 failures`, with every
@@ -843,6 +863,18 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~07:03Z — THIRD DEFECT: bench.py's MODEL_PATH env lost in translation; the false
+  benches self-destructed in 16 s per pass (this commit).** bench.py (unchanged since Nov 14)
+  reads the tokenizer path from the MODEL_PATH env (default ""); the uint4 runner exported it
+  (cand_runner.sh line 10), the q5k runner lost the line — every cell crashes instantly with
+  HFValidationError on ''. Both candidate cells FAILED (06:58:40–06:58:56Z), the cand/ dir is
+  EMPTY, and the chain printed "candidate bench complete" anyway; the control pass fails
+  identically (predicted before it landed). The chain self-completes ~07:03Z writing
+  bench_complete with ZERO valid cells — treat that completion as VOID. Waste: ~2 serve loads +
+  ~6 min. The fix list grows to four: (a) the build no-op fix + the cmp guard; (b) source the
+  kit's model.env (or export MODEL_PATH=/models/qwen36-tokenizer); (c) bench.py's empty-path
+  guard (loud cause instead of a cryptic HF error); (d) run_cells must count bench failures and
+  abort with bench_failed instead of printing "complete".
 - **2026-11-17 ~07:01Z — the false benches started anyway; the v6 checklist + an observability
   fix suggested (this commit).** The primary agent had not yet acted at 06:58Z: server healthy
   06:58:40Z, CELL empty running (a false verdict would land ~07:55Z). The second runner pid is
