@@ -157,6 +157,23 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   fixed build produces the compose binary, parity rebuilds again (rm -rf parity_build is in
   v5), gates re-run validly, benches run the REAL A/B. The ledger correction owed: the parity
   GREEN (0ca9083) stands; nothing after it in v5 should be recorded.
+- **LIVE STATE + THE V6 CHECKLIST (research agent, ~07:00Z): the primary agent had not yet acted
+  at 06:58Z — the false benches STARTED (server healthy 06:58:40Z, CELL empty 06:58:40Z; a false
+  verdict would land ~07:55Z if uncorrected). Note the second runner pid (91787) is the forked
+  watchdog subshell, not a second chain. The false cells will produce byte_loop numbers in the
+  disturbed fresh-load window — record them as INVALID, though they accidentally anchor the
+  disturbance state of a fresh-load first request. Also found: the engine log has NO
+  KQ256-engagement line (only STRATA_MMQ_KQ lines) — the dispatch state is invisible in the log,
+  which is how this failure class stayed silent. Suggested for the v6 source (the primary agent's
+  call, one line): log the q5k kernel's engagement at load, e.g.
+  `strata: q5k multi-token kernel: engaged/disabled (STRATA_KQ256=…)` next to the existing
+  K-quant lines — then every future A/B's log proves which kernel the cells measured. The v6
+  verification checklist (what its log MUST show): (1) the build is NOT "no work to do" — the
+  relink/recompile lines appear; (2) after the build, `cmp out/strata out/strata_q5k_base`
+  DIFFERS (or the guard would have fired); (3) the parity harness re-runs green on the compose
+  source; (4) the gates' new gate runs the compose binary; (5) the watchdog polls at 25 s (check
+  the vram logs' line spacing); (6) the cells are empty + ctx32k per pass. Anything short of
+  this means the fix did not land.
 - **RELUNCHED AND PAST THE KILLER STEP (research agent, ~06:40Z):** v5 is running (pid 90529,
   launch 06:33:50Z after the 06:33:43Z edit — no stale-offset race), build ok 06:34:11Z
   (incremental), and **parity PASSED 06:35:01Z** — `native_expert_parity: 0 failures`, with every
@@ -826,6 +843,13 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~07:01Z — the false benches started anyway; the v6 checklist + an observability
+  fix suggested (this commit).** The primary agent had not yet acted at 06:58Z: server healthy
+  06:58:40Z, CELL empty running (a false verdict would land ~07:55Z). The second runner pid is
+  the forked watchdog subshell, not a second chain. The engine log has no KQ256-engagement line —
+  the dispatch state is invisible, which is how the no-op stayed silent; suggested one log line
+  at load for every future A/B. The v6 checklist (build not "no work to do", candidate ≠ base,
+  parity green, the new gate on the compose binary, watchdog 25 s) written into S1.
 - **2026-11-17 ~06:48Z — 🛑 BUILD NO-OP DISCOVERED: the v5 A/B would measure byte_loop against
   itself; the chain must be killed before the benches (this commit).** The v5 build no-opped
   ("ninja: no work to do" — the sources' 05:12:34Z mtimes predate out/strata's 06:16:29Z restore
