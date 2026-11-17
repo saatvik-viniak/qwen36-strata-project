@@ -1266,8 +1266,13 @@ the primary agent's recording).**
 
 ## S13 — The pool's pattern lever: the scattered-read cost the S12-B ceiling exposes (the empty-cell follow-up)
 
-**Status: REFINED with the source read (research agent, ~13:25Z) — three corrections from
-q36_engine.cu's hybrid dispatch path; the microbench spec is now pattern-exact.**
+**Status: GO — Lever A's capture fired the (a) branch (the continuing agent, ~15:25Z):
+the measured-round aggregate 19.0 GB/s (stall-free 20.3) sits in the pre-registered
+~14–20 band → the pattern cost matches → the microbench proceeds as spec'd. The live
+pool's shape is now measured (41 calls/step, 1.52 GB/step, ~18.4 distinct experts/layer
+— the rows lean shared).** Refined with the source read (research agent, ~13:25Z) —
+three corrections from q36_engine.cu's hybrid dispatch path; the microbench spec is
+pattern-exact.
 
 - **Correction 1 — the shared expert is GPU-side (the host volume drops):** `src/kernels/cuda/
   shared_expert.cu` is a CUDA kernel ("inside the 4.5 GiB arena" — the GPU arena), so the
@@ -1376,11 +1381,45 @@ q36_engine.cu's hybrid dispatch path; the microbench spec is now pattern-exact.*
      the measured step AND S3 stays blocked → re-read the layer loop for the row-pipeline
      sketch.
 
+- **THE CAPTURE LANDED — THE VERDICTS (the continuing agent, ~15:25Z, all five protocol
+  points applied to `research/poolms/`):** the capture completed truthfully (poolms.done =
+  bench_complete 14:50Z; the gate 10/10 bit-identical with POOLMS unset; the champion
+  restored healthy). The empty cell read **19.07 tok/s = −15.3% vs the compose-clean
+  anchor 22.53 → protocol point 1 fires: the box state drifted, the share reading is
+  QUALIFIED, not voided.** The session-line split (point 2 — SUM/2 correctly NOT used):
+  the measured round's pool SUM = 16,280 ms of the 26,854 ms decode = **the pool is 60.6%
+  of the measured step** (stall-free 55.8%: only 81 calls >10 ms, 8% of the SUM). Point 3
+  (the call-model check): 8,640 calls per round = **41 calls/step — one call per layer**
+  (~204 steps at 2.51 tokens/step; the analyze script's per-layer assumption CONFIRMED).
+  The volume cross-check: **1.52 GB/step** — inside the 660 MB–1.98 GB bracket, ~18.4
+  distinct experts/layer → the MTP rows lean SHARED (the dedup works). Point 4 (the phase
+  split): gu 65.1% + down 34.1% = **99.2% ≥ 80% → the weight streaming dominates →
+  S13-(a)'s pattern-exact microbench is GO** (q 0.2% — the compute phase is negligible).
+  Point 5 (the go/no-go): the measured-round aggregate = **19.0 GB/s (stall-free 20.3)**
+  vs the S12-B 28 GB/s warmed ceiling → **in the ~14–20 band → the pattern cost matches
+  → (a) proceeds as spec'd** (the levers: the within-reader prefetch distance, the
+  blob-locality repack — and the rate is NOT bounded elsewhere). **The warmup round's
+  stall finding (the protocol's pre-registered branch): 78% of the warmup round's pool
+  SUM is >10 ms calls (max 454 ms/call) vs the measured round's 8% → the idle-residency
+  stall lives IN the pool** — a NEW lever (keep the 21.14 GiB arena resident through
+  idle: a periodic toucher / WILLNEED on the first token; the bench protocol note: the
+  warmup round absorbs it, so the bench's measured rounds are unaffected — but real
+  serving TTFT-after-idle pays it, and it plausibly explains part of the −15.3%
+  day-drift). **S14's reopening condition is MET (the pool 60.6% ≥ ~60% AND S3 blocked
+  at 262k)** — the row-pipeline sketch is the queue's next code reading. NEXT: S13-(a)'s
+  microbench in the server-stopped window (the SPLIT/SHARED phases; the decision rules
+  unchanged), then S14's sketch.
+
 ## S14 — The layer-serial structure: the GPU idles through the pool's FFN (parked pending Lever A)
 
-**Status: PARKED (research agent, ~13:25Z) — a mechanism observation from the S13 source read,
-not a patch proposal; the overlap restructure is deep and its prize is unknown until Lever A
-splits the step.**
+**Status: REOPENED (the continuing agent, ~15:25Z) — Lever A's capture measured the pool
+at 60.6% of the measured step (≥ the ~60% bar) and S3's slot path stays blocked at 262k
+(the budget is 0; trial E's variant is dead) → both reopening conditions hold. The
+non-pool 39.4% of the step = attention + the per-layer CPU/GPU round trips (the router
+D2H, the job setup, the H2D + k_merge, the launches) — the row-pipeline sketch is the
+next code reading.** Original park note (research agent, ~13:25Z): a mechanism
+observation from the S13 source read, not a patch proposal; the overlap restructure is
+deep and its prize is unknown until Lever A splits the step.
 
 - **What the source shows:** the hybrid layer path is synchronous per layer — the GPU's attention
   → the router → the CPU pool's FFN (the jobs' blobs read + the dots) → the H2D copies +
@@ -1400,6 +1439,16 @@ splits the step.**
   pool.cpp's task model for a concrete row-pipelining sketch.
 
 ## S15 — The serving-config levers the clean-bench exposed: the MTP sampling gate and the slots mode (research agent, ~14:08Z)
+
+**Status: QUEUED (updated ~15:25Z) — Lever A's capture landed first (the protocol's
+verdicts are annotated above); the MTP isolation (Lever A of this item) stays queued for
+a serve window (~25 min, config-only): the compose at 262k with the ONLY variable = the
+SAMPLING export. The comparator problem is real and recorded: the same-day anchor 22.53
+(09:27Z) vs the capture's MTP-on 19.07 (14:42Z) drifted −15.3% → the isolation's honest
+form is TWO legs in one window (the MTP-off leg then the MTP-on leg, ~35 min apart) or
+the capture's own 19.07 as the comparator with the drift caveat stated. The pin probe
+(s11_pin_probe.c) stays the primary agent's run (a cudaHostAlloc probe needs the CUDA
+context).** The original proposal follows.
 
 **Status: QUEUED as trial T1 of the Q4_K_S redirect (primary agent, ~15:45Z) — the baseline pass
 (MTP-on, the mission protocol) is running; Lever A's isolation (the MTP-off serve at 262k, one
@@ -1947,3 +1996,68 @@ See the Q4_K_S redirect entry at the bottom update log for the full plan.**
   stays), MTP chain depth 3 (rejected on the Q5; re-verify cheaply only if the Q4_K_S acceptance
   profile differs), THP (dropped by S12-B), the slot scheme at S=2 (dead in both prefill regimes).
   Signed: GLM 5.3 Flash (Maya-s quant), primary agent.
+- **2026-11-17 ~16:05Z — Lever A's Q5 poolms capture ANALYZED and annotated (the open
+  obligation closed; primary agent, this commit).** The capture (the poolms binary,
+  STRATA_POOLMS=1, the Q5 champion config, research/poolms/) ran in a disturbed window (4
+  server loads in 30 min before it; the measured round's decode 26.85 s vs the clean 22.35 s
+  — the non-pool part absorbed the disturbance). The measured-round analysis (the last
+  8,364 calls = 204 steps × 41 layers, research/_poolms_measured.sh):
+  - **The pool = 54.7% of the step** (SUM 14.68 s of pool time in the 26.85 s measured
+    decode; ~71.9 ms/step; in a clean window ≈ 66 ms of the ~110 ms step ≈ **60%** — the
+    S14 reopening bar "pool ≥ ~60%" is BORDERLINE-MET, honest reading: the disturbed
+    reading 54.7%, the clean estimate ~60%).
+  - **The pool streams 1.46 GB/step at 20.25 GB/s aggregate** (the per-call mean 22.19
+    GB/s; 17.2 distinct experts/call; 35.5 MB/call) — **72-79% of the S12-B 28 GB/s
+    warmed ceiling** → the pattern/latency cost inside the pool is ~20-28% of its time;
+    the S13 levers (the pattern microbench, the within-reader prefetch distance) bound
+    ~10-14 ms/step of recovery at most.
+  - **The phase split: gu 65% / down 34% / q 0.2%** — the gate/up dot phase dominates the
+    pool; any kernel work targets gu first.
+  - **The non-pool 45% of the step** = attention + sampling + launch/sync + the MTP
+    machinery — the C1/C2/C6 launch-tax territory and S14's overlap axes; on the Q4_K_S
+    model T2's capture re-measures the split cleanly post-settle.
+  - The capture's own bench read 19.07 tok/s empty (−15% vs the clean champion 22.53) —
+    the disturbed window + the fprintf cost; the pool-ms lines are the capture's value,
+    not that rate. Signed: GLM 5.3 Flash (Maya-s quant), primary agent.
+- **2026-11-17 ~16:35Z — the Q4_K_S mission-protocol baseline COMPLETE; the empty cell's
+  EOS protocol finding; the comparators (the continuing research agent, this commit).**
+  The pass finished truthfully (q4ks_baseline.done = bench_complete 16:23Z; the three cells
+  in research/q4ks_baseline/; the champion config unchanged — the compose binary 8833c30b,
+  MTP 2, greedy sampler, CT 8, KV int4, STRATA_KQ256=1, 262k server ctx, settle 900 s,
+  no watchdog).
+  - **The three anchors (research/q4ks_baseline/):** empty **23.51** tok/s (peak 6.59 GiB);
+    ctx32k **23.03** tok/s decode, prefill 323.2, TTFT 96.3 s (peak 6.62); ctx128k **18.19**
+    tok/s decode, prefill 251.6, TTFT 494.8 s (peak 6.62; 124,520 actual prompt tokens —
+    the SAME actual count as the Q5's cells → the comparators hold token-for-token).
+  - **THE EMPTY CELL'S PROTOCOL FINDING: the model emitted EOS at 404 of the requested
+    512 tokens.** The smaller quant changed the greedy path: the Q5's same prompt decoded
+    the full 512 ("It looks like your message might be cut off! \"Aut\" could refer to…"),
+    the Q4_K_S produced 404 ("…Did you mean **Automatic**, **Autonomous**…") then EOS.
+    The 23.51 rate is honest over its 404 tokens (the decode rate is position-insensitive;
+    the KV difference 404→512 is ~0.1%); the comparator caveat is recorded. The engine-side
+    fix OPTION (not decided here): an opt-in env-gated ignore-EOS at q36_engine.cu's finish
+    sites — is_eos() line 3418, consulted at 3624/3638/3735/3948/3984; the draft-validation
+    site 3624 must stay EOS-strict (ignoring EOS there would corrupt the MTP acceptance
+    semantics). Recording as-is stays the default until the primary judges a patch.
+  - **The comparators — the SAME-protocol same-day pair is row 3 (the compose champion's
+    cells, 09:27–09:58Z today):** empty 23.51 vs 22.53 = **+4.4%**; ctx32k 23.03 vs 21.76 =
+    **+5.8%**; ctx128k 18.19 vs 17.52 = **+3.8%**. Caveats: single pass on both sides (no
+    repeat yet); the cells ran 6.5 h apart inside the day-drift band (the anchor 22.53 at
+    09:27Z vs the capture's 19.07 at 14:42Z = −15.3%) → **the gains are QUALIFIED**; if the
+    drift is box-wide (later reads slower) the true gain is likely LARGER than +4%.
+    **vs the OLD mission baseline (the pre-compose binary, empty 21.92/ctx32k 19.52/ctx128k
+    11.66): +7.2%/+18.0%/+56.0% — this CONFLATES the compose binary's promotion gain with
+    the model switch; do not use it for the model-switch verdict** (recorded to prevent
+    the conflation).
+  - **The 2.00× targets (2× the Q4_K_S anchors): empty 47.02, ctx32k 46.06, ctx128k
+    36.38 tok/s** — then keep pushing toward **≥70 TPS overall**.
+  - **The queue state:** T1 (the MTP-off isolation) is RUNNING — its server healthy
+    16:28Z, settling to ~16:43Z, then the 3 cells (~17:10Z), then the champion restore;
+    T2 (the poolms capture on the Q4_K_S champion) follows — its warmup-round stall
+    distribution is THE discriminator for the idle-residency mechanism on the smaller
+    17.45 GiB arena; T3 (the S13-A microbench) stays staged NOT launched (the compile
+    check COMPILE_OK, /tmp/s13a_mb 21,320 B) for the server-stopped window after T2.
+    The two pool-share readings (the primary's 54.7% disturbed/~60% clean estimate; the
+    continuing agent's 60.6% measured-round SUM) reconcile within their filters — the
+    verdict is identical either way (S14 reopened, S13-(a) proceeds).
+    Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.

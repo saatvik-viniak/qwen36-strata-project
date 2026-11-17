@@ -1362,6 +1362,92 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   one) → S14 stays PARKED (the reopening condition: Lever A shows the pool ≥ ~60% of the
   step AND S3's slot path stays blocked).
 
+## Continuation #29 — the continuing research agent, ~16:05Z (Lever A's verdicts landed; THE Q4_K_S REDIRECT: the primary took over with a user directive)
+
+- **Lever A's capture HARVESTED per the pre-registered protocol (all source-bound,
+  `research/poolms/`):** the capture completed truthfully (poolms.done = bench_complete
+  14:50Z; the POOLMS build's gate 10/10 bit-identical with POOLMS unset, binary df3c3230;
+  the champion restored healthy 14:50Z). **The empty cell 19.07 tok/s = −15.3% vs the
+  compose-clean anchor 22.53 → protocol point 1: the box state drifted; the share reading
+  is QUALIFIED, not voided.** The five verdicts: (1) the session-line split (SUM/2
+  correctly NOT used): the measured round's pool SUM = 16,280 ms of 26,854 ms = **the pool
+  is 60.6% of the measured step** (stall-free 55.8%: 81 calls >10 ms = 8% of the SUM);
+  (2) the call-model check: 8,640 calls/round = **41 calls/step — one call per layer**
+  (~204 steps at 2.51 tokens/step; the analyze script's per-layer assumption CONFIRMED);
+  (3) the volume: **1.52 GB/step**, inside the 660 MB–1.98 GB bracket, ~18.4 distinct
+  experts/layer → the MTP rows lean SHARED; (4) the phase split: gu 65.1% + down 34.1% =
+  99.2% ≥ 80% → **the weight streaming dominates → S13-(a) GO**; (5) the go/no-go: the
+  aggregate **19.0 GB/s (stall-free 20.3)** vs the 28 GB/s warmed ceiling → **in the
+  ~14–20 band → the pattern cost matches → the levers proceed**. **NEW finding (the
+  protocol's pre-registered branch): the warmup round's pool calls are 78% >10 ms stalls
+  (max 454 ms/call) vs the measured round's 8% → the idle-residency stall lives IN the
+  pool** — a NEW lever (arena residency through idle: a periodic toucher / WILLNEED on
+  the first token; it does not move the bench's measured rounds — the warmup absorbs it —
+  but it is a real TTFT-after-idle lever and plausibly part of the −15.3% day-drift).
+  **S14's reopening condition is MET** (the pool 60.6% ≥ ~60% AND S3 blocked at 262k).
+  The analysis receipts: research/_pm_analyze.ps1 + _pmdist3.ps1 (the session-line split,
+  the per-call distribution, the top-10 slowest calls).
+- **THE Q4_K_S REDIRECT — the primary agent took over (its commits 5ed2149 [Engine] =
+  the poolms patch + the capture artifacts; 401d1f7 [Docs] = the pivot; both carry the
+  earlier session's unpushed evidence).** The user directive: serve the **Q4_K_S quant**
+  on disk (20.43 GB, the expert arena 17.45 GiB vs the Q5_K_S's 21.14), NOT the
+  uncensored Q5_K_S; the int4 KV cache is VERIFIED LIVE unchanged on the smaller quant
+  (the KV geometry is architecture-dependent only; the slots ENGAGE at S=23 at 64k); then
+  climb to 2.00x on every measured cell and keep pushing toward **≥70 TPS overall**; the
+  standing user rules bind (the ~15-min SUGGESTIONS.MD checks, the annotation protocol).
+  **The mission-protocol baseline for the new model COMPLETE (q4ks_baseline.done =
+  bench_complete 16:23Z): empty 23.51 (EOS at 404 of 512 — the smaller quant changed the
+  greedy path; the rate is honest over 404 tokens, see the update log), ctx32k 23.03 /
+  prefill 323.2 / TTFT 96.3 s, ctx128k 18.19 / prefill 251.6 / TTFT 494.8 s (124,520
+  actual prompt tokens — the same actual count as the Q5's cells). The SAME-protocol
+  comparators (row 3, the compose champion's cells 09:27–09:58Z): empty +4.4% / ctx32k
+  +5.8% / ctx128k +3.8% — QUALIFIED (single pass, 6.5 h apart, the day-drift band −15.3%;
+  vs the old pre-compose mission baseline +7.2/+18.0/+56.0 CONFLATES the compose gain —
+  recorded to prevent the conflation). The 2.00× targets: empty 47.02, ctx32k 46.06,
+  ctx128k 36.38 tok/s.** First reference point: the Q4_K_S
+  MTP-off/64k/slots-23/w5 empty cell = 28.10 tok/s (research/q4ks_ref/) vs the Q5's 28.398
+  same-mode — **the smaller blobs did NOT move the MTP-off empty cell → it is not
+  pool-bytes-bound; per-layer overheads/attention/launch bind there** (the S14/C6/C1
+  levers are now first-class for the ≥70 TPS push).
+- **The trial queue (the primary's, recorded in SUGGESTIONS.MD's update log):** T1 = the
+  MTP sampling-gate isolation at 262k on Q4_K_S (its scripts staged:
+  q4ks_trial_mtpoff.sh + serve_262k_q4ks_mtpoff.sh); T2 = the poolms capture on the
+  Q4_K_S champion (staged: q4ks_trial_poolms.sh + serve_262k_q4ks_poolms.sh); T3 = S13's
+  pattern microbench (server-stopped); T4 = S8's staging shrink → the slots at 262k (the
+  Q4_K_S staging is 0.91 GiB); T5 = S2's split-K attention. Negative records that bind:
+  CT (w=8 stays), MTP depth 3, THP, the S=2 slot scheme.
+- **THE QUEUE IS EXECUTING (16:23Z):** the trials supervisor (run_q4kstrials_sup.sh) ran
+  T1 the moment the baseline marker appeared — its MTP-off server healthy 16:28Z, the
+  900-s settle to ~16:43Z, then the 3 cells (~17:10Z), then the champion restore; T2
+  (the Q4_K_S poolms capture) chains next; T3 stays staged.
+- **MY CANCELLED RUN + what I staged instead:** I had planned to run S13-(a)'s pattern
+  microbench in a server-stopped window this turn — CANCELLED: the box serves the
+  primary's baseline pass (never stop a server under another agent's measurement; the
+  GPU/RAM is the primary's while its pass runs). I staged T3's implementation instead:
+  research/s13a_microbench.c + research/s13a_runner.sh (written COMPLETE up front, the
+  lesson; the SPLIT phase k=24 distinct blobs round-robin over 8 workers + the SHARED
+  phase k=8, the layer-span scatter, the S12-B reader verbatim, 2 untimed warm-ups + 3
+  reps, the minor-fault counters, the arena/blob size configurable for the Q4_K_S's
+  17.45 GiB / 1.65 MB; NOT launched — the box is busy; the runner restores the champion
+  config it stopped, with the md5 receipt). Compile check via research/_s13a_compilecheck.sh:
+  **COMPILE_OK + the tiny-arena smoke run clean (/tmp/s13a_mb 21,320 B)** — the binary is
+  one `gcc -O2` away whenever a server-stopped window opens.
+- **Lessons this turn:** (1) the two agents' clocks disagree — the primary's "~15:45Z"
+  entry predated my assumed 15:20Z by ~25 min of wall time; verify the frontier by file
+  mtimes and git log, never by an assumed clock; (2) interleaved staging is real — the
+  primary's commits absorbed my uncommitted pool.cpp edit (5ed2149 carries it, correctly
+  attributed in its message); I committed my record files explicitly right after writing
+  them; (3) never plan a server-stopped window while another agent's detached pass is
+  running — check for running .done-pending pipelines FIRST (the q4ks_baseline.done
+  marker is the pass's completion signal).
+- **Next (mine):** (1) commit these records + push; (2) the S14 row-pipeline sketch (the
+  code reading of q36_engine.cu's layer loop + pool.cpp's task model — the non-pool
+  39.4% of the step is now first-class for the ≥70 TPS push); (3) when the box is free
+  (the T1/T2 trials complete — check q4ks_trial_mtpoff.done + q4ks_trial_poolms.done and
+  the server state BEFORE any T3 launch), T3's runner may execute — coordinate through
+  SUGGESTIONS.MD's annotations; (4) the idle-residency lever's spec (an engine-side
+  periodic toucher) after T2's capture confirms the stall on Q4_K_S.
+
 ## Continuation #29 — primary agent, ~15:50Z (THE Q4_K_S REDIRECT: the user switched the model; the baseline is running)
 
 - **USER DIRECTIVE (binding, supersedes the Q5_K_S mission's model pin):** use the **Q4_K_S quant

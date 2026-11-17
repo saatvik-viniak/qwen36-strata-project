@@ -53,6 +53,10 @@ Server context 262144 throughout (the int4 KV cache is 1.40 GiB there), model
 | 4t | 2026-11-17 04:27Z | 74c5f1f4 | **trial D mmqslots2**: EXPERT_SLOTS=2 (MMQ kept; mission lever B1 at the VRAM edge) | empty | 20.11 | 2.70 | - | 7.54 | trial (−8.1%) — recovered |
 | 4t | 2026-11-17 04:27Z | 74c5f1f4 | trial D mmqslots2 | ctx32k | 18.46 | 249.8 | - | 7.57 | trial (−5.4%) |
 | 4t | 2026-11-17 04:27Z | 74c5f1f4 | trial D mmqslots2 | ctx128k | 11.69 | 184.5 | - | 7.57 | rejected: −0.3% there but the empty/32k cells regress; peak up to 7.57 GiB |
+| 5 | 2026-11-17 14:42Z | df3c3230 (the POOLMS binary, gate 10/10 bit-identical) | **Lever A's capture** (STRATA_POOLMS=1, the FULL champion config — compose, STRATA_KQ256=1, w=8, 262k, MTP on "drafts accepted 308 of 410", settle 900 s, no watchdog): empty 19.07 = **−15.3% vs the compose-clean anchor 22.53 → the box state drifted; per the pre-registered rule the share reading is QUALIFIED, not voided**. The pool-ms slice (17,403 lines): the measured round = 8,640 calls = **41 calls/step (one call per layer; ~204 steps at 2.51 tokens/step — the call-model check answered)**, the pool = **60.6% of the measured step** (16,280 ms of 26,854; stall-free 55.8% — only 81 calls >10 ms sum 8%), the volume **1.52 GB/step** (inside the 660 MB–1.98 GB bracket; ~18.4 distinct experts/layer → the MTP rows lean shared), the aggregate rate **19.0 GB/s (stall-free 20.3)** vs the 28 GB/s warmed ceiling → per the pre-registered thresholds (~14–20) **the pattern cost matches → S13-(a) proceeds**. Phase split: gu 65.1% + down 34.1% = 99.2% (q 0.2%) → the weight streaming dominates. The warmup round: **78% of its pool SUM in >10 ms calls (max 454 ms/call)** vs the measured round's 8% → the idle-residency stall lives IN the pool (a NEW lever: arena residency through idle) | empty | 19.07 | 1.04 | 959.3 | 7.31 | measurement (the pool-share reading, qualified −15.3% drift) | pool 60.6% of the step at 19–20.3 GB/s of a 28 ceiling; S14's reopening condition (pool ≥ ~60% of the step AND S3 blocked) is **MET** |
+| 6 | 2026-11-17 16:01Z | 8833c30b (the champion compose) | **THE MODEL SWITCHED — the Q4_K_S 262k baseline, empty cell**: the champion config unchanged (MTP 2 greedy CT 8 KV int4 STRATA_KQ256=1, 262k server ctx, settle 900 s, no watchdog); the model file now Qwen3.6-35B-A3B-…-Q4_K_S.gguf (20.43 GB, the expert arena 17.45 GiB vs the Q5_K_S's 21.14). **The model emitted EOS at 404 of the requested 512 tokens** (the smaller quant changed the greedy path; the rate is honest over 404 tokens — the KV delta 404→512 is ~0.1%) | empty | **23.51** | 3.8 | 262 | 6.59 | the Q4_K_S campaign's anchor (vs the compose champion's same-day empty 22.53 = **+4.4%**, qualified: single pass, 6.5 h apart, the drift band −15.3%) |
+| 6 | 2026-11-17 16:05Z | 8833c30b | the Q4_K_S baseline, ctx32k cell (31,130 actual prompt tokens — the same actual count as the Q5's cells) | ctx32k | **23.03** | 323.2 | 96,326 | 6.62 | the Q4_K_S anchor (vs the champion's same-day 21.76 = **+5.8%**, qualified) |
+| 6 | 2026-11-17 16:23Z | 8833c30b | the Q4_K_S baseline, ctx128k cell (124,520 actual prompt tokens — the same actual count as the Q5's cells) | ctx128k | **18.19** | 251.6 | 494,832 | 6.62 | the Q4_K_S anchor (vs the champion's same-day 17.52 = **+3.8%**, qualified; the pass's done marker bench_complete 16:23Z) |
 
 **The initial tps (pass 1)**: empty 21.92, ctx32k 18.94, ctx128k 11.80 decode tok/s.
 **Repeats (final)**: empty 21.86 (0.3%), ctx32k 20.44 → 19.52 (median 19.52), ctx128k 11.66 (1.19%).
@@ -70,6 +74,25 @@ control read within ±2% of the cross-day anchors (−1.5% / +1.3% / +2.0%) — 
 **The 2.00x progress**: empty 22.53/43.85 (51%), ctx32k 21.76/37.87 (57%), ctx128k
 17.52/23.60 (74%). Future chains' restore semantics: cp strata_q5k_cand → out/strata +
 serve_262k_q5k.sh.
+
+**THE Q4_K_S CAMPAIGN (the user's redirect, ~15:45Z; the model switched 16:23Z)**: the
+serving model is now Qwen3.6-35B-A3B-…-Q4_K_S.gguf (20.43 GB; the expert arena 17.45 GiB
+vs the Q5_K_S's 21.14; ~1.65 MB per expert blob vs 2.01 MB) with the champion config
+otherwise unchanged (the compose binary 8833c30b, MTP 2, greedy sampler, CT 8, KV int4,
+STRATA_KQ256=1, 262k server ctx). **The Q4_K_S baseline (row 6): empty 23.51 (EOS at 404
+of 512 — the smaller quant changed the greedy path; the rate is honest over 404 tokens),
+ctx32k 23.03 (prefill 323.2), ctx128k 18.19 (prefill 251.6); peak 6.59–6.62 GiB (−0.73 GiB
+vs the Q5 champion's 7.32–7.35).** **The new 2.00x targets (2× the Q4_K_S anchors):
+empty 47.02, ctx32k 46.06, ctx128k 36.38 tok/s — then keep pushing toward ≥70 TPS
+overall.** The model-switch comparators (vs the compose champion's same-day cells, row 3):
+empty +4.4% / ctx32k +5.8% / ctx128k +3.8% — **qualified** (single pass both sides, the
+cells 6.5 h apart inside the −15.3% day-drift band; a second Q4_K_S pass in a fresh
+window is the drift-bound proposal). The old mission-baseline deltas (+7.2/+18.0/+56.0)
+CONFLATE the compose binary's promotion gain — not a model-switch verdict. The trial
+queue on this model: T1 the MTP-off isolation (RUNNING 16:28Z), T2 the poolms capture
+(THE discriminator for the idle-residency stall on the smaller arena), T3 the S13-A
+pattern microbench (staged, compile-checked), T4 the staging shrink → the slots at 262k,
+T5 the S2 split-K attention.
 
 ## Chart: decode tok/s per cell across trials
 
@@ -131,22 +154,55 @@ baseline cluster.)*
 - **§9.0's tool reality on this box**: perf and ncu are ABSENT → profile_pool.sh (perf)
   and profile_gpu.sh (nsys→ncu) cannot run; the ncu V-path counters (the S2 dispute
   decider) are unanswerable here. The feasible halves: the S12-B microbench (done) and
-  Lever A's STRATA_POOLMS accounting (the next build).
+  Lever A's STRATA_POOLMS accounting (**done 2026-11-17 14:42Z, row 5**).
+- **Lever A's capture (2026-11-17 14:42Z, the champion config, empty cell)**: the pool is
+  **60.6% of the measured step** (55.8% stall-free), reading **1.52 GB/step** (~18.4
+  distinct experts/layer — the MTP rows lean shared) at **19.0 GB/s aggregate (20.3
+  stall-free)** = 68–72% of the measured 28 GB/s warmed ceiling → per the pre-registered
+  thresholds (~14–20 GB/s) the pattern cost matches → S13-(a)'s pattern-exact microbench
+  proceeds. Phase split gu+down = 99.2% → the weight streaming dominates. The call model:
+  41 pool calls per step (one per layer), ~204 steps at 2.51 tokens/step. The warmup
+  round's pool calls are 78% stalls (max 454 ms/call) vs the measured round's 8% → the
+  idle-residency stall lives in the pool (the anchor-drift −15.3% reading is qualified,
+  not voided). The empty cell's residual wall after the pool: 39.4% of the step =
+  attention + the per-layer CPU/GPU round trips + launches (S14's serial structure).
 - Expert slots at 262k: **0/layer** (free 1.28 GiB − MMQ staging 1.03 − reserve 0.77 < 0).
 
 ## Not yet measured (open)
 
-- **The four pre-promotion trials — decided (rows 4t, recovered from `research/trials/`)**:
-  nommq rejected (empty +5.0% but ctx32k −4.5% with the prefill collapsed to 96.8 tok/s;
-  no 128k cell), ct5 a wash (−0.9% / −0.9% / −0.2%), mtp3 a loss on all three cells (MTP
-  stays 2), mmqslots2 a loss (peak up to 7.57 GiB). None promoted; the uint4 compose
-  remains the champion.
-- **Lever A (STRATA_POOLMS) — the next measurement**: one env-gated fprintf at the end of
-  `ExpertPool::run_split_multi_native` (src/kernels/cpu/pool.cpp ~1365–1391), default OFF
-  (the kqlog precedent — byte-identical when unset); one rebuild + the solo gate + cmp vs
-  `research/cand_q5k/new.json`, then one empty bench with STRATA_POOLMS=1 → the pool's
-  share of the step + the per-call effective GB/s (the roofline verification vs the
-  measured 28 GB/s ceiling).
+- **Lever A (STRATA_POOLMS) — DONE (row 5)**: the pool = 60.6% of the measured step at
+  19.0 GB/s aggregate (20.3 stall-free) of the 28 GB/s ceiling; the pattern cost matches
+  the pre-registered ~14–20 band → S13-(a)'s pattern-exact microbench is the decisive
+  next measurement (the SPLIT/SHARED phases, the decision rules: SPLIT ≥ ~25 GB/s → the
+  item dies, ~14–20 → the levers proceed, ≤ ~10 → the within-reader prefetch lever).
+- **S14's reopening condition is MET** (the pool ≥ ~60% of the step AND S3's slot path
+  stays blocked at 262k): re-read q36_engine.cu's layer loop + pool.cpp's task model for
+  a concrete row-pipelining sketch. The non-pool 39.4% of the step (attention + the
+  per-layer CPU/GPU round trips + launches) is the other half of the wall.
+- **The idle-residency stall (Lever A's NEW finding)**: after the 900-s settle the
+  warmup round's pool calls are 78% >10 ms stalls (max 454 ms/call); the measured round
+  is clean (8%). A NEW lever: keep the 21.14 GiB arena resident through idle (a periodic
+  toucher / WILLNEED on the first token). It does not move the bench's measured round
+  (the warmup absorbs it) but it is a real serving-latency (TTFT-after-idle) lever and
+  it explains part of the box's day-drift (the −15.3% anchor gap).
+- **S15-A (the MTP sampling gate's isolation at 262k)** = trial T1 of the Q4_K_S
+  redirect — **RUNNING (its server healthy 16:28Z, settling, then the 3 cells to ~17:10Z;
+  results research/q4ks_trials/mtpoff/)**: the only variable = the SAMPLING export (the
+  MTP on vs off), all 3 cells (not just empty). Its verdict decides the MTP-dependence
+  note (the q5k ledger term lives in the MTP-ON protocol) and whether an MTP-off serving
+  mode is worth a per-cell trade study (the clean bench's +26% empty came WITH the S=15
+  slots confound at 64k).
+- **The Q4_K_S drift-bound second pass (proposed, ~24 min of bench — within the 30-min
+  rule)**: repeat the 3 baseline cells in a fresh window after T2. The first pass's
+  comparators (+4.4/+5.8/+3.8% vs the champion's same-day cells) ran 6.5 h apart inside
+  the −15.3% day-drift band; a same-evening repeat bounds the drift AND confirms the
+  single-pass anchors.
+- **The empty cell's EOS protocol finding (open decision for the primary)**: the Q4_K_S
+  emits EOS at 404 of 512 (the smaller quant changed the greedy path). Options: (a) an
+  opt-in env-gated ignore-EOS at q36_engine.cu's finish sites (the draft-validation site
+  3624 stays EOS-strict — MTP semantics), (b) record as-is with the token count stated
+  (the rate is position-insensitive; current default). The 2.00x empty target 47.02
+  should be protocol-clean when judged.
 - **S2's dispute** (the attention-kernel split at 128k) stays open until a profiling path
   exists on this box (perf/ncu absent).
 - Device-copy VRAM bandwidth — not yet measured (the RAM-stream half is now measured by
