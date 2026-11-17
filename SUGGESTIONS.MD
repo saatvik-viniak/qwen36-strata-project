@@ -1033,16 +1033,18 @@ the primary agent's recording).**
   says ~30% of peak), more outstanding loads should raise the read rate until DRAM latency
   saturates — 12 may win; if the engine's warning is right, 5 wins. Either way it is one
   serve flag per run and composes with THP.
-  **OUTCOME (research agent, ~12:30Z — live): RUNNING on the promoted compose champion
-  (STRATA_KQ256=1), the promotion protocol per config (stop → serve → health → settle 900 s →
-  bench empty), the w=8 anchor REUSED (the promotion compose-clean empty 22.53, same binary,
-  same protocol, same day — engine-log block 3). Screen rule: a config winning ≥ +3% over
-  22.53 justifies a confirm pass. Live engine-log evidence: block 5 = `--cpu-threads 5`
-  (started ~11:44Z, 5 workers = the engine's recommendation, NO warning line, q5k ENGAGED)
-  whose empty warm round read 22.9 tok/s = **+1.6% — below the +3% screen bar** (the
-  negative direction so far, consistent with the earlier byte_loop ct5 trial B's wash:
-  21.69, −0.9%); block 6 = `--cpu-threads 6` (started ~12:07Z, 6 workers, warning present,
-  q5k ENGAGED) warming at 12:09:45Z; w=12 next; harvest ~12:55Z. NOTE for the block
+  **OUTCOME (research agent, ~13:06Z — RUN AND DECIDED, the screen rule fired on the negative
+  side): `research/s12c/{w5,w6,w12}.json` — w=5 **22.906** (+1.67%), w=6 **20.904** (−7.22%),
+  w=12 **12.065** (−46.45%) vs the reused w=8 anchor 22.53 (the promotion compose-clean empty,
+  same binary, same protocol, same day). NO config wins ≥ +3% → **the negative record: the
+  worker count is NOT a lever on this box; the champion config stays w=8** (the engine's own
+  5-worker recommendation does NOT pay off on live decode — consistent with the earlier
+  byte_loop ct5 trial B's wash, 21.69/−0.9%; the direction is also non-monotonic: 8 > 5 > 6 > 12,
+  so the "more outstanding loads until latency saturates" hypothesis is dead too). The w=12
+  run surfaced a NEW engine-warning class (WSL2's process thread cap): "12 CPU expert workers
+  are configured, but this process can run only 12 CPU threads. The extra workers spin and
+  take time from the others" — the −46% confirms it. The champion restored (compose, w=8
+  default) healthy 13:03:01Z; "ok: s12c complete". NOTE for the block
   attribution (my own lesson from ~12:20Z): the engine-log blocks are identified by their
   "[strata] HH:MM:SS engine started ... --cpu-threads N" headers — a tail-grep read of the
   log's last lines mis-attributes the CURRENT serve's block to whichever leg you expect.**
@@ -1214,6 +1216,35 @@ the primary agent's recording).**
   config engaged); harvest ~12:55Z.
 
 ---
+
+## S13 — The pool's pattern lever: the scattered-read cost the S12-B ceiling exposes (the empty-cell follow-up)
+
+**Status: NEW (research agent, ~13:08Z) — S12-B measured the ceiling, S12-C killed the
+worker-count lever; this item is the lever family the remaining gap implies.**
+
+- **The arithmetic (unconfirmed static analysis, to be re-derived from Lever A's lines):** the
+  pool reads ~742 MB/step (369 × 2.01 MB: 328 routed + 41 shared expert slots across 41
+  layers) in the champion compose's ~44.4 ms step (22.53 tok/s empty × ~1.75 accepted/step
+  from the drafts-accepted 308-of-410 ratio) = **~16.7 GB/s effective = 60% of the S12-B
+  warmed-stream ceiling (28 GB/s = 55% of the 51 GB/s DDR4 peak)**. The ceiling is
+  page-size-independent (S12-B's finding) → the gap is the SCATTERED pattern's cost: 369 ×
+  2 MiB chunks scattered across the 21.14 GiB arena defeat the hardware prefetcher and pay
+  DRAM row-miss/bank-conflict terms a sequential stream does not.
+- **Candidate levers, cheapest first:** (a) a pattern-realistic microbench FIRST (369
+  scattered 2 MiB reads per round, 5 vs 8 worker threads, server-stopped, the S12-B harness
+  extended almost verbatim) — if it lands ~16–17 GB/s the pattern cost is quantified and
+  real; if ~28 GB/s the pool's rate is bounded elsewhere (sync/launch/imbalance) and this
+  item dies; (b) software prefetch of the NEXT layer's expert rows during the current
+  layer's dot (the 8 routed + 1 shared addresses are known after each layer's router; ~16
+  MB/layer to fetch behind ~1 ms of compute); (c) an arena layout that groups the shared
+  experts (the 41 always-read rows) contiguously — a load-time re-pack, zero per-step cost.
+- **Bounded by Lever A's split:** if the pool is ~100% of the empty step the ceiling ratio is
+  the prize (+60–70% IF (a) confirms the pattern cost); if ~50%, halve it. The dot compute
+  (~14% of CPU peak, per the notebook's 54-of-384 GFLOPS reading) overlaps the reads inside
+  the 8 workers, so the pattern lever and S1's kernel trim do not double-count.
+- **Sequence:** Lever A's STRATA_POOLMS lines (the pool's per-step ms+bytes+GB/s) validate the
+  ~16.7 GB/s reading first; then (a)'s microbench decides whether this item lives. Both fit
+  the between-benches rule; neither touches the default path.
 
 ## Already present (do NOT propose these again)
 
@@ -1591,3 +1622,18 @@ the primary agent's recording).**
   a tail-grep read mis-attributes the current serve's block (my 6-workers/engaged misread was
   the S12-C serve, not the base leg's; the base leg = block 4, 8 workers, no q5k line).
   Signed: GLM 5.3 Flash (Maya-s quant), research agent.
+- **2026-11-17 ~13:10Z — S12-C RUN AND DECIDED (the negative record) + S13 proposed (research
+  agent, this commit).** The worker-count screen on the promoted compose champion completed
+  13:03:01Z: w=5 22.906 (+1.67%), w=6 20.904 (−7.22%), w=12 12.065 (−46.45%) vs the reused
+  w=8 anchor 22.53 — NO config wins ≥ +3% → **the worker count is NOT a lever; the champion
+  config stays w=8**; the direction is non-monotonic (8 > 5 > 6 > 12), killing both the
+  engine's 5-worker recommendation and the "more outstanding loads until latency saturates"
+  hypothesis. The w=12 run surfaced a new engine-warning class (WSL2's process thread cap:
+  "the extra workers spin and take time from the others" — confirmed by the −46%).
+  **S13 proposed** (the pattern lever the S12-B ceiling exposes): the pool's ~742 MB/step at
+  ~16.7 GB/s effective = 60% of the page-size-independent 28 GB/s warmed-stream ceiling →
+  the scattered 369 × 2 MiB chunks' pattern cost is the remaining gap; cheapest checks: the
+  pattern-realistic microbench (369 scattered 2 MiB reads, 5 vs 8 threads, server-stopped),
+  then the next-layer software prefetch / the shared-expert arena re-pack. Bounded by Lever
+  A's STRATA_POOLMS split (the decisive next build lever). S13 recorded as a full item above
+  the already-present list. Signed: GLM 5.3 Flash (Maya-s quant), research agent.

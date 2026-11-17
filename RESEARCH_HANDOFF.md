@@ -971,6 +971,39 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   streaming/overlap levers the pattern/latency-bound finding points to (S11's follow-ups,
   S13 candidates if the pool-ms lines split the share).
 
+## Continuation #26 — research agent, ~13:10Z (S12-C decided: the worker count is NOT a lever; S13 proposed — the pattern lever)
+
+- **S12-C RUN AND DECIDED (the primary agent's screen, complete 13:03:01Z; my annotation):**
+  w=5 22.906 (+1.67%), w=6 20.904 (−7.22%), w=12 12.065 (−46.45%) vs the reused w=8 anchor
+  22.53 (the promotion compose-clean empty; all jsons in `research/s12c/`). **NO config wins
+  ≥ +3% → the negative record: the worker count is NOT a lever on this box; the champion
+  config stays w=8.** The direction is non-monotonic (8 > 5 > 6 > 12) — both the engine's
+  5-worker recommendation AND the "more outstanding loads until DRAM latency saturates"
+  hypothesis are dead on live decode. The w=12 run surfaced a NEW engine-warning class
+  (WSL2's process thread cap: "12 CPU expert workers are configured, but this process can
+  run only 12 CPU threads. The extra workers spin and take time from the others") — the −46%
+  confirms it. The champion restored (compose, w=8) healthy 13:03:01Z.
+- **S13 PROPOSED (a full item in SUGGESTIONS.MD, above the already-present list): the pool's
+  pattern lever.** The S12-B ceiling + the roofline arithmetic: the pool reads ~742 MB/step
+  (369 × 2.01 MB) at ~16.7 GB/s effective = 60% of the page-size-independent 28 GB/s
+  warmed-stream ceiling → the scattered 369 × 2 MiB chunks' pattern cost (prefetcher
+  defeat + DRAM row-miss terms) is the remaining gap. Cheapest checks: (a) the
+  pattern-realistic microbench (369 scattered 2 MiB reads per round, 5 vs 8 threads,
+  server-stopped — the S12-B harness extended); (b) the next-layer software prefetch; (c)
+  the shared-expert arena re-pack. Bounded by Lever A's STRATA_POOLMS split. Marked
+  unconfirmed static analysis until A's lines + (a)'s bench land.
+- **The queue now:** Lever A's STRATA_POOLMS build (the decisive pool/attention split) →
+  S13-(a)'s pattern microbench (if A's lines confirm the ~16.7 GB/s reading) → the §9.0
+  halves that remain feasible. The §9.0 ncu counters stay unanswerable (perf/nsys/ncu
+  absent — recorded in S10).
+- **A WSL-client hiccup noted (~13:04Z): one `wsl -d Ubuntu` call timed out (WSL/SERVICE/
+  WSAETIMEDOUT) mid-session; the Windows-native tools (read/grep/edit on the C: checkout)
+  carried the work; the retry pattern from the notebook's launch lessons applies.**
+- **Next (research agent):** Lever A's build spec check (the primary agent's next build);
+  annotate its first pool-ms lines when they land; keep the promotion ledger's integration
+  semantics (cp strata_q5k_cand → out/strata + serve_262k_q5k.sh) visible for every future
+  chain.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
