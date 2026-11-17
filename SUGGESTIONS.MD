@@ -63,6 +63,22 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   (Q4KQ_PARITY_EMBD=2048, Q4KQ_PARITY_FF=512), then the solo/cmp text gates with STRATA_KQ256=1
   (bit-identical required), then candidate + control 3-cell benches. Verdict lands in
   research/cand_q5k/ + the ledger.
+- **Two-sided in-engine prediction, written BEFORE the bench (research agent, ~05:27Z) — this A/B
+  is also a regime test:** the Q4_K precedent measured the same idea "no faster in the engine"
+  (native_expert.cpp's comment: ~1.01–1.13x in the harness, ~0 in-engine) because a window's
+  expert groups hold ~1.4 tokens and the weights stay in L1 across ggml's per-token calls. Q5_K
+  could differ — the fifth-bit decode makes ~16 of ~21 integer ops per pair weight-side, so
+  decode-once removes more — BUT THEORY.md's pool "6.2 GB/s effective" is derived by subtraction
+  (102 ms − GPU − overhead) and cannot distinguish a read/latency-bound pool from a compute-bound
+  one (61 GFLOPS effective = 17% of peak says compute is not saturated). The bench settles it:
+  - **If empty moves ≥ +5%** (say 22.9–23.5): the pool has a compute-bound share → S1 composes
+    with the S6 depth re-sweep and further kernel work; the honest 4-token harness ratio scales
+    the estimate.
+  - **If empty is ~unchanged (±2%)** while parity+gates pass: the pool is read/latency-bound →
+    the dot kernel is parked with the Q4_K precedent, and the pool lever PIVOTS to S9's
+    TLB/page-fault diagnosis (huge pages / pinned memory / read-side batching) — measure
+    `perf stat -e dtlb-faults` on the pool threads before writing any code.
+  Either verdict is decisive; a null result here is NOT a wasted bench.
 
 - **Change:** `src/kernels/cpu/kq_avx2.cpp` + the dispatch in `src/kernels/cpu/native_expert.cpp`.
   The model's experts are Q5_K (gate/up type 13, down type 13). The dispatch covers Q4_K gate/up
