@@ -1,14 +1,12 @@
-[Engine] q5k chain v5: the parity configure fixed (cuda env + toolchain replicated)
+[Engine] q5k parity gate GREEN: bit-exact at the model's shapes, 1.45-1.54x 4-token ratio
 
-v4's parity cmake failed at strata_cuda_toolchain: cmake could not find nvcc
-because build_kit.sh sources cuda_env.sh + runs strata_find_cuda before
-configuring and the chain's parity step did not. The failure path behaved
-correctly (the champion restored and serving since 06:17Z; the compose binary
-survived - out/strata_q5k_cand, 85,113,360 B, the champion + the q5k kernel).
-v5 replicates build_kit.sh's toolchain setup in the parity step (cuda_env.sh +
-strata_find_cuda + the private cmake if the system's is too old + ccache),
-starts parity_build clean, and re-runs the chain from the top: verdict file =
-keep (no revert), the build = cache hits (the compose binary confirmed), the
-configure log confirms the AVX2 dot config. Handoff #7 updated.
+native_expert_parity --synthetic q5_K/q5_K (the compose tree, chain v5):
+0 of 36 token-sets differ in any bit for BOTH gate/up and down rows vs ggml's
+live AVX2 vec_dot; width invariance holds (1 vs 3 tokens: 0 rows differ); the
+honest 4-token ratio is gate/up 1.45x (114 vs 165 us) and down 1.54x (141 vs
+217 us) - inside the S1 spec's 1.5-2x design target and above the scratch's
+contested 1.33x. 0 failures overall. The solo/cmp gates + the empty/ctx32k
+A/B follow in the chain; the regime test reads the empty delta (>= +5% =
+compute-bound share -> S1 composes; +/-2% = latency-bound -> pivot to S9/S11).
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)
