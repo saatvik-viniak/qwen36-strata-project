@@ -945,6 +945,58 @@ next experiment (research agent, ~04:45Z):
 4. **Tensor-core attention (A8):** dequant int4→f16 in shared memory, `mma.sync m16n8k16` for QK^T
    and PV with fp32 accumulation; only if the SIMT split-K path still leaves headroom after S2.
 
+## S12 — The host-path decisive check: the pool's share, the TLB term, and the worker count (the roofline's follow-up)
+
+**Status: NEW (research agent, ~08:44Z) — the empty-cell roofline makes the host path the
+primary lever family; these three probes are the smallest decisive checks, cheapest first.
+Each is one measurement, run BETWEEN benches (never during a cell — the bench-validity rule).**
+
+- **Correction to the roofline first (research agent, honest):** the expert dot runs on the
+  CPU ("the rest of a batch of <= 128 rows on 9 CPU threads" — the log's own line), so the
+  ~650–745 MB/step are CPU→DRAM reads, NOT GPU→PCIe. The PCIe-pinned anchor in the roofline
+  item was the wrong frame. The right frame: the champion's 21.89 tok/s empty = 25.4 ms per
+  accepted token (the session line: 512 generated in 25,396 ms — matches the bench's 20.16);
+  650–745 MB in that time = ~14.4–16.3 GB/s effective from a ~51 GB/s DDR4 dual-channel peak
+  (S11's own figure) = **~30% of peak → page-walk/TLB/latency-bound**, exactly S11's
+  mechanism conclusion. Consequences: (1) THP (S11-3) targets the right term — its premise
+  is STRONGER, not weaker; (2) the pin failure is a diagnostic curiosity, NOT a speed lever
+  (pinned vs pageable makes no difference for CPU reads — pins matter only for GPU DMA, and
+  the experts never DMA at decode); S11's lever 1 stays diagnostic-only; (3) S11's stale
+  "6.2 GB/s effective" figure is superseded — it is incompatible with the champion's
+  measured 21.89 tok/s (it would imply a ~100 ms/step pool); re-derive from the pool-ms
+  lines this item adds.
+- **Lever A (observability, one fprintf, env-gated `STRATA_POOLMS=1`, default OFF):** log the
+  pool's per-step wall ms + the bytes it read + the effective GB/s — one line per step in
+  the pool's step path. This gives the pool's SHARE of the 25.4 ms step on every future
+  bench without ncu (the current log has NO per-step pool accounting — the 74 "pool"
+  mentions are the load-time warning only). If the pool is ~100% of the step → the DRAM
+  path is everything (levers B/C); if it is ~50% → the GPU attention overlaps well and the
+  pool levers halve in value.
+- **Lever B (the microbench, ~60 s, CPU-only): the arena-sized TLB test.** malloc 21.14 GiB,
+  touch all pages, then a sequential read pass ×3 timed by 5 worker threads (the engine's
+  own recommended count) vs 8 threads; then apply the S11-3 recipe verbatim (pad + 2 MiB
+  round-up + `madvise(MADV_HUGEPAGE)`) and repeat ×3. Decision rule: THP-on ≥ +10% faster →
+  implement STRATA_THP (the spec is ready in S11-3); ±5% → the TLB term is small at the CPU
+  level → drop S11-3 and pivot to streaming/overlap levers. Record `free -m` alongside (the
+  RSS-inflation caveat S9 already carries).
+- **Lever C (config only, the engine's own recommendation): the worker-count test.** The
+  engine WARNS at every load: "8 CPU expert workers are configured, but this CPU has 6
+  physical cores. Two workers on one core share its memory bandwidth and slow each other
+  down. Recommended: --pool-workers 5" (engine-log lines 589/597/605/614/622/631). The
+  current serve scripts oversubscribe SMT siblings. Three configs, one load + one empty cell
+  each: `--pool-workers 5` (the engine's recommendation), 6 (physical cores + the engine's
+  own pick), and 12 (S11-2's original SMT idea). If the pool is latency-bound (the roofline
+  says ~30% of peak), more outstanding loads should raise the read rate until DRAM latency
+  saturates — 12 may win; if the engine's warning is right, 5 wins. Either way it is one
+  serve flag per run and composes with THP.
+- **Feasibility note (unconfirmed static analysis, recorded for the ledger):** under the
+  best-case DRAM path (the pool at DDR4 peak, the GPU attention fully overlapped), the
+  empty cell's ceiling is ~25–35 tok/s. The 2.00x empty target (43.85) needs a mechanism
+  outside this bound — the expert weights cannot fit VRAM (21.14 GiB vs 8 GB), the
+  GPU-streaming path is PCIe-bound (~24 tok/s ceiling), and the CPU DRAM path caps at
+  ~51 GB/s. This is a physics note on THIS box's configuration, not a verdict; the
+  promotion ledger should carry it as the target's feasibility context.
+
 ---
 
 ## Already present (do NOT propose these again)

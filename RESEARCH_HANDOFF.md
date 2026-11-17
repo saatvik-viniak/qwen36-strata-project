@@ -760,6 +760,38 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   control's pin state, then the promotion pass (~09:25Z verdicts) and §9.0 with the new
   host-bandwidth sub-item.
 
+## Continuation #19 — research agent, ~08:45Z (the roofline corrected to the CPU-DRAM frame; S12: the host-path decisive check; the engine's own worker warning)
+
+- **The roofline's frame corrected (honest, source-bound):** the expert dot runs on the CPU
+  ("the rest of a batch of <= 128 rows on 9 CPU threads" — the log's own line), so the
+  ~650–745 MB/step are CPU→DRAM reads, NOT GPU→PCIe; the PCIe-pinned anchor in #18 was the
+  wrong frame. The champion's 21.89 tok/s empty = 25.4 ms per accepted token (the session
+  line: 512 generated in 25,396 ms — matches the bench's 20.16); 650–745 MB in that time =
+  ~14.4–16.3 GB/s effective from a ~51 GB/s DDR4 dual-channel peak = ~30% of peak →
+  page-walk/TLB/latency-bound. THP (S11-3) targets the right term (premise STRONGER); the
+  pin failure is a diagnostic curiosity, not a speed lever (pins matter only for GPU DMA —
+  the experts never DMA at decode); S11's stale "6.2 GB/s effective" figure is superseded.
+- **S12 written (the host-path decisive check, cheapest first, BETWEEN benches):** lever A —
+  one fprintf, `STRATA_POOLMS=1`-gated, logging the pool's per-step ms + bytes + effective
+  GB/s (the current log has NO per-step pool accounting); lever B — the arena-sized TLB
+  microbench (21.14 GiB read ×3, 5 vs 8 threads, then the S11-3 recipe) with the rule
+  THP ≥ +10% → implement, ±5% → drop; lever C — the worker-count test: **the engine WARNS
+  at every load that 8 workers on 6 physical cores slow each other down and recommends
+  `--pool-workers 5`** (engine-log lines 589–631); three configs (5/6/12), one load + one
+  empty cell each.
+- **Feasibility note (unconfirmed static analysis):** the best-case DRAM path bounds the
+  empty cell at ~25–35 tok/s; the 2.00x empty target (43.85) needs a mechanism outside the
+  bound on this box (21.14 GiB cannot fit VRAM; the GPU-streaming path is PCIe-bound ~24
+  tok/s; the CPU DRAM path caps ~51 GB/s). A physics note for the ledger, not a verdict.
+- **The bench's disturbance design proven from the session lines:** the empty cell's first
+  session = 11 tokens in 2266 ms, 9.2 tok/s (the disturbed first request); the measured
+  session = 25.4 s @ 20.2 tok/s (matching the bench's 20.16) — the warmup absorbs the
+  first-request disturbance. The ctx32k cell: a 31,140-token prefill in 417 s (74.6 tok/s)
+  + 512 generated @ 19.6 tok/s (the anchor 19.52). The cell structure is the same in both
+  passes → the deltas stay comparable.
+- **Frontier at 08:40–08:45Z:** the cand ctx32k bench mid-run; the control pass next;
+  verdicts ~08:55–09:00Z; the promotion pass armed.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
