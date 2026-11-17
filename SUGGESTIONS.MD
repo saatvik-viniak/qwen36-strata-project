@@ -94,6 +94,29 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   q5k verdicts await the relaunch. Note the failure cost the chain NOTHING irreversible: the
   candidate binary is preserved (out/strata_q5k_cand? — check), the champion is restored, and the
   uint4 patch stays in the source per the "keep" verdict.
+- **Artifacts + mechanism VERIFIED (research agent, ~06:26Z, md5 + cmake source read):** (1)
+  `out/strata` md5 == `out/strata_byte_loop` md5 (74c5f1f4) — the TRUE champion config is
+  serving, as the v4 design intends; (2) **`out/strata_q5k_cand` EXISTS** (6929c45a, mtime
+  06:16Z) — the line-106 `cp` ran before the parity step, so the failed run lost nothing (a
+  relaunch rebuilds incrementally in ~19 s anyway); (3) the mechanism confirmed at the source:
+  `cmake/backends/cuda.cmake` runs `enable_language(CUDA)`, and cmake's CUDA-compiler search
+  needs `CUDA_HOME`/PATH — the runner's shell never had them because `build_kit.sh` sources
+  `cuda_env.sh` (line 24) but the runner's raw parity cmake (line 112) does not source it.
+  **The surgical fix for `research/cand_q5k_runner.sh` line 112 (the `if cmake -G Ninja -S . -B
+  parity_build ...`): make the condition source-and-find first — `. ./cuda_env.sh &&
+  strata_find_cuda && cmake -G Ninja -S . -B parity_build ...` (cuda_env.sh only DEFINES
+  `strata_find_cuda`; it must also be CALLED, as build_kit.sh does — note the cwd at line 112 is
+  already `/home/dmin/qwen36-strata-project` from line 75), or append
+  `-DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc` to the flags.** Robustness: also `rm -rf
+  parity_build` before reconfiguring — the failed configure left a partial CMakeCache, and a
+  fresh configure removes stale-cache risk for pennies (the parity test tree is small). The
+  relaunch then runs end-to-end from the current state: the done-file wait passes
+  (cand_uint4.done exists), the verdict read passes (uint4_verdict.txt = "keep"), apply_q5k is
+  idempotent (the patch is already in the source), the base preserve passes (byte_loop exists),
+  the build is incremental (~19 s), then parity → gates → the 2-cell A/B (~40–50 min
+  to verdicts). One ledger correction owed: the primary agent's hillclimb ledger entry stamped
+  06:20:00Z says the chain is "running" — it actually died at 06:16:29Z (parity_build_failed in
+  cand_q5k.done, confirmed); relaunching promptly makes that entry true again.
 
 - **Change:** `src/kernels/cpu/kq_avx2.cpp` + the dispatch in `src/kernels/cpu/native_expert.cpp`.
   The model's experts are Q5_K (gate/up type 13, down type 13). The dispatch covers Q4_K gate/up
@@ -694,6 +717,20 @@ next experiment (research agent, ~04:45Z):
   the QK half recovers to ~10–15 ms, ≈ 13.5–14.5 (+15–24%) on a partial win; <12.5 means the
   mechanism didn't engage (check SASS for spill before rejecting the idea). Follow-up if it passes:
   the same uint4 pattern on the V path, then split-K. VERIFY phase started 05:00:49Z.
+- **2026-11-17 ~06:26Z — the q5k chain v4 died at the parity cmake; the surgical fix is written
+  into S1 (this commit).** The chain applied the "keep" verdict, applied the kernel (idempotent),
+  preserved the TRUE champion (out/strata_byte_loop → out/strata_q5k_base), built the q5k
+  candidate binary (out/strata_q5k_cand exists, 6929c45a), then FAILED at 06:16:27Z: the raw
+  parity cmake finds no nvcc ("No CMAKE_CUDA_COMPILER could be found" — cmake/backends/cuda.cmake
+  runs enable_language(CUDA), and the runner's shell lacks CUDA_HOME/PATH because only
+  build_kit.sh sources cuda_env.sh). Champion restored 06:16:29Z (md5-verified == byte_loop);
+  nothing irreversible lost. The fix (S1, implementation-ready): at the runner's line 112 make
+  the condition `. ./cuda_env.sh && strata_find_cuda && cmake ...` (cuda_env.sh only DEFINES
+  strata_find_cuda — it must also be CALLED), or append
+  -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc; plus rm -rf parity_build before reconfiguring
+  (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
+  state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
+  06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
 - **2026-11-17 ~06:12Z — THE UINT4 VERDICT: ctx128k +52%, promote pending a clean re-measure
   (this commit).** ctx128k landed 17.77 tok/s (measured decode 28.81 s vs the champion's 43.91 s;
   warmup ≈ measured — the post-load disturbance decayed by 38 min; prefill at champion speed).
