@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 32768,
+  "prompt_tokens_actual": 31130,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 98859.01433900108,
+      "decode_ms": 25792.061948999617,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text block.\n   - The core text is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This exact sentence pair is repeated many times (looks like ~100+ repetitions).\n   - There's no explicit question or prompt. It's just a massive repetition of a definition/description of \"Autoresearch\".\n\n2.  **Identify Key Concepts:**\n   - \"Autoresearch\" is defined as a loop/process.\n   - Steps: Change one thing -> Measure it -> Keep if better -> Undo if not.\n   - \"The judge owns the clock and the check.\" This seems like a metaphorical or specific rule about evaluation/verification in this process.\n   - The repetition might be intentional (to emphasize, test attention, or just a copy-paste artifact).\n\n3.  **Determine Response Strategy:**\n   - Acknowledge the input.\n   - Extract and summarize the core concept clearly.\n   - Address the repetition if relevant (e.g., note it, or just focus on the meaning).\n   - Ask what the user wants to do with this information (e.g., explain it, apply it, format it, etc.).\n   - Keep it concise since the input is just a repeated definition.\n\n4.  **Draft Response (Mental Refinement):**\n   You've shared a repeated definition of **Autoresearch**. At its core, it describes an iterative optimization loop:\n   1. **Change** one variable/parameter.\n   2. **Measure** the outcome.\n   3. **Keep** the change if it improves the result, **undo** it if it doesn\u2019t.\n   4. The phrase *\"The judge owns the clock and the check\"* likely emphasizes that evaluation (timing/performance) and validation (correctness/quality) are strictly controlled and objective during each iteration.\n\n   Since this is repeated extensively, are you looking for:\n   - A deeper explanation of how Autoresearch works in practice?\n   - Help applying it to a specific system or problem?\n   - Formatting/condensing the text?\n   - Something else?\n\n   Let me know how I",
+      "first": 16399.292086785,
+      "last": 16425.084148734
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 93998.56652000017,
+      "decode_ms": 23551.810667999234,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text block.\n   - The core text is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This exact sentence pair is repeated many times (looks like ~100+ repetitions).\n   - There's no explicit question or prompt. It's just a massive repetition of a definition/description of \"Autoresearch\".\n\n2.  **Identify Key Concepts:**\n   - \"Autoresearch\" is defined as a loop/process.\n   - Steps: Change one thing -> Measure it -> Keep if better -> Undo if not.\n   - \"The judge owns the clock and the check.\" This seems like a metaphorical or specific rule about evaluation/verification in this process.\n   - The repetition might be intentional (to emphasize, test attention, or just a copy-paste artifact).\n\n3.  **Determine Response Strategy:**\n   - Acknowledge the input.\n   - Extract and summarize the core concept clearly.\n   - Address the repetition if relevant (e.g., note it, or just focus on the meaning).\n   - Ask what the user wants to do with this information (e.g., explain it, apply it, format it, etc.).\n   - Keep it concise since the input is just a repeated definition.\n\n4.  **Draft Response (Mental Refinement):**\n   You've shared a repeated definition of **Autoresearch**. At its core, it describes an iterative optimization loop:\n   1. **Change** one variable/parameter.\n   2. **Measure** the outcome.\n   3. **Keep** the change if it improves the result, **undo** it if it doesn\u2019t.\n   4. The phrase *\"The judge owns the clock and the check\"* likely emphasizes that evaluation (timing/performance) and validation (correctness/quality) are strictly controlled and objective during each iteration.\n\n   Since this is repeated extensively, are you looking for:\n   - A deeper explanation of how Autoresearch works in practice?\n   - Help applying it to a specific system or problem?\n   - Formatting/condensing the text?\n   - Something else?\n\n   Let me know how I",
+      "first": 16519.085058674,
+      "last": 16542.636869342
+    }
+  ],
+  "decode_tps": 21.739305194724345,
+  "prefill_tps": 331.17526311825657,
+  "ttft_ms": 93998.56652000017,
+  "warmup_ttft_ms": 98859.01433900108,
+  "peak_gib": 6.6083984375
+}

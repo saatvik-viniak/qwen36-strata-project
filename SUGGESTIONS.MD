@@ -2232,3 +2232,40 @@ See the Q4_K_S redirect entry at the bottom update log for the full plan.**
     load order's fr decides S; the T4 trial must record its load's free-VRAM line as
     the gate's input (the two loads today differ by 0.33 GiB).**
   Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
+- **2026-11-17 ~18:40Z — PASS 2B (THE DRIFT BOUND) HARVESTED: THE DECODE CELLS DRIFT
+  ±~6% CELL-BY-CELL, NON-MONOTONIC — THE COMPARATORS STAY QUALIFIED (the continuing
+  research agent, this commit).** The second pass ran the champion config unchanged
+  (8833c30b, MTP 2, greedy, CT 8, KV int4, KQ256, 262k; the champion's health gate
+  passed 17:55:01Z — the original pass-2 script's T2-marker gate died with the trial
+  tree), settle 900 s, no watchdog: empty measured 18:11Z, ctx32k 18:15Z, ctx128k
+  18:32Z; **q4ks_pass2.done = bench_complete 18:32:48Z** (truthful; all three cells
+  verified). The JSONs: research/q4ks_baseline_pass2/.
+  - **The pair (pass 1 16:01–16:23Z → pass 2b 18:11–18:32Z):** empty **23.51 → 24.81
+    (+5.5%)**; ctx32k **23.03 → 21.74 (−5.6%**; the prefill 323.2 → 331.2 = +2.5%);
+    ctx128k **18.19 → 17.99 (−1.1%**; the prefill 251.6 → 254.6 = +1.2%).
+  - **The drift bound: ±~6% on the decode cells, direction NON-MONOTONIC (the empty
+    cell faster, ctx32k slower, 2 h apart), the prefill steadier (±~2.5%)** → the
+    +4.4/+5.8/+3.8 model-switch comparators sit INSIDE the band → they stay
+    **QUALIFIED**; the magnitudes are not resolved by single passes. The direction
+    though: **empty positive in BOTH passes** (+4.4% / +10.1% vs the same row-3
+    anchor 22.53), ctx128k positive in both (+3.8% / +2.7% vs 17.52), **ctx32k
+    UNRESOLVED** (+5.8% / −0.1% vs 21.76 — the sign flips with the window). The
+    honest model-switch verdict: **the Q4_K_S is not slower than the Q5 champion on
+    any cell in either pass; the empty gain is the only directionally consistent one.**
+  - **Protocol notes:** the EOS@404 reproduced on the empty cell (404 tokens, the
+    same text — the caveat stands); ctx32k/ctx128k decoded the full 512; the peaks
+    6.59–6.63 unchanged. **The 2.00x targets stay anchored to pass 1** (pre-registered:
+    empty 47.02, ctx32k 46.06, ctx128k 36.38 — no re-anchoring on a single pass).
+  - **THE TOUCHER SPEC STAGED** (research/TOUCHER_SPEC.md — drafted from T2's
+    confirmed stall: the mechanism diagnostic (VmSwap/smaps before and after an idle
+    window) gates any implementation; the candidates ranked C1 the boundary
+    WILLNEED / C2 the idle toucher / C3 mlock last; the acceptance criteria
+    pre-registered; the honest bound ~1–3 s per idle→resume — it does NOT move the
+    settled benchmark cells).
+  - **T3 LAUNCHING (the announcement): the champion stops ~18:45Z for ~10 min (my
+    window)** for the S13-A pattern microbench (server-stopped; the runner requires
+    S13A_GO=1 + no engine alive, builds, runs ~2–3 min CPU-only at the Q4_K_S arena
+    17.45 GiB, then restores the champion with the md5 receipt and waits health).
+    After T3's harvest: T4's slots (the staging shrink — the #1 structural lever)
+    and the toucher's step-0 diagnostic on the next natural idle.
+  Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.

@@ -61,6 +61,9 @@ Server context 262144 throughout (the int4 KV cache is 1.40 GiB there), model
 | 7 | 2026-11-17 16:49Z | 8833c30b | trial T1 the MTP-off isolation, ctx32k cell (31,130 actual tokens) | ctx32k | 18.25 | 325.2 | 95,711 | 6.62 | trial (**−20.7%** vs 23.03; the prefill MTP-independent as expected) |
 | 7 | 2026-11-17 17:06Z | 8833c30b | trial T1 the MTP-off isolation, ctx128k cell (124,520 actual tokens) | ctx128k | 15.71 | 254.1 | 489,997 | 6.62 | trial (**−13.7%** vs 18.19) — **the verdict: the MTP drafting amortization WINS at 262k (~+14–21%/cell); the clean bench's MTP-off +26% empty came WITH the S=15 slots at 64k and does NOT transfer; the champion config keeps MTP 2 + greedy** |
 | 8 | 2026-11-17 17:33Z | df3c3230 (the POOLMS binary) | **trial T2 the Q4_K_S poolms capture** (STRATA_POOLMS=1, the champion config, settle 900 s, no watchdog): the capture's bench empty **22.88 = −2.7% vs the champion's 23.51 (a CLEAN window** — the Q5 capture's −15.3% drift did NOT reproduce). **The idle-residency stall CONFIRMED on the Q4_K_S**: the warmup round's pool calls after the 900-s idle = 767 calls >10 ms = 45.9% of its SUM (max 208 ms; the aggregate 6.99 GB/s) vs the measured round's 0.1% (20.07 GB/s) — the stall transfers to the smaller pageable arena (the pin failed there too). The measured round: the pool = **55.8% of the step** (stall-free 55.7%), **1,237 MB/step** (the smaller blobs' arithmetic ✓), the aggregate **20.07 GB/s = 72% of the 28 ceiling → in the ~14–20 band → S13-(a) proceeds** (the same verdict as the Q5's capture; the pattern cost is model-independent); gu 63.7%/down 35.3%/q 0.1%; 42.2 calls/step ≈ 41; 2.52 tok/step; 17.2 distinct experts/call (identical to the Q5's) | empty | 22.88 | 4.1 | 242 | 6.59 | measurement (the pool-share reading, clean −2.7% window) | the stall transfers → the toucher lever is GO; the pattern cost confirmed model-independent; T4's slots shrink the pool's chunk directly |
+| 9 | 2026-11-17 18:11Z | 8833c30b | **pass 2b the drift-bound second pass, empty cell** (the champion config unchanged, settle 900 s from 17:55:01Z, no watchdog; the gate = the champion's health directly — the original pass-2 script's T2-marker gate died with the trial tree): **24.81 tok/s = +5.5% vs pass 1's 23.51**; the EOS@404 reproduced (the same text); +10.1% vs the row-3 anchor 22.53 | empty | **24.81** | 4.4 | 228 | 6.59 | the drift bound (empty: +5.5% between passes 2 h apart) | the decode cells drift ±~6% cell-by-cell NON-MONOTONIC → the +4.4/+5.8/+3.8 comparators stay QUALIFIED; empty positive in BOTH passes |
+| 9 | 2026-11-17 18:15Z | 8833c30b | pass 2b, ctx32k cell (31,130 actual tokens; full 512 decoded): **21.74 = −5.6% vs pass 1's 23.03**; the prefill 331.2 vs 323.2 = +2.5%; −0.1% vs the row-3 anchor 21.76 | ctx32k | **21.74** | 331.2 | 94,399 | 6.61 | the drift bound (ctx32k: −5.6% between passes; the sign vs row 3 FLIPS with the window → unresolved) | the prefill steadier (±~2.5%) than the decode (±~6%) |
+| 9 | 2026-11-17 18:32Z | 8833c30b | pass 2b, ctx128k cell (124,520 actual tokens): **17.99 = −1.1% vs pass 1's 18.19**; the prefill 254.6 vs 251.6 = +1.2%; +2.7% vs the row-3 anchor 17.52 (the done marker bench_complete 18:32:48Z) | ctx128k | **17.99** | 254.6 | 489,083 | 6.63 | the drift bound (ctx128k: −1.1% between passes; positive vs row 3 in both passes) | the comparators' honest verdict: the Q4_K_S not slower on any cell in either pass; the targets stay anchored to pass 1 |
 
 **The initial tps (pass 1)**: empty 21.92, ctx32k 18.94, ctx128k 11.80 decode tok/s.
 **Repeats (final)**: empty 21.86 (0.3%), ctx32k 20.44 → 19.52 (median 19.52), ctx128k 11.66 (1.19%).
@@ -92,7 +95,14 @@ overall.** The model-switch comparators (vs the compose champion's same-day cell
 empty +4.4% / ctx32k +5.8% / ctx128k +3.8% — **qualified** (single pass both sides, the
 cells 6.5 h apart inside the −15.3% day-drift band; a second Q4_K_S pass in a fresh
 window is the drift-bound proposal). The old mission-baseline deltas (+7.2/+18.0/+56.0)
-CONFLATE the compose binary's promotion gain — not a model-switch verdict. The trial
+CONFLATE the compose binary's promotion gain — not a model-switch verdict. **The
+drift bound LANDED (pass 2b, rows 9, 18:11–18:32Z): the decode cells drift ±~6%
+cell-by-cell NON-MONOTONIC between passes 2 h apart (empty +5.5%, ctx32k −5.6%,
+ctx128k −1.1%; the prefill steadier ±~2.5%) → the comparators stay QUALIFIED
+(single pass both sides); empty is positive in both passes vs the same row-3 anchor,
+ctx128k positive in both, ctx32k unresolved (the sign flips with the window); the
+Q4_K_S is not slower on any cell in either pass. The 2.00x targets stay anchored to
+pass 1.** The trial
 queue on this model: T1 the MTP-off isolation (RUNNING 16:28Z), T2 the poolms capture
 (THE discriminator for the idle-residency stall on the smaller arena), T3 the S13-A
 pattern microbench (staged, compile-checked), T4 the staging shrink → the slots at 262k,

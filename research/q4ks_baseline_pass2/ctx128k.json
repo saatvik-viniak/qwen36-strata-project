@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 131072,
+  "prompt_tokens_actual": 124520,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 488727.9131779978,
+      "decode_ms": 28088.17581400217,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text block.\n   - The core message is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This phrase is repeated hundreds of times.\n   - There's no explicit question or prompt. It's just a statement repeated ad infinitum.\n\n2.  **Identify Key Concepts:**\n   - \"Autoresearch\": Likely refers to an automated research/optimization process.\n   - \"Loop: change one thing, measure it, keep the change if it is better, and undo it if it is not.\" This describes a classic single-parameter optimization algorithm, similar to coordinate descent, hill climbing, or a simple evolutionary strategy. It's essentially a greedy local search with rollback.\n   - \"The judge owns the clock and the check.\" This is a metaphorical or technical statement. \"Judge\" likely refers to the evaluation metric/system. \"Clock\" = time/latency/performance metric. \"Check\" = correctness/accuracy/validation metric. So the judge measures both speed and correctness.\n\n3.  **Determine User Intent:**\n   - Since it's just a repeated statement, the user might be:\n     a) Testing my ability to handle repetition/extract meaning.\n     b) Sharing a concept/philosophy for feedback.\n     c) Implicitly asking for an explanation, validation, or expansion on the concept.\n     d) Just pasting something and expecting a response.\n   - I should acknowledge the core idea, explain it clearly, validate its merits, and offer to expand or apply it if needed.\n\n4.  **Formulate Response Strategy:**\n   - Acknowledge the core concept clearly.\n   - Break down the two main parts: the optimization loop and the judge's role.\n   - Explain the algorithmic/technical meaning (single-variable greedy search with rollback, multi-objective evaluation).\n   - Discuss pros/cons or practical considerations.\n   - Ask clarifying questions or offer next steps.\n   - Keep it concise despite the input's length.\n\n5.  **Draft Response (Mental Refinement):**\n   You\u2019ve shared a concise description of a classic optimization strategy paired with a clear evaluation framework. Let\u2019s break",
+      "first": 17034.656922705,
+      "last": 17062.745098519
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 489083.34153800027,
+      "decode_ms": 28467.689280998457,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text block.\n   - The core message is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This phrase is repeated hundreds of times.\n   - There's no explicit question or prompt. It's just a statement repeated ad infinitum.\n\n2.  **Identify Key Concepts:**\n   - \"Autoresearch\": Likely refers to an automated research/optimization process.\n   - \"Loop: change one thing, measure it, keep the change if it is better, and undo it if it is not.\" This describes a classic single-parameter optimization algorithm, similar to coordinate descent, hill climbing, or a simple evolutionary strategy. It's essentially a greedy local search with rollback.\n   - \"The judge owns the clock and the check.\" This is a metaphorical or technical statement. \"Judge\" likely refers to the evaluation metric/system. \"Clock\" = time/latency/performance metric. \"Check\" = correctness/accuracy/validation metric. So the judge measures both speed and correctness.\n\n3.  **Determine User Intent:**\n   - Since it's just a repeated statement, the user might be:\n     a) Testing my ability to handle repetition/extract meaning.\n     b) Sharing a concept/philosophy for feedback.\n     c) Implicitly asking for an explanation, validation, or expansion on the concept.\n     d) Just pasting something and expecting a response.\n   - I should acknowledge the core idea, explain it clearly, validate its merits, and offer to expand or apply it if needed.\n\n4.  **Formulate Response Strategy:**\n   - Acknowledge the core concept clearly.\n   - Break down the two main parts: the optimization loop and the judge's role.\n   - Explain the algorithmic/technical meaning (single-variable greedy search with rollback, multi-objective evaluation).\n   - Discuss pros/cons or practical considerations.\n   - Ask clarifying questions or offer next steps.\n   - Keep it concise despite the input's length.\n\n5.  **Draft Response (Mental Refinement):**\n   You\u2019ve shared a concise description of a classic optimization strategy paired with a clear evaluation framework. Let\u2019s break",
+      "first": 17551.833997563,
+      "last": 17580.301686844
+    }
+  ],
+  "decode_tps": 17.98530238777576,
+  "prefill_tps": 254.59873486679606,
+  "ttft_ms": 489083.34153800027,
+  "warmup_ttft_ms": 488727.9131779978,
+  "peak_gib": 6.625
+}
