@@ -1,13 +1,13 @@
-[Benchmark] Runner-2 death: mid-run edit killed bash mid-queue; runner-3 + cand_runner launched
+[Engine] Ground the Q5_K multi-token lever: type 13 gu+down fall to the AVX1 singleton
 
-Trial B (ct5) complete: empty 21.69 (-0.9%), ctx32k 19.33 (-1.0%), ctx128k 11.71
-(-0.2%) — a complete wash, REJECT. Trial C (mtp3) and D (mmqslots2) never ran:
-rewriting trial_runner2.sh while it was executing made bash resume at a stale file
-offset and die on a syntax error at 03:30:23Z ("never edit a running script" —
-violated my own lesson; the write tool replaced the file the runner was reading).
-The CT 5 server was left on the port. trial_runner3.sh (mtp3 -> mmqslots2 ->
-champion restore, written complete up front) runs detached (pid 46258), and
-cand_runner.sh (pid 46326) waits for trial_runner3.done to start the uint4
-candidate's build + VERIFY + gates + 3-cell bench.
+The model's experts are Q5_K x41 gate/up AND down (prior parse). The pool's
+dispatch (native_expert.cpp) has multi-token AVX-512/AVX-2 kernels only for the
+IQ families, trellis, NVFP4 and kq types 12/7/8 — Q5_K (13) falls to ggml-cpu's
+AVX1 single-token vec_dot per (row, token); the pool runs ~54 GFLOPS effective of
+a ~384 GFLOPS AVX2 peak. A Q5_K multi-token AVX-2 kernel (weights decoded once
+for all tokens, bit-equal to the singleton) is the templated lever with a
+measured 2.0-2.4x precedent at 3 tokens; MTP 2 always runs 3-token windows.
+Trial C (mtp3) empty 20.81 (-4.9%) — MTP 3 loses at empty, as the prior
+session's 32k finding predicted.
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)

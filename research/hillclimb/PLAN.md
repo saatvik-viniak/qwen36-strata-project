@@ -25,6 +25,7 @@ medians 21.89/19.52/11.73 are the promotion reference.
 | 4 | arena hugepages/WILLNEED + pool prefetch | code | pending | — |
 | 5 | int4 attention 128-bit loads | code (dd9fee1: uint4 QK read, 16x fewer L1 tx) | candidate built into main, pending WSL build + VERIFY + bench | attention is transaction-bound (45-57x above the DRAM floor) — the 128k cell's main lever |
 | 6 | MMQ staging sub-chunk shrink → slots+MMQ compose | code | pending | staging 2×max_layer→~4× smaller keeps 7 slots beside the fast prefill |
+| 7 | Q5_K multi-token AVX-2 expert kernels | code | pending | type 13 gu+down fall to the AVX1 singleton today; 2.0-2.4× precedent; the empty/32k compute wall |
 
 ## Walls (evidence in THEORY.md)
 1. CPU expert pool: 0.630 GiB/step at ~6 GB/s effective (empty/32k = 85-90% of step time).
