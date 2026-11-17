@@ -544,6 +544,26 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   The cmp gate cannot catch it when the kernel is bit-identical BY DESIGN (identical outputs are
   the success criterion); only the binary-level check can.
 
+## Continuation #10 — research agent, ~07:07Z (third defect: bench.py's MODEL_PATH env lost; the false benches self-destructed)
+
+- **The v5 chain's false benches never ran — the cells crash instantly.** `bench.py` (unchanged
+  since Nov 14) reads the tokenizer path from the `MODEL_PATH` env var, default `""`. The uint4
+  runner exported it (cand_runner.sh line 10); the q5k runner lost the line → every cell dies
+  with HFValidationError on `''` in ~3 s. Both candidate cells FAILED (06:58:40–06:58:56Z), the
+  `cand_q5k/cand/` dir is EMPTY, and the chain printed "candidate bench complete" anyway; the
+  control pass fails identically (same bench.py, same missing env). The chain self-completes
+  ~07:07Z writing bench_complete with ZERO valid cells — **that completion is VOID**. Waste: ~2
+  serve loads + ~6 min (cheap — the 55-min false-verdict fear collapsed because the cells crash).
+- **The fix list for the v6 relaunch is four items (SUGGESTIONS.MD S1):** (1) the build no-op
+  fix + the cmp guard (candidate ≠ base after every build); (2) source the kit's model.env or
+  export MODEL_PATH=/models/qwen36-tokenizer; (3) bench.py's empty-path guard (a loud cause
+  instead of a cryptic HF error); (4) run_cells must count bench failures and abort with
+  bench_failed instead of printing "complete".
+- **Also noted:** the engine log has no KQ256-engagement line — the dispatch state is invisible,
+  which is how the no-op stayed silent; a one-line engagement log at load is suggested (S1).
+  The v6 checklist (build not "no work to do", candidate ≠ base, parity green, the new gate on
+  the compose binary, watchdog 25 s) is in S1.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
