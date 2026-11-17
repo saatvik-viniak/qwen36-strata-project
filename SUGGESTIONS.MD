@@ -320,6 +320,52 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   (the guard is the point), and the fix was to fold the second patch's edit into the
   expected state. Generalized rule: every patcher that touches a file another patcher's
   table knows must update that table, or fold both edits into one patcher per file.
+- **🛰 THE EMPTY-CELL ROOFLINE (research agent, ~08:38Z, UNCONFIRMED STATIC ANALYSIS — the
+  bytes are source-bound, the bandwidth anchor is an assumption):** the GGUF header (parsed
+  with the vendored gguf.h's own enum — STRING=8, ARRAY=9, UINT64=10, a Gaessler-dialect
+  file, 753 tensors) gives the geometry: 41 layers, embedding 2048, 16 heads with 2 KV
+  heads × key/value length 256, 256 experts with 8 used, expert FFN 512, full-attention
+  interval 4 (≈10–11 of 41 layers full attention, the rest SSM), ctx 262144. The engine log
+  gives the expert arena: 21.14 GiB over 41 × 256 = 10,496 expert slots → 2.01 MB per
+  expert (source-bound). Per decode step: 8 routed experts × 41 layers = 328 reads + ~41
+  shared-expert reads ≈ 650–745 MB from HOST memory (0 experts in VRAM, all in pageable
+  host memory — the log's own line). At the champion's 21.89 tok/s empty that is ~14.4–16.3
+  GB/s sustained host reads — at or near the PCIe-gen3 pinned anchor (~16 GB/s; the
+  assumption). The GPU-side reads are ~10× smaller: the KV cache ≈ 1.5 GiB at 262k int4
+  (10–11 full-attn layers × 2 KV heads × 256 × 2 × 0.5625 B × 262144), read in ~3.7 ms at
+  448 GB/s vs the ~41–47 ms expert stream. **Conclusion (if the arithmetic holds): the
+  empty cell is host-expert-streaming-bound at ~90–95% of its ceiling; the remaining
+  headroom is in the HOST path (pinning, THP, streaming efficiency, staging overlap), not
+  in GPU kernel work.** This reorders the queue: S9/S11 (the host path) primary, S6 and the
+  GPU kernels secondary. It also sharpens the uint4 +52% mechanism: the sector-thrash
+  penalty ADDED to the streaming-bound step and scaled with ctx (bigger KV → more thrash),
+  which is why it was worth +52% at ctx128k and ~0 at empty. §9.0's ncu recipe gains a
+  sub-item: capture the per-step host-read bandwidth (the sectors/bytes counters) to
+  confirm or refute this roofline before spending on GPU-side levers.
+- **THE PIN STATE IS SYSTEMIC — and it VALIDATES the anchors and the THP target (research
+  agent, ~08:38Z, source-bound):** every load this session logs "all 21.14 GiB in pageable
+  host memory" (engine-log lines 598/606/615/623/632); the pinerr-patched compose binary
+  additionally logged the cause at the 08:26Z load: "cudaHostAlloc for the 21.14 GiB expert
+  arena FAILED (out of memory)". So the experts have NEVER been pinned this session (WSL2's
+  RAM cannot host a 21.14 GiB pinned allocation alongside the rest). Consequences: (1) the
+  champion anchors (21.89/19.52/11.73) were measured under the SAME pageable condition —
+  they stay valid comparators; (2) both A/B passes run pageable → the pin state is
+  symmetric → the empty delta stays attribution-clean (verify the control pass's load block
+  shows the same FAILED line when annotating the verdicts); (3) the S11-3/S9 THP lever's
+  target condition is the session's NORM, not a transient failure — its premise (the
+  pageable arena + TLB/page-walk cost on 21.14 GiB of 4 KiB pages ≈ 10.6k 2 MiB pages
+  equivalent) is confirmed live.
+- **OBSERVABILITY PROVEN LIVE (research agent, ~08:37Z):** the kq-log patch's engagement
+  line now appears in the serving binary's log — "strata: q5k multi-token kernel: engaged
+  (STRATA_KQ256=1)" (engine-log line 633, the cand pass's server). Every future A/B's log
+  self-documents which kernel the cells measured — the v5 failure class (a silent dispatch
+  state) is closed permanently.
+- **THE FIRST CELL LANDED (research agent, ~08:35Z):** cand/empty.json = 20.16 tok/s decode
+  (prefill 4.11 tok/s, ttft 243 ms, peak 7.35 GiB — under the 8090 MiB watchdog line).
+  −8% vs the clean anchor 21.89 — consistent with the disturbance window and the pageable
+  regime; the CONTROL pass's empty cell (landing ~08:48Z) is the decisive comparator. The
+  ctx32k cell is running; verdicts ~08:50–09:00Z; then the armed promotion pass fires on
+  bench_complete + the results existing.
 - **RELUNCHED AND PAST THE KILLER STEP (research agent, ~06:40Z):** v5 is running (pid 90529,
   launch 06:33:50Z after the 06:33:43Z edit — no stale-offset race), build ok 06:34:11Z
   (incremental), and **parity PASSED 06:35:01Z** — `native_expert_parity: 0 failures`, with every

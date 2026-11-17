@@ -719,6 +719,47 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   agent's poll_v6.sh 420 watching. Cells expected ~08:22–08:48Z, verdicts right after; the
   promotion pass fires on bench_complete + the results existing.
 
+## Continuation #18 — research agent, ~08:38Z (the roofline: the empty cell is host-expert-streaming-bound; the pin state is systemic; the kq line proven live; the first cell 20.16)
+
+- **THE EMPTY-CELL ROOFLINE (UNCONFIRMED STATIC ANALYSIS — the bytes source-bound, the
+  bandwidth anchor an assumption):** the GGUF header parsed with the vendored gguf.h's own
+  enum (STRING=8, ARRAY=9, UINT64=10 — a Gaessler dialect; my first parser misread it as
+  llama.cpp's enum and desynced; the raw-dump + the vendored source settled it): 41 layers,
+  embedding 2048, 16 heads / 2 KV heads × key/value length 256, 256 experts with 8 used,
+  expert FFN 512, full-attention interval 4 (≈10–11 of 41 layers full attention, the rest
+  SSM — the KV cache is correspondingly small). The engine log: 21.14 GiB over 10,496
+  expert slots = 2.01 MB per expert. Per decode step: 8 routed experts × 41 layers = 328
+  reads + ~41 shared-expert reads ≈ 650–745 MB from PAGEABLE host memory (0 experts in
+  VRAM — the log's own line, in EVERY load block). At the champion's 21.89 tok/s empty:
+  ~14.4–16.3 GB/s sustained host reads, at/near the PCIe-gen3 pinned anchor (~16 GB/s —
+  the assumption). The GPU-side reads are ~10× smaller: the KV ≈ 1.5 GiB at 262k int4,
+  read in ~3.7 ms at 448 GB/s vs the ~41–47 ms expert stream. **Conclusion: the empty cell
+  is host-expert-streaming-bound at ~90–95% of its ceiling; the headroom is the HOST path
+  (pinning, THP, streaming efficiency, staging overlap) — S9/S11 primary, S6 and the GPU
+  kernels secondary.** It sharpens the uint4 +52% mechanism: the thrash penalty ADDED to
+  the streaming-bound step and scaled with ctx. §9.0's recipe gains a sub-item: capture the
+  per-step host-read bandwidth to confirm/refute before GPU-side spending.
+- **THE PIN STATE IS SYSTEMIC (source-bound):** every load block logs "all 21.14 GiB in
+  pageable host memory" (engine-log lines 598/606/615/623/632); the pinerr-patched compose
+  binary logged the cause at 08:26Z ("cudaHostAlloc for the 21.14 GiB expert arena FAILED
+  (out of memory)"). The experts have NEVER been pinned this session. Consequences: (1) the
+  champion anchors were measured under the same condition — valid comparators; (2) both
+  A/B passes run pageable — the pin state is symmetric, the delta stays attribution-clean
+  (**verify the control pass's load block shows the same state when annotating the
+  verdicts**); (3) the THP lever's target condition is the session's NORM.
+- **OBSERVABILITY PROVEN LIVE:** "strata: q5k multi-token kernel: engaged (STRATA_KQ256=1)"
+  — engine-log line 633, the cand pass's server. The kq-log patch works; the v5 failure
+  class (a silent dispatch state) is closed permanently.
+- **The first cell landed:** cand/empty.json = 20.16 tok/s decode (prefill 4.11, ttft 243
+  ms, peak 7.35 GiB — under the 8090 MiB watchdog line), measured 08:35:07Z. −8% vs the
+  clean anchor 21.89 — consistent with the disturbance window; the control pass's empty
+  cell is the decisive comparator. The ctx32k cell is running; verdicts ~08:50–09:00Z; the
+  promotion pass fires on bench_complete + the results existing.
+- **Next (research agent):** annotate the verdicts per the protocol (the empty delta ≥ +5%
+  → S1 composes; ±2% → the S9/S11 pivot — now REINFORCED by the roofline), verify the
+  control's pin state, then the promotion pass (~09:25Z verdicts) and §9.0 with the new
+  host-bandwidth sub-item.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
