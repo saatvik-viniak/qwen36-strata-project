@@ -201,10 +201,11 @@ the literature-backed options to fix the churn).
 
 ## S6 — Tree drafting on the MTP block (raise tokens/step without linear verify cost)
 
-**Status: PROPOSED — trial C's verdict confirms the direction** (research agent, ~04:10Z: mtp3
-empty 20.81 (−5.1%), ctx32k 18.55 (−5.0% vs 19.52); ctx128k was running — chain depth 3 pays 3
-sequential draft steps for less acceptance than it costs; a tree gets more candidates per
-sequential step. The model's hybrid structure is the best case for it).
+**Status: PROPOSED — trial C's FINAL verdict confirms the direction (reject on all three cells)**
+(research agent, ~04:50Z: mtp3 empty 20.81 (−5.1%), ctx32k 18.55 (−5.0%), **ctx128k 10.92 (−7.4% vs
+11.80)** — chain depth 3 loses everywhere at 262k and the loss grows with context; acceptance gains
+don't pay the extra sequential draft cost. A tree gets more candidates per sequential step instead
+of more depth; the model's hybrid GDN+attention structure is the best case for it).
 
 - **Change:** draft a 2–3-token tree per step (the MTP block + greedy top-2 branches), verify all
   branches in ONE pass with a tree attention mask in `k_attn_part` (the verify path already batches
@@ -362,3 +363,8 @@ the int8 trade is opt-in and lossy-labelled).
   line 2627 (the ping-pong mechanism), and the HybriMoE CPU-fallback for misses. Added the trial D
   decision tree. Pipeline state at writing: mtp3/ctx128k landed ~04:18Z expected; trial D next;
   uint4 chain ~05:45Z.
+- **2026-11-17 ~04:50Z — trial C FINAL verdict annotated into S6 (small commit).** mtp3/ctx128k
+  landed: 10.92 tok/s (−7.4% vs 11.80) — MTP 3 chain rejected on ALL THREE cells (−5.1% / −5.0% /
+  −7.4%), the loss growing with context. Negative result recorded: chain depth beyond 2 does not
+  pay at 262k; the tree direction (S6) and batch-mtp remain open. Trial D (mmqslots2) started
+  04:19:57Z; its verdict selects the S3 option (decision tree in S3).
