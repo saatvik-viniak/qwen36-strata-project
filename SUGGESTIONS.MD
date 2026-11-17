@@ -646,6 +646,22 @@ predicted LOW-VALUE for this model; the depth×row-cost trade is the real lever.
 - **Measure (when S1 lands):** empty-cell depth sweep 2 → 3 → 4 at the new pool speed; accept if
   the median decode improves ≥2% with no cell regressing >2%; record the acceptance marginals
   per depth (the log lines give them for free).
+- **🧮 REVISION — the revival bar is much higher than the claim above (research agent, ~07:20Z,
+  static derivation from the measured numbers — unconfirmed until §9.0 validates the dot's
+  share):** the claim "a pool at ~1.5–2x shifts the depth-3 trade to roughly break-even" assumed
+  the pool speedup applies to the whole added row's cost. It does not — the kernel saves only
+  the dot part. Using trial C's measured tok/s ratio (0.9505 at empty), the row-scaling
+  assumption (the mtp3's dot = 4/3 × the baseline's), k = 1 − 1/f ≈ 1/3 (f ≈ 1.5, the scratch
+  1.45–1.54×), and A = the accepted-tokens ratio: the flip condition
+  `A(1 − 1/0.9505) + s·k(4/3 − A) ≥ 0` gives **s ≥ ~0.47 when A ≈ 1** (the dot must be ~47% of
+  the empty step — the regime test's empty delta would have to read ≈ **+18%**, not +5%) and
+  **s ≥ 1.4 — impossible — when A = 1.2**. So: (a) do NOT schedule the depth re-sweep on a
+  +5% regime result — it stays rejected; (b) the re-sweep reopens ONLY on a very strong
+  compute-bound signal (the empty delta ≳ +18%); (c) pin down what the "+0.401 tokens/window"
+  marginal actually counts (accepted tokens per STEP vs per window vs the draft's log-prob
+  improvement) — if A ≥ 1.2 the depth-3 trade can never flip at any pool speed and the whole
+  revival line closes; the engine-log "drafts accepted N of M" semantics decide. This bars a
+  wasted mtp3 re-bench either way.
 
 - **Original proposal (superseded by the measured marginals above):** draft a 2–3-token tree per
   step and verify with a tree mask in `k_attn_part` (the verify path already batches rows:
@@ -918,6 +934,15 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~07:21Z — the S6 revival bar pre-computed: the depth re-sweep needs an ≈+18%
+  empty delta, not +5% (this commit).** Static derivation from the measured numbers (trial C's
+  0.9505 tok/s ratio, the scratch f ≈ 1.5, the row-scaling assumption): the flip condition
+  A(1 − 1/0.9505) + s·k(4/3 − A) ≥ 0 gives s ≥ ~0.47 (the dot ~47% of the empty step) when A ≈ 1,
+  and an impossible s ≥ 1.4 when A = 1.2. Consequences: do NOT schedule the mtp3 re-bench on a
+  +5% regime result; it reopens only on a ≈+18% empty delta; and pin down what the +0.401
+  tokens/window marginal counts (accepted per step vs per window vs log-prob) — if A ≥ 1.2 the
+  depth-3 trade never flips at any pool speed and the revival line closes. Marked unconfirmed
+  static analysis until §9.0 validates the dot's share.
 - **2026-11-17 ~07:14Z — 🛑 SECOND URGENT: the promotion pass compounded the failure (this
   commit).** promotion_pass.sh (pid 91468) triggered on the v5 void marker at 07:06:30Z, served
   out/strata_q5k_cand = byte_loop as the "compose", and is settling until ~07:27:34Z. As written
