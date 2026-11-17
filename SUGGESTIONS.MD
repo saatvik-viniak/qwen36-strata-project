@@ -126,6 +126,37 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   still pre-fix — the commit froze the v4 text; the working tree is v5 and correct. Relaunch is
   pending (no process at 06:32Z); the chain should now pass parity and reach verdicts ~40–50 min
   after it.
+- **🛑 STOP THE V5 CHAIN — THE A/B IS MEASURING byte_loop AGAINST ITSELF (research agent,
+  ~06:48Z, md5 + mtime evidence — KILL BEFORE THE BENCHES, ~06:51Z):** the v5 build no-opped.
+  Evidence: (1) `out/strata` mtime 06:16:29Z = the v4 restore — the v5 build never touched it;
+  (2) all four binaries are now 85,072,112 B with md5 74c5f1f4 = byte_loop — `out/strata_q5k_cand`
+  was 6929c45a / 85,113,360 B at 06:26Z and became byte_loop at 06:34:11Z; (3) the v5 build log
+  says "ninja: no work to do"; (4) the source mtimes (05:12:34Z, the staged chain's apply) predate
+  the binary's mtime, so ninja had nothing to do — **the chain's build step is not robust to the
+  binary being externally overwritten after the last build** (the v4 restore overwrote out/strata
+  with byte_loop; ninja's source-vs-output mtimes don't see an external overwrite; line 106's
+  `cp out/strata → out/strata_q5k_cand` then propagated the stale binary). **Consequence: the
+  candidate pass serves byte_loop + STRATA_KQ256=1 (the env is inert on a binary without the
+  compiled-in dispatch), the control pass serves byte_loop — the benches will measure the same
+  config against itself, the cmp gate passes trivially, and a ~0-delta "verdict" would wrongly
+  kill S1 as a false null.** What still stands: the parity harness (the parity tree was rm -rf'd
+  and REBUILT from the patched source — it tested the REAL q5k kernel: bit-exact, 1.45–1.54×);
+  the old gate (base = byte_loop, correct for the A/B's old side). What is INVALID: the new gate
+  (out/strata = byte_loop + inert env), any cmp "pass" it produces, and both bench passes.
+  **The fix spec for the runner (the primary agent's call, ~1 min of work):** (a) before
+  build_kit.sh, `rm -f /home/dmin/qwen36-strata-project/out/strata` — ninja relinks from the
+  06:16Z compose objects (uint4 in libstrata_engine.a + q5k in libstrata_kernels_cpu.a, both
+  mtime 06:16Z) in ~seconds; or `touch` the 4 patched sources (recompile+relink, seconds). (b)
+  **Add the class-killer guard after build_kit.sh: `if cmp -s out/strata out/strata_q5k_base;
+  then echo "BUILD NO-OP: candidate == base" >> LOG; echo "build_noop" > DONE;
+  restore_champion; exit 1; fi`** — silent no-ops become loud failures forever. (c) kill v5
+  (pid 90529) — BEFORE the benches start (~06:51Z) to save ~60 min of false measurements and
+  before any false verdict lands; the champion is not serving right now (the gates run solo
+  instances), so restore per its own protocol (out/strata IS byte_loop already — serve_262k.sh
+  directly). (d) relaunch: verdict keep ✓, apply idempotent ✓, the base preserve is fine, the
+  fixed build produces the compose binary, parity rebuilds again (rm -rf parity_build is in
+  v5), gates re-run validly, benches run the REAL A/B. The ledger correction owed: the parity
+  GREEN (0ca9083) stands; nothing after it in v5 should be recorded.
 - **RELUNCHED AND PAST THE KILLER STEP (research agent, ~06:40Z):** v5 is running (pid 90529,
   launch 06:33:50Z after the 06:33:43Z edit — no stale-offset race), build ok 06:34:11Z
   (incremental), and **parity PASSED 06:35:01Z** — `native_expert_parity: 0 failures`, with every
@@ -795,6 +826,17 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~06:48Z — 🛑 BUILD NO-OP DISCOVERED: the v5 A/B would measure byte_loop against
+  itself; the chain must be killed before the benches (this commit).** The v5 build no-opped
+  ("ninja: no work to do" — the sources' 05:12:34Z mtimes predate out/strata's 06:16:29Z restore
+  mtime, and ninja cannot see an external overwrite), so line 106's cp propagated byte_loop into
+  out/strata_q5k_cand (md5 evidence: 6929c45a/85,113,360 B at 06:26Z → 74c5f1f4/85,072,112 B at
+  06:34:11Z; all four binaries now byte_loop). The candidate pass would serve byte_loop + an
+  inert env vs the control's byte_loop — a false null that would wrongly kill S1. The fix spec +
+  the class-killer guard (cmp out/strata vs the base after every build → build_noop failure) are
+  in S1. What stands: the parity GREEN (the parity tree was wiped and rebuilt from the patched
+  source — the REAL kernel, bit-exact 1.45–1.54×) and the old gate. What is invalid: the new
+  gate (running now against byte_loop), its trivial cmp, both bench passes.
 - **2026-11-17 ~06:46Z — the ncu recipe that settles the V-path dispute, written for §9.0 (this
   commit).** Capture k_attn_part with MemoryWorkloadAnalysis + SchedulerStats and the
   l1tex requests/sectors .sum metrics; sector efficiency = requested_bytes ÷ (32 B × sectors).
