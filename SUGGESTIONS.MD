@@ -174,6 +174,14 @@ the literature-backed options to fix the churn).
   19.52)** — trial D loses at BOTH landed cells (empty −8.2%, ctx32k −5.4%); ctx128k was running.
   Slots at the VRAM edge at S=2 are heading for a full reject → F3 → F2, or abandon the slot
   scheme for the kernel levers (S1/S2) until F1/F3 make churn cheap.
+- **Slot-scheme revival sequence (research agent, ~04:55Z) — the un-tried corner:** trial A proved
+  7 slots save ~5% at empty; trial D proved 2 slots + MMQ lose at empty; item 6 (staging shrink)
+  is the piece that was never combined. The sequence, one change per trial: (1) land item 6's
+  staging shrink (~4x smaller) — enables, no speed claim; (2) trial E = MMQ + `--expert-slots 7`
+  (the need-check should pass by ~0.75 GiB) — expect empty ≈ trial A's +5.1% WITH the fast prefill;
+  (3) only if trial E's ctx32k still regresses (trial A's −4.5%), add F3a (decay 0.5 → 0.9,
+  one-line change at line 2627) as trial F. If trial E also fails at empty, the slot scheme is
+  dead on this box and S1/S2 carry the climb alone.
 - **Mechanism:** trial A proved 7 slots help empty (+5.1%) but the blocking swaps cost 32k (−4.5%).
   Remove the stall and the composition (MMQ staging shrink ~4x → more slots + fast MMQ prefill) is
   the single largest decode lever for both empty and 32k.
@@ -278,8 +286,10 @@ predicted LOW-VALUE for this model; the depth×row-cost trade is the real lever.
 
 ## S8 — Prefill: MMQ staging shrink first, then int8 prefill GEMMs as a labelled trade
 
-**Status: PROPOSED** (the staging shrink is already the primary agent's composition recipe — keep it;
-the int8 trade is opt-in and lossy-labelled).
+**Status: PARKED for the 2x gates (research agent, ~04:55Z) — the mission's targets are decode-only
+per cell; prefill tok/s and TTFT are recorded, not gated. Prefill work does not move the 2.00x
+numbers, so this item is enabler-value only (the staging shrink frees VRAM for a working slot
+scheme — see S3's revival sequence).**
 
 - **Change:** (a) shrink the MMQ staging sub-chunks ~4x in `place_experts`/the staging path so slots
   coexist with the fast MMQ prefill (same PCIe bytes, finer pipelining). (b) Opt-in int8 prefill
@@ -447,3 +457,11 @@ next experiment (research agent, ~04:45Z):
   marginal ≈ 0.04 tokens/window (predicted from (1−p)·p′) — the tree idea is parked with the
   arithmetic shown; the lever is cutting per-row cost (S1/S2) and re-sweeping depth after S1 lands
   (mission C5's re-measure point). Trial D ctx128k still running when written.
+- **2026-11-17 ~04:55Z — S8 parked for the gates; S3 gained the slot-revival sequence (this
+  commit).** The mission's 2.00x targets are decode-only per cell, so prefill work (S8) is
+  enabler-value only — the staging shrink matters as the piece that lets 7 slots coexist with the
+  fast MMQ prefill (trial A's empty win + trial D's fast prefill were never combined). S3 now
+  carries the one-change-per-trial sequence: item 6 shrink → trial E (MMQ + 7 slots, expect
+  ≈ +5.1% empty with fast prefill) → trial F (decay 0.5→0.9) only if ctx32k still regresses; if
+  trial E fails at empty, the slot scheme is dead and S1/S2 carry the climb. Trial D's ctx128k
+  still running; the uint4 chain follows (~06:05Z).
