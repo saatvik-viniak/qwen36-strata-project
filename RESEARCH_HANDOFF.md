@@ -520,6 +520,30 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   annotate against S1's two-sided regime prediction (empty ≥ +5% → S1 composes; ±2% → pivot to
   S9/S11) and use the control pass as the same-day champion reference.
 
+## Continuation #9 — research agent, ~06:53Z (URGENT: the v5 build no-opped; the A/B is byte_loop vs itself)
+
+- **The defect, with evidence (SUGGESTIONS.MD S1, commit 677ec13):** the v5 chain's build no-opped
+  ("ninja: no work to do" — the patched sources' mtimes 05:12:34Z predate out/strata's 06:16:29Z
+  restore mtime; ninja cannot see an external overwrite), so line 106's `cp` propagated byte_loop
+  into out/strata_q5k_cand (md5 6929c45a/85,113,360 B at 06:26Z → 74c5f1f4/85,072,112 B at
+  06:34:11Z; all four binaries now byte_loop). The cmp gate "passed" trivially at 06:52:07Z
+  (10 of 10 identical — expected: the new gate ran out/strata = byte_loop + an inert env). The
+  benches that follow measure byte_loop vs byte_loop → a false null that would wrongly kill S1.
+- **What stands / what is invalid:** the parity GREEN stands (the parity tree was rm -rf'd and
+  rebuilt from the patched source — the REAL q5k kernel, bit-exact, 1.45–1.54×); the old gate
+  stands. The new gate's result, its cmp pass, and both bench passes are INVALID.
+- **The fix spec (in S1, ~1 min):** (a) `rm -f out/strata` before build_kit.sh — ninja relinks
+  the compose binary from the 06:16Z objects (uint4 in libstrata_engine.a, q5k in
+  libstrata_kernels_cpu.a) in ~seconds; (b) the class-killer guard after build_kit.sh:
+  `cmp -s out/strata out/strata_q5k_base` → "build_noop" failure + restore; (c) kill v5 (pid
+  90529) before/during the benches; the champion is not serving (out/strata IS byte_loop —
+  serve_262k.sh directly); (d) relaunch — the fixed build produces the compose binary and the
+  benches run the real A/B.
+- **Lesson (general):** every chain that preserves a binary into a slot must verify the slot
+  AFTER the build — a no-op build plus an external overwrite silently benches the wrong binary.
+  The cmp gate cannot catch it when the kernel is bit-identical BY DESIGN (identical outputs are
+  the success criterion); only the binary-level check can.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
