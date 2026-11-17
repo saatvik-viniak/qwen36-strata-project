@@ -317,3 +317,43 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   the V path (bit-identical per-thread), then S2's split-K flash-decoding on top. (3) Trial E
   feasibility once PLAN.md item 6's staging shrink lands. (4) The S6 depth re-sweep after S1 lands
   (its measured-marginal table is the acceptance reference).
+
+## Continuation #6 — research agent, ~05:12Z (S1 implemented, q5k chain staged)
+
+- **S1 (Q5_K multi-token AVX-2 expert kernels) is IMPLEMENTED, commit 07a2766** — `q5k_dot<NT>` in
+  src/kernels/cpu/kq_avx2.cpp mirrors ggml_vec_dot_q5_K_q8_K's `__AVX2__` branch with the token loop
+  inside the block loop (weight-side scale/min unpack + 8 scale shuffles + the full fifth-bit decode
+  hoist per block; per-token `acc`/`sums` accumulators keep ggml's exact order); dispatch
+  (`kq256_supported`/gu/down) += 13, still STRATA_KQ256-gated (default path byte-identical), `nt >=
+  2`; native_expert_parity.cpp gained role-0 coverage for type 13. The supplementary agent's ILP
+  suggestions (two-token interleave, dual accumulators) are deliberately NOT in v1 — the parity
+  gate comes first; revisit after the harness ratio.
+- **Scratch verification (research/q5k_parity_scratch.cpp): 1600 of 1600 randomized token-results
+  bit-identical** to a verbatim transcription of the AVX2 branch (nb=8 gate/up + nb=2 down, nt=1..4,
+  raw-fp16 stress patterns). Contested indicative timing at nt=3: 1.33× (a floor — the test TU
+  inlines and the engine's pool contested it; the honest 4-token ratio comes from the repo harness).
+- **The WSL clone is patched** (research/apply_q5k.py, idempotent, md5-guarded — its 4 CPU files
+  verified byte-identical to the canonical checkout's pre-edit state, so the patch is exactly the
+  committed one). The kernel is inert without STRATA_KQ256, so cand_runner's uint4 build (which now
+  includes the patch) leaves the uint4 A/B clean.
+- **The q5k candidate chain is STAGED and detached (cand_q5k_runner.sh, pid 75509; it waits for
+  cand_uint4.done):** reconcile the uint4 verdict (revert_uint4.py if the candidate was rejected —
+  the kernel A/B must be kernel-only) → apply → preserve out/strata → out/strata_q5k_base → build →
+  keep out/strata_q5k_cand → build the parity test tree (separate cmake dir parity_build,
+  STRATA_BUILD_TESTS=ON) and run `native_expert_parity --synthetic q5_K/q5_K` at the model's shapes
+  (Q4KQ_PARITY_EMBD=2048, Q4KQ_PARITY_FF=512; the harness compares vs ggml's live AVX2 dot bit for
+  bit for nt=1..8 and prints the 4-token ratio) → solo/cmp text gates with STRATA_KQ256=1
+  (bit-identical required) → candidate 3-cell bench (serve_262k_q5k.sh) → control 3-cell bench (the
+  base binary, serve_262k.sh) → champion restored. Any failure restores the base binary + champion
+  serving. Results: research/cand_q5k/{cand,control}/*.json + cand_q5k.done.
+- **Pipeline state:** trial C (mtp3) FULL REJECT (20.81/18.55/10.92 = −4.9/−5.0/−6.9%); trial D
+  (mmqslots2) FULL REJECT (20.11/18.46/11.69 = −8.2/−5.4/−0.4%); the slot scheme at S=2 is measured
+  dead in both prefill regimes (only S3's revival sequence remains). cand_runner: VERIFY started
+  05:00:49Z → gates → the uint4 3-cell bench (compare against S2's prediction: 15.5–16.5 tok/s if
+  the QK half recovers; <12.5 means the mechanism didn't engage). Then the q5k chain runs
+  autonomously (~2 h).
+- **Frontier after these verdicts:** no trial has beaten the baseline yet (best empty stays
+  nommq's 23.00, unpromotable alone); the climb rides on S1 (pool kernels) + the uint4/split-K
+  attention work. Next after the q5k verdict: S3-F1 (async swap stream) or the S8 staging shrink →
+  trial E (MMQ + 7 slots); §9.0 profiling splits the pool/attention/overhead shares for the
+  post-S1 sequencing.

@@ -1,35 +1,20 @@
-[Engine] Q5_K multi-token AVX-2 expert kernels (S1/PLAN #7) + candidate chain
+[Engine] Record trial C/D verdicts, S1 implemented, q5k chain staged
 
-The model's experts are Q5_K (type 13) x41 gate/up AND down; the pool's dispatch
-had no multi-token kernel for type 13 - it fell to ggml-cpu's single-token
-AVX2-branch vec_dot per (row, token), re-decoding the row's weights (the fifth-
-bit chain, ~16 of ~21 integer ops per pair are weight-side) once per token.
+Trial C (mtp3): FULL REJECT on all three cells (empty 20.81 -4.9%, ctx32k
+18.55 -5.0%, ctx128k 10.92 -6.9%); MTP stays 2. Trial D (mmqslots2): FULL
+REJECT (20.11 -8.2%, 18.46 -5.4%, 11.69 -0.4% near-tie) - the fixed rebalance
+stalls amortize as context grows; the slot scheme at S=2 is measured dead in
+both prefill regimes.
 
-- kq_avx2.cpp: q5k_dot<NT> mirrors ggml_vec_dot_q5_K_q8_K's __AVX2__ branch
-  (the build's GGML_AVX2=ON makes it the engine's actual dot - correcting the
-  earlier AVX1/generic note) with the token loop inside the block loop: the
-  scale/min unpack, the 8 scale shuffles and the full 5-bit decode hoist per
-  block; every token keeps ggml's exact integer chain and float order
-  (per-token acc/sums accumulators, block-ordered).
-- native_expert.cpp: kq256_supported += 13; gu dispatch += gu_type 13; down
-  dispatch += d_type 13. Still behind STRATA_KQ256 (default off: the default
-  path stays byte-identical), nt >= 2, same AVX2/FMA condition as the Q4_K
-  branch.
-- native_expert_parity.cpp: role-0 coverage for type 13 (the harness compares
-  kq256_rows vs ggml's vec_dot bit for bit for 1..8 tokens and times 4 tokens).
-
-Scratch verification (research/q5k_parity_scratch.cpp, this checkout): 1600 of
-1600 randomized token-results bit-identical to a verbatim transcription of the
-AVX2 branch (nb=8 gate/up + nb=2 down, nt=1..4, raw-fp16 stress patterns).
-Indicative contested timing at nt=3: 1.33x (floor; the honest number comes
-from the parity harness's 4-token ratio).
-
-Candidate chain staged (cand_q5k_runner.sh, detached, waits for
-cand_uint4.done): reconcile the uint4 verdict (revert_uint4.py if rejected),
-apply, build, native_expert_parity --synthetic q5_K/q5_K at the model's
-shapes, solo/cmp text gates with STRATA_KQ256=1 (bit-identical required),
-then candidate + control 3-cell benches. Trial C (mtp3) rejected on all three
-cells: empty 20.81 (-4.9%), ctx32k 18.55 (-5.0%), ctx128k 10.92 (-6.9%); MTP
-stays at 2. Trial D (mmqslots2) empty 20.11 (-8.1%) - slots hurt empty here.
+S1 (Q5_K multi-token AVX-2 expert kernels) implemented, commit 07a2766:
+q5k_dot<NT> mirrors ggml's __AVX2__ branch (the build IS AVX2 - the earlier
+AVX1/generic note was wrong, corrected in the notebook and handoff); dispatch
++= type 13 behind STRATA_KQ256 (default path byte-identical). Scratch parity
+1600/1600 bit-identical (research/q5k_parity_scratch.cpp). The WSL clone is
+patched via apply_q5k.py (md5-guarded; its CPU sources verified byte-identical
+to the canonical pre-edit state). cand_q5k_runner.sh (pid 75509) staged
+detached: uint4 verdict reconcile (revert_uint4.py if rejected) -> build ->
+native_expert_parity --synthetic q5_K/q5_K -> STRATA_KQ256=1 gates (bit
+identical) -> candidate + control 3-cell benches.
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)
