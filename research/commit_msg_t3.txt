@@ -1,0 +1,17 @@
+[Docs] T3 harvested: S13's pattern levers DIE — the pre-registered first branch fires (SPLIT-8t 25.41 GB/s >= ~25); the pattern costs only ~9.4% of the read time; the toucher's step-0 diagnostic running
+
+The re-run (the fixed microbench — each list entry packs layer*256 + slot; the real 17.45 GiB arena, THP off, madvise rc=0, the touch 46.7 s, the minor faults 8-32 = the /proc reads themselves) ran 18:56:39-18:57:33Z; the champion restored healthy 19:01:43Z (s13a.done = mb_complete truthful — the re-run's own; the runner exited cleanly; the box serves).
+
+The medians (2 untimed warm-ups + 3 timed reps per config): SPLIT-5t 23.65 (25.07/23.65/22.45), SPLIT-8t 25.41 (24.78/25.41/26.20), SHARED-DIST-8t 25.06 (24.17/25.06/25.30), SHARED-ALL-8t 73.48 (73.48/56.87/78.77 — noisy).
+
+The verdict per the pre-registered rules (they key on SPLIT): SPLIT-8t 25.41 >= ~25 -> the first branch: the pattern cost is small -> the live pool's rate is bounded ELSEWHERE -> the S13 pattern levers DIE (the within-reader prefetch distance + the repack drop from the queue). The honest margin: SPLIT-5t 23.65 sits just below the line; the 8t config — the live pool's own worker count — sits above it; the verdict is the rule's, taken at its pre-registered wording.
+
+The honest decomposition: the pattern-exact reader achieves 91% of the S12-B sequential 8t ceiling (25.41 vs 28.05) -> the scatter itself costs only ~9.4% of the read time; the live pool runs 20.07 GB/s (T2's capture) = 79% of the pattern-exact reader -> the missing ~21% is the pool's compute/sync interleave (the dot kernels + the per-layer spawn/join + the copy/merge) — S14's territory (the per-job drain lever, its ~2-4% bound stands).
+
+SHARED-DIST 25.06 ~= SPLIT-8t 25.41 -> the dedup model buys NOTHING at 1.695-MiB blobs (the L3 cannot absorb them; DRAM-bound) — the L3-absorption hypothesis is dead at this blob size. SHARED-ALL 73.48 but 8x redundant -> the useful-data rate 9.2 GB/s = a loss per byte -> the redundant-reader model dies too (the live pool's dedup is right).
+
+The queue updates: T4's slots (the staging shrink -> the slots at 262k) stays the #1 structural lever; S13's pattern levers DROP; the toucher's step-0 diagnostic is RUNNING — the BEFORE snapshot 19:06:28Z (pid 12004): VmRSS 24.0 GiB, VmSwap 0, the 7-GiB swap partition holding only 6.5 MB, the dmesg MemoryReclaim drop_caches events recurring ~10 min apart; the AFTER at ~19:22Z decides the mechanism per TOUCHER_SPEC's pre-registered rule (VmSwap grows arena-scale -> swap -> the toucher proceeds; VmSwap 0 -> the hypothesis weakens honestly — with the note that the guest's /proc cannot see the WSL host's own paging, and a toucher keeps the pages warm against BOTH mechanisms).
+
+Receipts: research/s13a/s13a.log (the harvest), research/_toucher_diag.sh + the before snapshot.
+
+Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.

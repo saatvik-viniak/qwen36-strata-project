@@ -1266,11 +1266,17 @@ the primary agent's recording).**
 
 ## S13 — The pool's pattern lever: the scattered-read cost the S12-B ceiling exposes (the empty-cell follow-up)
 
-**Status: GO — Lever A's capture fired the (a) branch (the continuing agent, ~15:25Z):
-the measured-round aggregate 19.0 GB/s (stall-free 20.3) sits in the pre-registered
-~14–20 band → the pattern cost matches → the microbench proceeds as spec'd. The live
-pool's shape is now measured (41 calls/step, 1.52 GB/step, ~18.4 distinct experts/layer
-— the rows lean shared).** Refined with the source read (research agent, ~13:25Z) —
+**Status: DECIDED — THE PATTERN LEVERS DIE (T3's re-run, 2026-11-17 ~18:57Z: SPLIT-8t
+median 25.41 GB/s ≥ the ~25 threshold → the pre-registered first branch; the pattern
+costs only ~9.4% of the read time at the live shape — 25.41 vs the 28.05 sequential
+ceiling; the live pool's 20.07 = 79% of the pattern-exact reader → the binding
+constraint is the pool's compute/sync interleave, S14's territory). The original GO
+note (the continuing agent, ~15:25Z) below for the record: the measured-round
+aggregate 19.0 GB/s (stall-free 20.3) sat in the ~14–20 band → the microbench
+proceeded as spec'd — and the microbench then EXONERATED the pattern. The live
+pool's shape is measured (41 calls/step, 1.52 GB/step on the Q5; 1,237 MB/step on
+the Q4_K_S; ~17.2–18.4 distinct experts/layer — the rows lean shared).** Refined
+with the source read (research agent, ~13:25Z) —
 three corrections from q36_engine.cu's hybrid dispatch path; the microbench spec is
 pattern-exact.
 
@@ -2291,3 +2297,40 @@ See the Q4_K_S redirect entry at the bottom update log for the full plan.**
   → they proceed; ≤ ~10 → the within-reader prefetch lever).** The T2/pass-2b
   verdicts are untouched. Signed: GLM 5.3 Flash (Maya-s quant), the continuing
   research agent.
+- **2026-11-17 ~19:10Z — T3 (THE RE-RUN) HARVESTED: S13'S PATTERN LEVERS DIE — THE
+  PRE-REGISTERED FIRST BRANCH FIRES, SPLIT-8t 25.41 ≥ ~25 GB/s (the continuing
+  research agent, this commit).** The re-run (the fixed microbench — each list entry
+  packs layer*256 + slot; the real 17.45 GiB arena, THP off, madvise rc=0, the touch
+  46.7 s, the minor faults 8–32 = the /proc reads themselves) ran 18:56:39–18:57:33Z;
+  **the champion restored healthy 19:01:43Z (s13a.done = mb_complete truthful — the
+  re-run's own; the runner exited cleanly; the box serves).**
+  - **The medians (2 untimed warm-ups + 3 timed reps per config): SPLIT-5t 23.65**
+    (25.07/23.65/22.45), **SPLIT-8t 25.41** (24.78/25.41/26.20), **SHARED-DIST-8t
+    25.06** (24.17/25.06/25.30), **SHARED-ALL-8t 73.48** (73.48/56.87/78.77 — noisy).
+  - **The verdict per the pre-registered rules (they key on SPLIT): SPLIT-8t 25.41
+    ≥ ~25 → the first branch: the pattern cost is small → the live pool's rate is
+    bounded ELSEWHERE → the S13 pattern levers DIE** (the within-reader prefetch
+    distance + the repack drop from the queue). The honest margin: SPLIT-5t 23.65
+    sits just below the line; the 8t config — the live pool's own worker count —
+    sits above it; the verdict is the rule's, taken at its pre-registered wording.
+  - **The honest decomposition: the pattern-exact reader achieves 91% of the S12-B
+    sequential 8t ceiling (25.41 vs 28.05) → the scatter itself costs only ~9.4%
+    of the read time; the live pool runs 20.07 GB/s (T2's capture) = 79% of the
+    pattern-exact reader → the missing ~21% is the pool's compute/sync interleave
+    (the dot kernels + the per-layer spawn/join + the copy/merge) — S14's territory
+    (the per-job drain lever, its ~2–4% bound stands).**
+  - **SHARED-DIST 25.06 ≈ SPLIT-8t 25.41 → the dedup model buys NOTHING at 1.695-MiB
+    blobs (the L3 cannot absorb them; DRAM-bound) — the L3-absorption hypothesis is
+    dead at this blob size. SHARED-ALL 73.48 but 8× redundant → the useful-data
+    rate 9.2 GB/s = a loss per byte → the redundant-reader model dies too (the live
+    pool's dedup is right).**
+  - **The queue updates: T4's slots (the staging shrink → the slots at 262k) stays
+    the #1 structural lever; S13's pattern levers DROP; the toucher's step-0
+    diagnostic is RUNNING — the BEFORE snapshot 19:06:28Z (pid 12004): VmRSS 24.0
+    GiB, VmSwap 0, the 7-GiB swap partition holding only 6.5 MB, the dmesg
+    MemoryReclaim drop_caches events recurring ~10 min apart; the AFTER at ~19:22Z
+    decides the mechanism per TOUCHER_SPEC's pre-registered rule (VmSwap grows
+    arena-scale → swap → the toucher proceeds; VmSwap 0 → the hypothesis weakens
+    honestly — with the note that the guest's /proc cannot see the WSL host's own
+    paging, and a toucher keeps the pages warm against BOTH mechanisms).**
+  Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
