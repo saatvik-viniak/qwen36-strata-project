@@ -203,11 +203,12 @@ baseline cluster.)*
   the MTP-on leg emitted EOS at 404 — the EOS@404 is plausibly MTP-caused.** The q5k
   ledger term stays MTP-ON-only; the MTP-off mode stays recorded as a short-ctx/slots
   serving mode.
-- **The Q4_K_S drift-bound second pass (proposed, ~24 min of bench — within the 30-min
-  rule)**: repeat the 3 baseline cells in a fresh window after T2. The first pass's
-  comparators (+4.4/+5.8/+3.8% vs the champion's same-day cells) ran 6.5 h apart inside
-  the −15.3% day-drift band; a same-evening repeat bounds the drift AND confirms the
-  single-pass anchors.
+- **The Q4_K_S drift-bound second pass — STAGED (q4ks_pass2_bench.sh +
+  run_q4kspass2_sup.sh), chaining on T2's done marker**: bench-only (nothing stopped;
+  the T2-restored champion measured after its own 900-s settle), the 3 mission-protocol
+  cells, no watchdog → research/q4ks_baseline_pass2/. Bounds the drift for the first
+  pass's comparators (+4.4/+5.8/+3.8% vs the champion's same-day cells, 6.5 h apart
+  inside the −15.3% day-drift band).
 - **The empty cell's EOS protocol finding (open decision for the primary)**: the Q4_K_S
   emits EOS at 404 of 512 (the smaller quant changed the greedy path). Options: (a) an
   opt-in env-gated ignore-EOS at q36_engine.cu's finish sites (the draft-validation site

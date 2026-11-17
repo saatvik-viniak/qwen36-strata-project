@@ -2166,3 +2166,18 @@ See the Q4_K_S redirect entry at the bottom update log for the full plan.**
   (T2's capture tests it directly), and the box's pin cap is BELOW 17.45 GiB (the
   S11-1 probe's answer tightens: not even 17.45 GiB pins).
   Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
+- **2026-11-17 ~17:20Z — THE PASS-2 PLAN STAGED (the drift bound; the continuing
+  research agent).** The drift-bound second pass is STAGED, NOT launched:
+  research/q4ks_pass2_bench.sh + run_q4kspass2_sup.sh — bench-ONLY (it stops nothing;
+  it measures the T2-RESTORED champion), chaining on T2's done marker: the champion
+  health gate → the settle 900 s → the 3 mission-protocol cells (no watchdog) →
+  research/q4ks_baseline_pass2/<cell>.json + q4ks_pass2.done. The protocol note: pass 1
+  served fresh + settled 900 s; pass 2 measures the restored champion after its own
+  900-s settle — the same config (8833c30b, MTP 2, greedy, CT 8, KV int4, KQ256, 262k),
+  the same bench invocations, so the pair bounds the drift for the +4.4/+5.8/+3.8%
+  comparators. **The queue order proposed: T2 (running) → pass 2 (~35 min total, the 3
+  cells ~24 min — within the 30-min rule per benchmark) → T3 (the S13-A microbench,
+  the server-stopped window AFTER pass 2's cells) → T4 → T5.** T3's runner (staged,
+  COMPILE_OK) stops the champion itself and restores it with the md5 receipt — it may
+  launch once pass 2's done marker exists AND no other serve/bench is pending.
+  Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
