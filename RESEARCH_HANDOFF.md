@@ -361,3 +361,41 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   attention work. Next after the q5k verdict: S3-F1 (async swap stream) or the S8 staging shrink →
   trial E (MMQ + 7 slots); §9.0 profiling splits the pool/attention/overhead shares for the
   post-S1 sequencing.
+
+## Continuation #6 — research agent, ~06:00Z (bench confound found; S11; uint4 verdict pending)
+
+- **THE BENCH CONFOUND (the turn's headline):** the uint4 candidate passed ALL gates (VERIFY 6103
+  comparisons 0 mismatches; solo/cmp bit-identical 10/10 at 05:24:19Z) — but its empty cell landed
+  18.08 tok/s (−17.4% vs the champion's 21.89) and ctx32k 17.91 (−8.2%) on bit-identical code, with
+  the GPU verified healthy live (1950 MHz, 40 °C, 110 W, util 47%). Mechanism found: `cand_runner.sh`
+  line 102's VRAM watchdog polls `nvidia-smi` every 3 s during the bench, and on WSL2 each call
+  burns 1–2 s of 100% CPU (caught live: pid 84008 at 100% during the bench, the engine at 208%).
+  `run_baseline_cells.sh` and `trial_runner3.sh` have NO watchdog — the champion reference and the
+  trials ran clean. Losing ~1 of 6 physical cores at the pool-bound empty cell matches −17.4%;
+  ctx32k is equally contaminated. **The empty/ctx32k cells are INVALID as champion comparisons.**
+- **uint4 verdict decision rule (in S2):** ctx128k ≥ ~13.5 ⇒ the QK-half gain is real (promote
+  pending a clean re-measure); ~11.7–12.5 ⇒ inconclusive (masked); < 11.7 ⇒ likely loss, still
+  re-measure clean before rejecting. The champion's ctx128k reference: 11.66 measured decode
+  (43.91 s; pass-2 lean bench), warmup ≈ measured at this cell.
+- **Config verification (placement lines):** the candidate bench server runs the champion config
+  exactly — 0 of 256 slots, 8 workers ("9 CPU threads" printed = workers + host), 21.14 GiB
+  pageable arena, `--cpu-threads 8` via the serve script's `CPU_THREADS=8` env (both serve_262k.sh
+  and serve_262k_mtp3.sh set it — trial C's verdict is NOT thread-confounded). Correction to the
+  earlier picture: at 262k the champion config has **0 slots** (the "21 of 256" lines were the
+  ctx32k VERIFY runs, where the KV cache is 1.476 GiB smaller); trial D's "2 of 256 (0.17 GiB)"
+  matches its `--expert-slots 2` and its 7.54 GiB peak.
+- **NEW S11 — the pool's access path:** the 21.14 GiB arena is PAGEABLE because `cudaHostAlloc`
+  failed silently (the error is discarded at q36_engine.cu:3281); the pool reads ~0.6 GB/step at
+  6.2 GB/s effective (12% of DDR4 peak) while computing at 17% of CPU peak — neither saturated →
+  latency-bound; the worker plan pins 1 worker/physical core on a bandwidth-bound assumption the
+  numbers contradict. Three cheapest-first levers: log the swallowed pin error (one line),
+  `--pool-workers 12` SMT test, THP (S9). Live evidence: the engine runs only ~2 of 6 cores during
+  ctx128k decode.
+- **My process lesson (recorded):** my `--amend` briefly absorbed the primary agent's [Engine]
+  commit 07a2766 — repaired by resetting to 07a2766 and re-committing separately (aae154f discloses
+  both contents). Rule adopted: no amends in this shared checkout, ever.
+- **Next checks:** (1) the ctx128k verdict vs the decision rule; (2) the q5k chain (auto-starts on
+  cand_uint4.done; its A/B is internally fair — both sides carry the watchdog — but its control
+  serves the uint4-config binary, NOT the champion config, so the frontier still needs a same-day
+  champion-config re-measure); (3) the watchdog fix (poll 10–30 s or once per cell) before any
+  future bench that compares against historical numbers.
