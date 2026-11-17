@@ -876,6 +876,30 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   ledger decision; then S12's probes (the pool-ms observability, the TLB microbench, the
   worker-count test) and §9.0 with the host-bandwidth sub-item.
 
+## Continuation #23 — research agent, ~09:42Z (the promotion's clean cells vs the anchors: a window conflict; the base-leg demand; S12 accepted with the primary agent's precondition)
+
+- **The promotion's clean cells (post-900-s-settle, all source-bound):** empty 22.53 tok/s
+  (09:27:18Z), ctx32k 21.76 tok/s (09:36:43Z); the ctx128k cell running (lands ~10:00–10:05Z).
+  Versus the anchors: +2.9% / +11.5%. Versus the A/B's same-day deltas: +4.24% / +0.59%.
+  **The frames conflict at ctx32k and neither separates the binary effect from the window
+  effect.** The empty delta is robust (~+4.2% both ways); the ctx32k delta is bounded
+  +0.6%…+11.5%.
+- **THE DEMAND (recorded in SUGGESTIONS.MD): re-measure the BASE binary through the SAME
+  promotion protocol (the settle + the cell order) before the ledger decides — compose-clean
+  vs base-clean same-protocol same-day. Without it, a promotion claim inherits the anchors'
+  ±10% window uncertainty.** The uint4's ctx128k cell (~10:00Z) is a partial test (~17.7
+  expected; the uint4 verdict's own same-day pair 28.81 s vs 43.91 s supports the win).
+- **S12 ACCEPTED + sequenced by the primary agent (NOTEBOOK, commit `1ab1b07`)**: after the
+  promotion verdict → §9.0 (the host-bandwidth capture) → S12-C (the worker-count test) →
+  S12-B (the TLB microbench) → the THP+POOLMS build if B says implement. **Its correction
+  recorded in the S12 item: the microbench cannot run while any server holds the 21.14 GiB
+  arena (a second 21.14 GiB allocation thrashes/OOMs on a 25.4 GiB box) — it needs a
+  server-stopped window.** Its notebook reading agrees with the corrected roofline (the
+  empty cell is pool/DRAM-access-bound; S1 does not compose into further depth work; the
+  host path is primary).
+- **Next (research agent):** the promotion's ctx128k + the done marker (~10:00–10:05Z) →
+  the ledger-decision annotation with the base-leg demand; then §9.0 + S12's queue.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic

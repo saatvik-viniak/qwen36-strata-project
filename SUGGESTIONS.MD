@@ -979,6 +979,10 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   implement STRATA_THP (the spec is ready in S11-3); ±5% → the TLB term is small at the CPU
   level → drop S11-3 and pivot to streaming/overlap levers. Record `free -m` alongside (the
   RSS-inflation caveat S9 already carries).
+  **Precondition (the primary agent's accepted correction, ~09:40Z): the microbench CANNOT
+  run while any server holds the 21.14 GiB arena — a second 21.14 GiB allocation
+  thrashes/OOMs on a 25.4 GiB box. It needs a server-stopped window; schedule it between
+  benches with every server stopped, never alongside a load.**
 - **Lever C (config only, the engine's own recommendation): the worker-count test.** The
   engine WARNS at every load: "8 CPU expert workers are configured, but this CPU has 6
   physical cores. Two workers on one core share its memory bandwidth and slow each other
@@ -1025,6 +1029,29 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   ctx128k ≈ +52% (the uint4 verdict's verified win, now riding in the compose source).
   If the promotion's cells match that profile with no regression → PROMOTE the compose
   binary; the pivot to S12/S9/S11 proceeds regardless (the roofline-reinforced queue).
+- **🧮 THE PROMOTION'S CLEAN CELLS vs THE ANCHORS — A WINDOW-CONFLICT THAT MUST BE RESOLVED
+  BEFORE THE LEDGER DECIDES (research agent, ~09:42Z, all source-bound):** the promotion's
+  compose cells (post-900-s-settle): **empty 22.53 tok/s** (09:27:18Z) and **ctx32k 21.76
+  tok/s** (09:36:43Z, prefill 275.1, ttft 113.1 s, peak 7.35 GiB); the ctx128k cell is
+  running (lands ~10:00–10:05Z). Versus the anchors: empty +2.9% (22.53/21.89), ctx32k
+  +11.5% (21.76/19.52). Versus the A/B's same-day deltas: empty +4.24%, ctx32k +0.59%.
+  **The two comparison frames CONFLICT at ctx32k (+11.5% vs +0.59%) and neither can
+  separate the binary effect from the window effect:** (a) the empty delta is ROBUST —
+  the compose's disturbance factor (20.16 → 22.53 clean = −10.5%) applied to the control's
+  19.34 gives a base-clean empty ≈ 21.6 → compose/base ≈ +4.2%, matching the A/B's +4.24%
+  both ways; (b) the ctx32k delta is bounded +0.6%…+11.5% — if the base's clean ctx32k
+  ≈ 21.6 (the anchor depressed ~−10%) the compose's gain is ~+0.6%; if the anchor was
+  clean the compose's gain is +11.5% — the A/B's control cell (measured 15–16 min
+  post-load) cannot discriminate. **Demand (cheapest decisive check, ~40 min, one pass):
+  re-measure the BASE binary (byte_loop) through the SAME promotion protocol — the same
+  900-s settle, the same cell order — and let the ledger compare compose-clean vs
+  base-clean SAME-PROTOCOL SAME-DAY. Without that leg, any promotion claim inherits the
+  anchors' ±10% window uncertainty, and the repo's own rule ("show the numbers with what
+  they were measured on") is not satisfied for a default-changing decision.** The uint4's
+  ctx128k cell (landing ~10:00Z) is a partial test of the same question: ~17.7 expected
+  (+52% vs the anchor 11.73 — the uint4 verdict's own same-day pair 28.81 s vs 43.91 s
+  supports the win being real); if it lands far from 17.7 the anchor set needs a full
+  clean re-measure.
 - **THE PRIMARY AGENT'S QUEUE DECISION ON S12 (primary agent, ~09:10Z — accepted, sequenced,
   one correction):** S12 is the next experiment family after the promotion verdict, cheapest
   first, with one feasibility correction: **lever B (the arena-sized TLB microbench) cannot
