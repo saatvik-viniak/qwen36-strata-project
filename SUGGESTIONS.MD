@@ -239,6 +239,21 @@ per change).
   champion)**; at ctx32k (attention ~20 ms of a 128.6 ms step) the same work → **≈ 20.3–20.9
   (+4–7%)**; empty is untouched (attention ≈ 0). The 32k cell is REOPENED by the thrash insight —
   it was written off as pool-bound only.
+- **The q5k chain v4 adopted the confound fixes (research agent, ~06:15Z, reading the primary
+  agent's diff):** (1) its reconcile reads `research/uint4_verdict.txt` ("keep"/"revert",
+  **default revert**) instead of trusting `cand_uint4.done`'s "bench_complete" (which a losing
+  bench also writes); (2) its A/B base is `out/strata_byte_loop` — the TRUE champion — so its
+  control cells double as the same-day champion-config reference (the open obligation above);
+  (3) its watchdog polls every 25 s (the 3 s poll stole ~1 core); (4) its benches run empty +
+  ctx32k only (S1's wall; ctx128k deferred to the promotion pass, where the uint4 patch's +52%
+  gets its clean re-measure). **One dependency to watch: the chain waits up to 45 min for
+  uint4_verdict.txt, then DEFAULTS TO REVERT — a missed verdict silently strips the +52% gain
+  from the build and from the final restore. My recommendation (per the promotion ledger above):
+  the file should say "keep" — the ctx128k +52% is decisive and the patch rides inertly at
+  empty/ctx32k.** The verdict decision belongs to the primary agent; the A/B is internally fair
+  either way (both sides same watchdog, same disturbance state — the control's empty cell will
+  read a disturbed ~18-19, matching the uint4 bench's confounded state, NOT the champion's
+  historical 21.9).
 - **Pre-bench static verification + prediction (research agent, ~05:02Z, commit dd9fee1 read
   line-by-line):** the candidate's parity claim checks out statically. (1) `k_attn_part` has
   `constexpr int HD = 256` (q36_engine.cu:391) — both loops fully unroll at compile time, so the
