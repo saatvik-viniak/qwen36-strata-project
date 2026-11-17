@@ -200,4 +200,9 @@ baseline exists.
   21.69 (−0.9%), ctx32k 19.33 (−1.0%) — washing out.
 - Composition recipe for the kernel phase: shrink the MMQ staging sub-chunks ~4×
   (code) so 7 slots coexist with the fast MMQ prefill — composes trial A's +5.1%
-  empty decode with the baseline's prefill path.
+  empty decode with the baseline's prefill path. Caveat grounded in the rebalance
+  code: swaps are ≤8 per 32 rows, each a blocking 2.06 MB H2D + sync (~2-3 ms/step
+  at 7 slots; scores ×0.5 per pass; 2048-swap pass after prompts) — the slots' 32k
+  churn needs a B2-style fix (non-blocking swap stream / weaker decay / context-
+  scaled kRebalanceEvery) or the composition inherits trial A's 32k regression.
+  Trial D's ctx32k (S=2, MMQ prefill) is the cheap sign test.
