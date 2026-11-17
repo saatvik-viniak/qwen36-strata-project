@@ -1462,10 +1462,11 @@ deep and its prize is unknown until Lever A splits the step.
   per-entry merge as soon as that expert's dot lands (a pool worker or a completion
   poll issuing `cudaMemcpyAsync` — thread-safe — with per-entry merge ordering), so the
   copies+merges ride UNDER the pool's remaining dots and the serial tail shrinks to the
-  LAST expert's dot+copy+merge. **The honest bound: the copy+merge is latency-dominated
-  (ecpu ≈ 160 KB at T≈2.5 rows; ~0.1–0.3 ms/layer → ~4–12 ms/step ≈ 4–11% of the
-  step)** — real but bounded; it needs the T2 capture's numbers to size it and is a
-  deep pool/engine surgery (a new completion contract), not a patch.
+  LAST expert's dot+copy+merge. **The honest bound, corrected from the first pass:
+  `cpu_out` is PINNED (`cudaHostAllocDefault`, q36_engine.cu:3337) → the copies are
+  DMA-fast (~30–40 µs per layer incl. `d_miss` + the merge kernel) → ~2–4 ms/step ≈
+  2–4% of the step — real but SMALL; it ranks BELOW T4's slots and S13's pattern
+  levers** and needs a new completion contract (deep surgery), not a patch.
 - **The ranked actionable levers (the sketch's output):** (1) **T4's staging shrink →
   the slots at 262k** — the structural lever: every expert moved from the pool to the
   GPU shrinks the max()'s longer side (the pool) directly; the Q4_K_S's smaller blobs
@@ -2115,7 +2116,8 @@ See the Q4_K_S redirect entry at the bottom update log for the full plan.**
   dependency (pool(i) → combine(i) → attention(i+1) → router(i+1) → pool(i+1); the
   MTP-rows axis is already closed — the rows batch into every kernel); (3) the per-job
   pipelined drain proposed (the copies+merges ride under the pool's remaining dots;
-  ~4–11% of the step bound, deep surgery). The ranked levers: T4's slots → the per-job
+  cpu_out is PINNED so the honest bound is ~2–4% of the step — real but small; deep
+  surgery). The ranked levers: T4's slots → the per-job
   drain → S13's pattern levers → the task-plan audit. See the S14 section for the full
   sketch. Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
 - **2026-11-17 ~16:55Z — T1 (the MTP-off isolation) FIRST TWO CELLS LANDED — the MTP is
