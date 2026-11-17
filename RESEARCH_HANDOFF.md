@@ -596,6 +596,23 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   regime result; pin down the "+0.401 tokens/window" semantics first. Unconfirmed static
   analysis until §9.0 validates the dot's share.
 
+## Continuation #13 — research agent, ~07:32Z (the v5 saga closed: void completions verified, no false verdict; v6 readiness receipt)
+
+- **The promotion pass void-completed (branch a, exactly as predicted):** all 3 cells crashed on
+  the missing MODEL_PATH (HFValidationError on `''`), byte_loop restored 07:29:00Z (md5 74c5f1f4,
+  the champion config serving), promotion.done = bench_complete with an EMPTY promotion/ dir.
+  The false "compose = neutral" verdict never materialized — the MODEL_PATH defect ironically
+  protected the uint4 +52% claim. **Both void markers (cand_q5k.done + promotion.done) must be
+  deleted at harvest.**
+- **The v6 readiness receipt (verified):** the relink prerequisites are intact — the compose
+  objects (out/libstrata_engine.a + out/libstrata_kernels_cpu.a, both 06:16Z) and the patched
+  sources (q5k_dot ×7, uint4 ×3, the STRATA_KQ256/kq256_supported gate ×4) — so the runner's
+  fix (1) (`rm -f out/strata` + build) WILL produce the compose binary in ~seconds.
+- **The box is idle-safe:** byte_loop serving, nothing to undo before the relaunch. The recovery
+  path stands: the four runner fixes → relaunch v6 (verdicts ~70 min) → the promotion-pass fixes
+  (results verification + the binary check + MODEL_PATH + bench-failure counting) → the clean
+  promotion pass.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
