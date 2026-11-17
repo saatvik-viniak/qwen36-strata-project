@@ -263,6 +263,28 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   produce the compose binary in ~seconds. The recovery path stands: the four runner fixes →
   relaunch v6 → verdicts ~70 min → fix the promotion trigger + MODEL_PATH → the clean promotion
   pass. The box is idle-safe: byte_loop serving, nothing to undo before the relaunch.**
+- **🛑 THIRD URGENT — DO NOT MASS-COMMIT THE 5,579-M EVENT (research agent, ~07:43Z, verified a
+  git-VIEW artifact, not data damage):** `git status` suddenly shows 5,579 tracked files
+  modified (appeared between ~06:51Z and 07:39Z). Verified: (1) the content is INTACT — spot
+  checks (.dockerignore, q36_engine.cu) are byte-identical to HEAD modulo CR; (2) the file
+  mtimes are OLD (2026-11-16 17:02:27, the original checkout — no recent writes); (3) the
+  `.gitattributes` diff is itself just flipped line endings; (4) `core.autocrlf` is now UNSET
+  (= false) — it was normalizing earlier this session (my commits' LF→CRLF warnings), so the
+  CRLF working tree vs the LF index now shows phantom modifications. **The consequence to
+  avoid: a `git add -A` / `commit -a` would land 5,579 files of line-ending churn in the repo —
+  unreviewable and against the contributing rules. The safe moves: add files explicitly (as
+  both agents have done all session), and to restore the clean view: `git config core.autocrlf
+  true` (repo-local; verify `git status` shrinks back to ~55 untracked before doing anything
+  else).** What is NOT affected: the runner (unmodified, LF, content == HEAD), the compose
+  objects, the patched sources, my committed annotations.
+- **THE PRIMARY AGENT IS RECOVERING (research agent, ~07:43Z, its new scripts read):** its
+  untracked check scripts map one-to-one to my alarm items — check_q5k_gate/gate2 (06:43/06:49Z,
+  the cmp gate), check_q5k_cells (07:02Z, the empty cand/ dir), check_bench_fail (07:10Z, the
+  bench-failure counting), check_bench_env (07:12Z, MODEL_PATH — it greps bench.py itself),
+  check_promo_state (07:32Z, the promotion void), check_binaries (07:40Z, the no-op build's
+  md5/mtime evidence + the build dirs' object mtimes + the patched sources' mtimes), kill_v1
+  (07:35Z). It is verifying my findings source-first before touching the chain — exactly the
+  right order.
 - **RELUNCHED AND PAST THE KILLER STEP (research agent, ~06:40Z):** v5 is running (pid 90529,
   launch 06:33:50Z after the 06:33:43Z edit — no stale-offset race), build ok 06:34:11Z
   (incremental), and **parity PASSED 06:35:01Z** — `native_expert_parity: 0 failures`, with every
@@ -968,6 +990,18 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~07:43Z — 🛑 THIRD URGENT: the 5,579-M event is a git-VIEW artifact — do NOT
+  mass-commit (this commit).** git status suddenly shows 5,579 tracked files modified (between
+  ~06:51Z and 07:39Z). Verified: the content is intact (spot checks byte-identical to HEAD
+  modulo CR), the mtimes are old (2026-11-16 17:02:27 — no recent writes), the .gitattributes
+  diff is itself just flipped endings, and core.autocrlf is now UNSET (= false; it was
+  normalizing earlier — my commits' warnings). A mass add/commit would land 5,579 files of
+  line-ending churn; add files explicitly and restore the view with git config core.autocrlf
+  true (verify the status shrinks to ~55 untracked). The runner/compose objects/patched sources
+  are NOT affected. Also recorded: the primary agent is recovering — its new untracked scripts
+  map one-to-one to my alarm items (the gates, the empty cand/, bench-failure counting,
+  MODEL_PATH, the promotion void, the binary md5/mtime evidence, kill_v1), the newest at
+  07:40Z — verifying source-first before touching the chain.
 - **2026-11-17 ~07:36Z — the THP lever (S11-3/S9) made implementation-ready; the magnitude
   honestly bounded (this commit).** The fallback site is `std::malloc(host)` inside `if (!pinned)`
   (q36_engine.cu:3277-3293, read). The spec: STRATA_THP=1-gated (default OFF, the default path
