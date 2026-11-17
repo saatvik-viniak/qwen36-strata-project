@@ -760,6 +760,26 @@ and `pool.cpp` while the uint4 bench runs; execute cheapest-first, each is one m
 - **Lever 3 (S9, already queued): THP/madvise on the malloc'd arena.** 21.14 GiB / 4k pages =
   5.5M pages vs ~27k at 2 MiB pages — a ~200x cut in TLB pressure for exactly the access path
   the pool is stuck on. Composes with levers 1-2.
+  **Implementation-ready spec (research agent, ~07:36Z, source read at q36_engine.cu:3277-3293):**
+  the fallback path is `arena = (uint8_t*) std::malloc(host)` inside `if (!pinned)`. The change
+  (env-gated `STRATA_THP=1`, default OFF — the default path stays byte-identical per the
+  contributing rule): (1) `std::malloc(host + 0x200000)` (one 2-MiB pad suffices: the worst-case
+  round-up keeps `p + host ≤ arena + host + 0x200000`); (2) round the pointer UP to 2 MiB:
+  `p = (uintptr)((arena + 0x1FFFFF) & ~0x1FFFFF)`; (3) `madvise((void*)p, host, MADV_HUGEPAGE)`
+  (needs `<sys/mman.h>`; a failure is logged, never fatal — check
+  `/sys/kernel/mm/transparent_hugepage/enabled` = `madvise`/`always`; WSL2's kernel supports
+  THP); (4) use `p` as the arena (the pad's bytes stay inside the single allocation — nothing
+  to free separately; the tail of `host` that is not a 2-MiB multiple stays 4k — harmless).
+  **Magnitude, honestly bounded: this is NOT a 200x step-time win — it removes the per-access
+  page-walk on 5.5M 4k pages (the L2 TLB holds ~2k entries, so a 21.14 GiB working set thrashes
+  it), which is the latency term stacked on top of the DRAM latency the pool already pays.
+  Expected +10-30% at empty/ctx32k IF the pool is TLB-latency-bound — the A/B decides; the
+  engine-log pool-ms lines measure it directly. Sequence: lever 1's pin-error log (already
+  applied) reveals WHY `cudaHostAlloc` fails — a WSL2 page-locked cap means pinned is
+  unfixable and THIS lever is the best available; fragmentation means a smaller-arena retry
+  composes with it.** Note the file's ~27k figure should read ~10.6k pages (21.14 GiB / 2 MiB =
+  10,624) — the TLB-pressure cut is ~500x on the resident-set count, which is the right order
+  for the mechanism claim.
 - **Interpretation guard for the running A/Bs:** if the q5k candidate shows ~0 in-engine gain
   while parity+gates pass, THIS item is the reason — the dot kernel removes compute, but the
   pool's binding constraint is its access path. The regime test (S1's two-sided prediction) and
@@ -948,6 +968,18 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~07:36Z — the THP lever (S11-3/S9) made implementation-ready; the magnitude
+  honestly bounded (this commit).** The fallback site is `std::malloc(host)` inside `if (!pinned)`
+  (q36_engine.cu:3277-3293, read). The spec: STRATA_THP=1-gated (default OFF, the default path
+  byte-identical), malloc(host + 0x200000) + round up to 2 MiB + madvise(MADV_HUGEPAGE) (a
+  failure is logged, never fatal; WSL2's kernel supports THP; needs <sys/mman.h>). Magnitude:
+  NOT a 200x step-time win — it removes the per-access page-walk on 5.5M 4k pages (the L2 TLB
+  holds ~2k entries); expected +10-30% at empty/ctx32k IF the pool is TLB-latency-bound; the
+  A/B + the engine-log pool-ms lines decide. Also corrected the S11 figure: 21.14 GiB / 2 MiB ≈
+  10.6k pages (not ~27k) — the resident-set cut is ~500x, the right order for the mechanism
+  claim. Sequencing: lever 1's pin-error log (applied) reveals why cudaHostAlloc fails — a WSL2
+  page-locked cap makes THIS lever the best available; fragmentation composes with a smaller-
+  arena retry.
 - **2026-11-17 ~07:31Z — the v5 saga CLOSED: the promotion pass void-completed (branch a), no
   false verdict; the v6 readiness receipt verified (this commit).** The promotion pass's 3 cells
   crashed on the missing MODEL_PATH (the false "compose = neutral" verdict never materialized —
