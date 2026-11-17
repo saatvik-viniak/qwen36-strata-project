@@ -1448,6 +1448,40 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   SUGGESTIONS.MD's annotations; (4) the idle-residency lever's spec (an engine-side
   periodic toucher) after T2's capture confirms the stall on Q4_K_S.
 
+## Continuation #29 addendum — the continuing research agent, ~17:12Z (T1's verdict + the two live-log findings + the sketch landed)
+
+- **S14's row-pipeline sketch LANDED (committed 7801e19 + 3660a1a):** the park note's
+  premise corrected (the GPU runs the resident experts + the shared expert DURING the
+  pool; the idle is the pool's tail beyond the GPU's own kernels + the copy+merge
+  latency); the cross-layer pipeline CONFIRMED BLOCKED (the data dependency chain —
+  recorded so no agent re-litigates); the per-job pipelined drain proposed with its
+  honest bound ~2–4% of the step (cpu_out is PINNED, q36_engine.cu:3337 → DMA-fast
+  copies; ranks below T4's slots and S13's pattern levers). The ranked levers: T4's
+  slots → the per-job drain → S13's pattern levers → the task-plan audit.
+- **T1 COMPLETE — the MTP STAYS ON:** the full triple MTP-off empty 19.31 (−17.9%,
+  protocol-clean 512 tokens), ctx32k 18.25 (−20.7%), ctx128k 15.71 (−13.7%) vs the
+  MTP-on baseline 23.51/23.03/18.19. The clean bench's MTP-off +26% empty came WITH the
+  S=15 slots at 64k and does NOT transfer to 262k (0 slots). The q5k kernel's
+  multi-token path also disengages with MTP off (nt=1) — the confound stated; the q5k
+  ledger term stays MTP-ON-only. **The EOS insight: the MTP-off empty leg decoded the
+  FULL 512 (no EOS) while the MTP-on leg emitted EOS at 404 — the EOS@404 is plausibly
+  MTP-caused (the draft acceptance can land on EOS); the ignore-EOS patch option stays
+  for the champion's protocol-clean empty cell.**
+- **Two live-log findings (strata-qwen36-q4ks262.log):** (1) the slots DO NOT ENGAGE at
+  262k on the Q4_K_S either ("hybrid experts: 0 of 256 per layer in VRAM"; the free
+  1.72/1.39 GiB − the staging 0.91 GiB − the reserve ≈ 0) → T4's staging shrink remains
+  the ONLY path to the slots at 262k, and the Q4_K_S's budget gap is ~0.1–0.4 GiB (not
+  ~0.5 as the Q5's); (2) the 17.45 GiB expert arena ALSO fails to pin ("cudaHostAlloc …
+  FAILED (out of memory); the pool runs in pageable host memory") → the idle-residency
+  stall mechanism applies to the Q4_K_S too (T2 tests it directly) and the box's pin
+  cap is BELOW 17.45 GiB.
+- **The queue state:** T2 (the Q4_K_S poolms capture) starts after the champion restore
+  (the restore began 17:06Z; healthy ~17:10Z); T3 (the S13-A microbench, staged,
+  COMPILE_OK) needs the server-stopped window after T2; then T4 (the staging shrink →
+  the slots at 262k, now the #1 ranked lever) and T5 (split-K).
+- **A second Q4_K_S baseline pass in a fresh window remains proposed** (the drift bound
+  for the +4.4/+5.8/+3.8% comparators; ~24 min of bench, within the 30-min rule).
+
 ## Continuation #29 — primary agent, ~15:50Z (THE Q4_K_S REDIRECT: the user switched the model; the baseline is running)
 
 - **USER DIRECTIVE (binding, supersedes the Q5_K_S mission's model pin):** use the **Q4_K_S quant

@@ -57,6 +57,9 @@ Server context 262144 throughout (the int4 KV cache is 1.40 GiB there), model
 | 6 | 2026-11-17 16:01Z | 8833c30b (the champion compose) | **THE MODEL SWITCHED — the Q4_K_S 262k baseline, empty cell**: the champion config unchanged (MTP 2 greedy CT 8 KV int4 STRATA_KQ256=1, 262k server ctx, settle 900 s, no watchdog); the model file now Qwen3.6-35B-A3B-…-Q4_K_S.gguf (20.43 GB, the expert arena 17.45 GiB vs the Q5_K_S's 21.14). **The model emitted EOS at 404 of the requested 512 tokens** (the smaller quant changed the greedy path; the rate is honest over 404 tokens — the KV delta 404→512 is ~0.1%) | empty | **23.51** | 3.8 | 262 | 6.59 | the Q4_K_S campaign's anchor (vs the compose champion's same-day empty 22.53 = **+4.4%**, qualified: single pass, 6.5 h apart, the drift band −15.3%) |
 | 6 | 2026-11-17 16:05Z | 8833c30b | the Q4_K_S baseline, ctx32k cell (31,130 actual prompt tokens — the same actual count as the Q5's cells) | ctx32k | **23.03** | 323.2 | 96,326 | 6.62 | the Q4_K_S anchor (vs the champion's same-day 21.76 = **+5.8%**, qualified) |
 | 6 | 2026-11-17 16:23Z | 8833c30b | the Q4_K_S baseline, ctx128k cell (124,520 actual prompt tokens — the same actual count as the Q5's cells) | ctx128k | **18.19** | 251.6 | 494,832 | 6.62 | the Q4_K_S anchor (vs the champion's same-day 17.52 = **+3.8%**, qualified; the pass's done marker bench_complete 16:23Z) |
+| 7 | 2026-11-17 16:44Z | 8833c30b | **trial T1 (S15-A) the MTP-off isolation, empty cell**: the champion config MINUS the SAMPLING export (the drafting off, "drafts accepted 0 of 0" live-verified; the q5k kernel's multi-token path also disengages — the confound); **the leg decoded the FULL 512 tokens (protocol-clean, no EOS — the MTP-on leg's EOS@404 is plausibly MTP-caused)** | empty | 19.31 | 4.2 | 235 | 6.59 | trial (**−17.9% vs the MTP-on baseline 23.51**) — the MTP stays ON |
+| 7 | 2026-11-17 16:49Z | 8833c30b | trial T1 the MTP-off isolation, ctx32k cell (31,130 actual tokens) | ctx32k | 18.25 | 325.2 | 95,711 | 6.62 | trial (**−20.7%** vs 23.03; the prefill MTP-independent as expected) |
+| 7 | 2026-11-17 17:06Z | 8833c30b | trial T1 the MTP-off isolation, ctx128k cell (124,520 actual tokens) | ctx128k | 15.71 | 254.1 | 489,997 | 6.62 | trial (**−13.7%** vs 18.19) — **the verdict: the MTP drafting amortization WINS at 262k (~+14–21%/cell); the clean bench's MTP-off +26% empty came WITH the S=15 slots at 64k and does NOT transfer; the champion config keeps MTP 2 + greedy** |
 
 **The initial tps (pass 1)**: empty 21.92, ctx32k 18.94, ctx128k 11.80 decode tok/s.
 **Repeats (final)**: empty 21.86 (0.3%), ctx32k 20.44 → 19.52 (median 19.52), ctx128k 11.66 (1.19%).
@@ -184,14 +187,22 @@ baseline cluster.)*
   is clean (8%). A NEW lever: keep the 21.14 GiB arena resident through idle (a periodic
   toucher / WILLNEED on the first token). It does not move the bench's measured round
   (the warmup absorbs it) but it is a real serving-latency (TTFT-after-idle) lever and
-  it explains part of the box's day-drift (the −15.3% anchor gap).
-- **S15-A (the MTP sampling gate's isolation at 262k)** = trial T1 of the Q4_K_S
-  redirect — **RUNNING (its server healthy 16:28Z, settling, then the 3 cells to ~17:10Z;
-  results research/q4ks_trials/mtpoff/)**: the only variable = the SAMPLING export (the
-  MTP on vs off), all 3 cells (not just empty). Its verdict decides the MTP-dependence
-  note (the q5k ledger term lives in the MTP-ON protocol) and whether an MTP-off serving
-  mode is worth a per-cell trade study (the clean bench's +26% empty came WITH the S=15
-  slots confound at 64k).
+  it explains part of the box's day-drift (the −15.3% anchor gap). **The Q4_K_S live
+  log CONFIRMS the mechanism applies there too: "cudaHostAlloc for the 17.45 GiB expert
+  arena FAILED (out of memory); the pool runs in pageable host memory" — not even the
+  smaller arena pins (the box's pin cap < 17.45 GiB; the S11-1 probe's answer
+  tightens). T2's capture tests the stall on the Q4_K_S directly.**
+- **The slots at 262k: STILL 0 on the Q4_K_S (the live log)** — "hybrid experts: 0 of
+  256 per layer in VRAM" (the free 1.72/1.39 GiB − the staging 0.91 GiB − the reserve
+  ≈ 0). T4's staging shrink remains the ONLY path; the Q4_K_S's smaller staging makes
+  the budget gap ~0.1–0.4 GiB, not ~0.5.
+- **S15-A (the MTP sampling gate's isolation at 262k)** = trial T1 — **COMPLETE (row 7):
+  the MTP STAYS ON — all three cells regress MTP-off (empty −17.9%, ctx32k −20.7%,
+  ctx128k −13.7%); the clean bench's MTP-off +26% empty came WITH the S=15 slots at 64k
+  and does not transfer. The MTP-off empty leg was protocol-clean (the full 512) while
+  the MTP-on leg emitted EOS at 404 — the EOS@404 is plausibly MTP-caused.** The q5k
+  ledger term stays MTP-ON-only; the MTP-off mode stays recorded as a short-ctx/slots
+  serving mode.
 - **The Q4_K_S drift-bound second pass (proposed, ~24 min of bench — within the 30-min
   rule)**: repeat the 3 baseline cells in a fresh window after T2. The first pass's
   comparators (+4.4/+5.8/+3.8% vs the champion's same-day cells) ran 6.5 h apart inside

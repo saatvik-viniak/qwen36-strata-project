@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 131072,
+  "prompt_tokens_actual": 124520,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 496097.68590100063,
+      "decode_ms": 30981.32269100097,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text block.\n   - The core message is repeated many times: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - There's no specific question or prompt at the end. It just ends with \"The judge\".\n   - This looks like a test of attention, pattern recognition, or perhaps a prompt injection/continuation test.\n\n2.  **Identify Key Elements:**\n   - Core concept: Autoresearch (a loop for optimization)\n   - Steps: Change one thing -> measure it -> keep if better -> undo if not\n   - Key phrase: \"The judge owns the clock and the check.\"\n   - Repetition: The exact same paragraph is repeated ~100+ times.\n   - Ending: Cuts off mid-sentence/phrase at \"The judge\"\n\n3.  **Determine Intent:**\n   - Since there's no explicit question, the user might be:\n     a) Testing if I can recognize the pattern and summarize it.\n     b) Providing context for a future prompt.\n     c) Just pasting something to see how I handle massive repetition.\n     d) Expecting me to complete the thought or acknowledge the core message.\n   - Best approach: Acknowledge the core concept, note the repetition, and ask how I can help with it. Keep it concise.\n\n4.  **Formulate Response:**\n   - Acknowledge the repeated definition of \"Autoresearch\"\n   - Extract the key principle: iterative single-variable optimization with automated judgment\n   - Note the phrase about \"the judge\" controlling time and validation\n   - Offer to help apply it, explain it further, or continue from where it left off\n   - Keep it professional and direct.\n\n   Draft:\n   You've shared a highly repetitive definition of **Autoresearch**: an iterative optimization loop where you change one variable at a time, measure the result, keep the change if it improves performance, and revert it if it doesn\u2019t\u2014all while \"the judge\" controls both timing and validation. \n\n   How would you like to proceed? I can help you:\n   - Implement this loop in code or a workflow\n   - Design the \"",
+      "first": 11918.190594283,
+      "last": 11949.171916974
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 489997.1725410014,
+      "decode_ms": 32597.654695999154,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text block.\n   - The core message is repeated many times: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - There's no specific question or prompt at the end. It just ends with \"The judge\".\n   - This looks like a test of attention, pattern recognition, or perhaps a prompt injection/continuation test.\n\n2.  **Identify Key Elements:**\n   - Core concept: Autoresearch (a loop for optimization)\n   - Steps: Change one thing -> measure it -> keep if better -> undo if not\n   - Key phrase: \"The judge owns the clock and the check.\"\n   - Repetition: The exact same paragraph is repeated ~100+ times.\n   - Ending: Cuts off mid-sentence/phrase at \"The judge\"\n\n3.  **Determine Intent:**\n   - Since there's no explicit question, the user might be:\n     a) Testing if I can recognize the pattern and summarize it.\n     b) Providing context for a future prompt.\n     c) Just pasting something to see how I handle massive repetition.\n     d) Expecting me to complete the thought or acknowledge the core message.\n   - Best approach: Acknowledge the core concept, note the repetition, and ask how I can help with it. Keep it concise.\n\n4.  **Formulate Response:**\n   - Acknowledge the repeated definition of \"Autoresearch\"\n   - Extract the key principle: iterative single-variable optimization with automated judgment\n   - Note the phrase about \"the judge\" controlling time and validation\n   - Offer to help apply it, explain it further, or continue from where it left off\n   - Keep it professional and direct.\n\n   Draft:\n   You've shared a highly repetitive definition of **Autoresearch**: an iterative optimization loop where you change one variable at a time, measure the result, keep the change if it improves performance, and revert it if it doesn\u2019t\u2014all while \"the judge\" controls both timing and validation. \n\n   How would you like to proceed? I can help you:\n   - Implement this loop in code or a workflow\n   - Design the \"",
+      "first": 12439.172698619,
+      "last": 12471.770353315
+    }
+  ],
+  "decode_tps": 15.706651437805428,
+  "prefill_tps": 254.12391535704333,
+  "ttft_ms": 489997.1725410014,
+  "warmup_ttft_ms": 496097.68590100063,
+  "peak_gib": 6.6181640625
+}

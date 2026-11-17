@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 32768,
+  "prompt_tokens_actual": 31130,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 98060.90748600036,
+      "decode_ms": 29184.942502999547,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text block.\n   - The core message is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This exact sentence pair is repeated dozens of times (looks like ~100+ repetitions).\n   - There's no explicit question or prompt. It's just a statement repeated many times.\n\n2.  **Identify Key Concepts:**\n   - \"Autoresearch\": Likely refers to an automated research/optimization process.\n   - \"Loop: change one thing, measure it, keep the change if it is better, and undo it if it is not.\" This describes a classic single-parameter optimization loop, similar to hill climbing or coordinate descent with backtracking. It's essentially a greedy local search algorithm.\n   - \"The judge owns the clock and the check.\" This is a metaphorical/poetic line. \"Judge\" likely refers to the evaluation metric/system. \"Clock\" = time/latency/performance measurement. \"Check\" = correctness/validation/quality check. So the evaluation system controls both performance timing and correctness validation.\n\n3.  **Determine User Intent:**\n   - Since there's no question, the user might be:\n     a) Testing my ability to handle repetition/context windows.\n     b) Sharing a concept/prompt for me to acknowledge, expand on, or format.\n     c) Using it as a system prompt or context setter for future interactions.\n     d) Just pasting something and expecting a response that acknowledges the core idea.\n   - I should acknowledge the core concept, explain it clearly, and ask how they'd like to proceed (e.g., implement it, discuss it, refine it, etc.).\n\n4.  **Formulate Response Strategy:**\n   - Acknowledge the repeated statement.\n   - Extract and clarify the core algorithm/concept.\n   - Explain the metaphor (\"judge owns the clock and the check\").\n   - Offer next steps: implementation details, pseudocode, optimization strategies, or how to apply it to a specific domain.\n   - Keep it concise since the input was highly repetitive.\n\n5.  **Draft Response (Mental Refinement):**\n   You\u2019ve shared a clear description of an",
+      "first": 11262.931202324,
+      "last": 11292.116144827
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 95711.42078000048,
+      "decode_ms": 28048.98710099951,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text block.\n   - The core message is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This exact sentence pair is repeated dozens of times (looks like ~100+ repetitions).\n   - There's no explicit question or prompt. It's just a statement repeated many times.\n\n2.  **Identify Key Concepts:**\n   - \"Autoresearch\": Likely refers to an automated research/optimization process.\n   - \"Loop: change one thing, measure it, keep the change if it is better, and undo it if it is not.\" This describes a classic single-parameter optimization loop, similar to hill climbing or coordinate descent with backtracking. It's essentially a greedy local search algorithm.\n   - \"The judge owns the clock and the check.\" This is a metaphorical/poetic line. \"Judge\" likely refers to the evaluation metric/system. \"Clock\" = time/latency/performance measurement. \"Check\" = correctness/validation/quality check. So the evaluation system controls both performance timing and correctness validation.\n\n3.  **Determine User Intent:**\n   - Since there's no question, the user might be:\n     a) Testing my ability to handle repetition/context windows.\n     b) Sharing a concept/prompt for me to acknowledge, expand on, or format.\n     c) Using it as a system prompt or context setter for future interactions.\n     d) Just pasting something and expecting a response that acknowledges the core idea.\n   - I should acknowledge the core concept, explain it clearly, and ask how they'd like to proceed (e.g., implement it, discuss it, refine it, etc.).\n\n4.  **Formulate Response Strategy:**\n   - Acknowledge the repeated statement.\n   - Extract and clarify the core algorithm/concept.\n   - Explain the metaphor (\"judge owns the clock and the check\").\n   - Offer next steps: implementation details, pseudocode, optimization strategies, or how to apply it to a specific domain.\n   - Keep it concise since the input was highly repetitive.\n\n5.  **Draft Response (Mental Refinement):**\n   You\u2019ve shared a clear description of an",
+      "first": 11387.829338322,
+      "last": 11415.878325423
+    }
+  ],
+  "decode_tps": 18.253778582320184,
+  "prefill_tps": 325.2485413580321,
+  "ttft_ms": 95711.42078000048,
+  "warmup_ttft_ms": 98060.90748600036,
+  "peak_gib": 6.62109375
+}

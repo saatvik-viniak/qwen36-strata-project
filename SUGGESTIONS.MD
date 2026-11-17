@@ -1490,13 +1490,15 @@ the capture's own 19.07 as the comparator with the drift caveat stated. The pin 
 (s11_pin_probe.c) stays the primary agent's run (a cudaHostAlloc probe needs the CUDA
 context).** The original proposal follows.
 
-**Status: RUNNING — trial T1 live, the first two cells READ (the continuing agent, ~16:55Z):
-the MTP-off leg at 262k is SLOWER than the MTP-on baseline — empty 19.31 vs 23.51 (−17.9%),
-ctx32k 18.25 vs 23.03 (−20.7%; the prefill MTP-independent as expected) — the OPPOSITE of the
-64k-slots clean bench's hint: at 262k with 0 slots the MTP drafting amortization WINS. The
-q5k kernel's multi-token path also disengages with MTP off (nt=1) — the isolation's confound,
-stated. ctx128k pending (~17:06Z), then the champion restore.** The queued status (primary
-agent, ~15:45Z) — the baseline pass (MTP-on, the mission protocol) is running; Lever A's isolation
+**Status: COMPLETE — T1's verdict LANDED (the continuing agent, ~17:10Z): the MTP STAYS ON.
+All three cells regress MTP-off at 262k — empty 19.31 vs 23.51 (−17.9%), ctx32k 18.25 vs 23.03
+(−20.7%), ctx128k 15.71 vs 18.19 (−13.7%) — the OPPOSITE of the 64k-slots clean bench's hint:
+at 262k with 0 slots the MTP drafting amortization WINS. The q5k kernel's multi-token path also
+disengages with MTP off (nt=1) — the isolation's confound, stated; the q5k ledger term stays
+MTP-ON-only. The MTP-off empty leg decoded the FULL 512 (protocol-clean) while the MTP-on leg
+emitted EOS at 404 — the EOS@404 is plausibly MTP-caused (the draft acceptance can land on EOS).
+The MTP-off mode stays recorded as a short-ctx/slots serving mode only.** The queued status
+(primary agent, ~15:45Z) — the baseline pass (MTP-on, the mission protocol) is running; Lever A's isolation
 (the MTP-off serve at 262k, one flag) runs right after it, on the Q4_K_S model. A first supporting
 data point landed: the Q4_K_S MTP-off/64k/slots-23/w5 empty reference read 28.10 tok/s
 (research/q4ks_ref/), matching the Q5's 28.398 same-mode reading — the MTP-off mode's empty
@@ -2134,3 +2136,33 @@ See the Q4_K_S redirect entry at the bottom update log for the full plan.**
   mode. The q5k ledger term stays MTP-ON-only (recorded). ctx128k lands ~17:06Z; the
   champion restore follows (~17:12Z), then T2 (the poolms capture). Signed:
   GLM 5.3 Flash (Maya-s quant), the continuing research agent.
+- **2026-11-17 ~17:10Z — T1 COMPLETE: THE MTP STAYS ON (all three cells regress
+  MTP-off); two live-log findings (the continuing research agent, this commit).** The
+  trial finished truthfully (the 3 cells measured; the champion restore started
+  17:06Z). The full triple (research/q4ks_trials/mtpoff/):
+  - empty **19.31** tok/s (−17.9% vs the MTP-on baseline 23.51) — **and protocol-clean:
+    the MTP-off leg decoded the FULL 512 tokens** ("length", no EOS) — the MTP-on leg's
+    EOS@404 is plausibly MTP-caused (the draft acceptance can land on EOS where the
+    plain greedy path continues); the ignore-EOS patch option stays for the champion's
+    protocol-clean empty cell;
+  - ctx32k **18.25** (−20.7% vs 23.03; the prefill 325.2 vs 323.2 — MTP-independent as
+    expected);
+  - ctx128k **15.71** (−13.7% vs 18.19; the prefill 254.1 vs 251.6).
+  - **The verdict: the MTP drafting amortization WINS at 262k (~+14–21% per cell) — the
+    clean bench's MTP-off +26% empty does NOT transfer** (that reading came WITH the
+    S=15 slots at 64k; the slots move the experts' FFN to the GPU and change the trade).
+    The champion config keeps MTP 2 + greedy. The q5k kernel's multi-token path also
+    disengages with MTP off (nt=1) — the isolation's confound, recorded; the q5k ledger
+    term stays MTP-ON-only.
+- **Two live-log findings (strata-qwen36-q4ks262.log, the Q4_K_S 262k servers):**
+  (1) **"hybrid experts: 0 of 256 per layer in VRAM" — the slots DO NOT ENGAGE at 262k
+  on the Q4_K_S either** (the free VRAM 1.72/1.39 GiB − the staging 0.91 GiB − the
+  reserve ≈ 0; the same verdict as the Q5's trial-E arithmetic) → **T4's staging shrink
+  remains the ONLY path to the slots at 262k**, and the Q4_K_S's smaller staging makes
+  it closer (the budget gap is ~0.1–0.4 GiB, not ~0.5);
+  (2) **"cudaHostAlloc for the 17.45 GiB expert arena FAILED (out of memory); the pool
+  runs in pageable host memory" — the Q4_K_S's SMALLER arena also fails to pin** → the
+  idle-residency stall mechanism (Lever A's NEW finding) applies to this model too
+  (T2's capture tests it directly), and the box's pin cap is BELOW 17.45 GiB (the
+  S11-1 probe's answer tightens: not even 17.45 GiB pins).
+  Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.

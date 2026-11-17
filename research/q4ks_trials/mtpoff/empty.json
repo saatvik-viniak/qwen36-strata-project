@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 1193.0238980003196,
+      "decode_ms": 31969.374886000878,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - User input: \"Aut\"\n   - This is a very short, incomplete word or acronym. It could be the beginning of many words: \"Author\", \"Automatic\", \"Autism\", \"AutoCAD\", \"Autonomous\", \"Authentication\", etc.\n   - It could also be an abbreviation for \"Austria\" (country code), \"Automobile\", \"Autumn\", etc.\n\n2.  **Identify Possible Meanings/Contexts:**\n   - Since there's no context, I need to ask for clarification or provide a brief overview of common meanings.\n   - Common expansions of \"AUT\":\n     - Austria (ISO country code)\n     - Automatic/Automated\n     - Autism\n     - AutoCAD (software)\n     - Autonomous\n     - Authentication\n     - Autumn (season, though usually abbreviated as \"Aut.\" or just \"Fall\")\n     - Automobile/Auto\n\n3.  **Determine Response Strategy:**\n   - Acknowledge the input is short/incomplete\n   - List common meanings/contextual uses\n   - Ask for clarification to provide a precise answer\n   - Keep it concise and helpful\n\n4.  **Draft Response (Mental Refinement):**\n   \"Aut\" can stand for several things depending on the context. Here are some common meanings:\n   - **Austria** \u2013 ISO country code (AUT)\n   - **Automatic/Automated** \u2013 Often used in tech/engineering contexts\n   - **Autism** \u2013 Shortened form in medical/educational settings\n   - **AutoCAD** \u2013 Popular CAD software by Autodesk\n   - **Authentication** \u2013 In IT/security contexts\n   - **Autumn** \u2013 Sometimes abbreviated as \"Aut.\" (especially in British English)\n   \n   Could you clarify the context or let me know what you're referring to? I\u2019ll give you a more precise answer!\"\n\n5.  **Self-Correction/Verification:**\n   - Check accuracy: Austria's ISO code is indeed AUT. AutoCAD is by Autodesk, not typically abbreviated as \"AUT\" alone but possible. Autism abbreviation is common in clinical notes. Authentication is sometimes \"Auth\" not \"Aut\", but possible. Autumn abbreviation is valid. Automatic is usually \"Auto\". \n   - The response is balanced, covers likely interpretations, and prompts for context.\n   - Tone is helpful and open-ended.\n",
+      "first": 11100.674184717,
+      "last": 11132.643559603
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 235.46237200025644,
+      "decode_ms": 26511.401590998503,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - User input: \"Aut\"\n   - This is a very short, incomplete word or acronym. It could be the beginning of many words: \"Author\", \"Automatic\", \"Autism\", \"AutoCAD\", \"Autonomous\", \"Authentication\", etc.\n   - It could also be an abbreviation for \"Austria\" (country code), \"Automobile\", \"Autumn\", etc.\n\n2.  **Identify Possible Meanings/Contexts:**\n   - Since there's no context, I need to ask for clarification or provide a brief overview of common meanings.\n   - Common expansions of \"AUT\":\n     - Austria (ISO country code)\n     - Automatic/Automated\n     - Autism\n     - AutoCAD (software)\n     - Autonomous\n     - Authentication\n     - Autumn (season, though usually abbreviated as \"Aut.\" or just \"Fall\")\n     - Automobile/Auto\n\n3.  **Determine Response Strategy:**\n   - Acknowledge the input is short/incomplete\n   - List common meanings/contextual uses\n   - Ask for clarification to provide a precise answer\n   - Keep it concise and helpful\n\n4.  **Draft Response (Mental Refinement):**\n   \"Aut\" can stand for several things depending on the context. Here are some common meanings:\n   - **Austria** \u2013 ISO country code (AUT)\n   - **Automatic/Automated** \u2013 Often used in tech/engineering contexts\n   - **Autism** \u2013 Shortened form in medical/educational settings\n   - **AutoCAD** \u2013 Popular CAD software by Autodesk\n   - **Authentication** \u2013 In IT/security contexts\n   - **Autumn** \u2013 Sometimes abbreviated as \"Aut.\" (especially in British English)\n   \n   Could you clarify the context or let me know what you're referring to? I\u2019ll give you a more precise answer!\"\n\n5.  **Self-Correction/Verification:**\n   - Check accuracy: Austria's ISO code is indeed AUT. AutoCAD is by Autodesk, not typically abbreviated as \"AUT\" alone but possible. Autism abbreviation is common in clinical notes. Authentication is sometimes \"Auth\" not \"Aut\", but possible. Autumn abbreviation is valid. Automatic is usually \"Auto\". \n   - The response is balanced, covers likely interpretations, and prompts for context.\n   - Tone is helpful and open-ended.\n",
+      "first": 11132.895109569,
+      "last": 11159.40651116
+    }
+  ],
+  "decode_tps": 19.31244556205738,
+  "prefill_tps": 4.246963077391028,
+  "ttft_ms": 235.46237200025644,
+  "warmup_ttft_ms": 1193.0238980003196,
+  "peak_gib": 6.5888671875
+}

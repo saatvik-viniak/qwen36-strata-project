@@ -1,0 +1,48 @@
+[strata] 2026-11-17 09:40:34 engine started: /home/dmin/qwen36-strata-project/out/strata --serve --native /models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q4_K_S.gguf --max-context 262144 --prefill 1024 --mtp 2 --cpu-threads 8 --kv int4
+strata-q36: /models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q4_K_S.gguf: 753 tensors (layout checked), 1.66 GiB on the GPU in 12.0 s (the routed experts are placed after the engine's buffers)
+strata: K-quant prompt kernels from /home/dmin/qwen36-strata-project/out/libstrata_kq.so (STRATA_MMQ_KQ=1)
+strata-q36: prompt experts on MMQ (int8)
+strata-q36: context 262144 cells, prompt chunk 1024, KV cache int4, MTP block loaded, 1.72 GiB of VRAM free
+strata-q36: cudaHostAlloc for the 17.45 GiB expert arena FAILED (out of memory); the pool runs in pageable host memory
+strata cpu pool: warning: 8 CPU expert workers are configured, but this CPU has 6 physical cores. Two workers on one core share its memory bandwidth and slow each other down. Recommended: --pool-workers 5 (or leave it out: the engine picks that by itself). It still runs as configured.
+strata-q36: hybrid experts: 0 of 256 per layer in VRAM (0.00 GiB), all 17.45 GiB in pageable host memory, the rest of a batch of <= 128 rows on 9 CPU threads, bigger prompt chunks streamed (0.91 GiB staging); 144.0 s
+strata: q5k multi-token kernel: engaged (STRATA_KQ256=1)
+strata-q36: warmed up in 146.7 s (one prompt chunk, a decode step, a speculative step)
+strata serve: session 0: prompt 11 tokens = 0 reused + 11 read in 1100 ms (10.0 tok/s), 404 generated in 30664 ms (13.2 tok/s), drafts accepted 243 of 320 (stop)
+strata serve: session 0: prompt 11 tokens = 0 reused + 11 read in 252 ms (43.6 tok/s), 404 generated in 17183 ms (23.5 tok/s), drafts accepted 243 of 320 (stop)
+strata serve: session 0: prompt 31140 tokens = 0 reused + 31140 read in 105674 ms (294.7 tok/s), 512 generated in 22459 ms (22.8 tok/s), drafts accepted 306 of 414 (length)
+strata serve: session 0: prompt 31140 tokens = 0 reused + 31140 read in 96306 ms (323.3 tok/s), 512 generated in 22233 ms (23.0 tok/s), drafts accepted 306 of 414 (length)
+strata serve: session 0: prompt 124530 tokens = 0 reused + 124530 read in 494146 ms (252.0 tok/s), 512 generated in 28833 ms (17.8 tok/s), drafts accepted 295 of 434 (length)
+strata serve: session 0: prompt 124530 tokens = 0 reused + 124530 read in 494769 ms (251.7 tok/s), 512 generated in 28151 ms (18.2 tok/s), drafts accepted 295 of 434 (length)
+[strata] 2026-11-17 10:23:55 engine started: /home/dmin/qwen36-strata-project/out/strata --serve --native /models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q4_K_S.gguf --max-context 262144 --prefill 1024 --mtp 2 --cpu-threads 8 --kv int4
+strata-q36: /models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q4_K_S.gguf: 753 tensors (layout checked), 1.66 GiB on the GPU in 13.9 s (the routed experts are placed after the engine's buffers)
+strata: K-quant prompt kernels from /home/dmin/qwen36-strata-project/out/libstrata_kq.so (STRATA_MMQ_KQ=1)
+strata-q36: prompt experts on MMQ (int8)
+strata-q36: context 262144 cells, prompt chunk 1024, KV cache int4, MTP block loaded, 1.39 GiB of VRAM free
+strata-q36: cudaHostAlloc for the 17.45 GiB expert arena FAILED (out of memory); the pool runs in pageable host memory
+strata cpu pool: warning: 8 CPU expert workers are configured, but this CPU has 6 physical cores. Two workers on one core share its memory bandwidth and slow each other down. Recommended: --pool-workers 5 (or leave it out: the engine picks that by itself). It still runs as configured.
+strata-q36: hybrid experts: 0 of 256 per layer in VRAM (0.00 GiB), all 17.45 GiB in pageable host memory, the rest of a batch of <= 128 rows on 9 CPU threads, bigger prompt chunks streamed (0.91 GiB staging); 105.5 s
+strata: q5k multi-token kernel: engaged (STRATA_KQ256=1)
+strata-q36: warmed up in 148.4 s (one prompt chunk, a decode step, a speculative step)
+strata serve: session 0: prompt 11 tokens = 0 reused + 11 read in 1100 ms (10.0 tok/s), 512 generated in 31986 ms (16.0 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 0: prompt 11 tokens = 0 reused + 11 read in 221 ms (49.8 tok/s), 512 generated in 26512 ms (19.3 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 0: prompt 31140 tokens = 0 reused + 31140 read in 97909 ms (318.1 tok/s), 512 generated in 29186 ms (17.5 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 0: prompt 31140 tokens = 0 reused + 31140 read in 95694 ms (325.4 tok/s), 512 generated in 28049 ms (18.3 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 0: prompt 124530 tokens = 0 reused + 124530 read in 495973 ms (251.1 tok/s), 512 generated in 30983 ms (16.5 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 0: prompt 124530 tokens = 0 reused + 124530 read in 489893 ms (254.2 tok/s), 512 generated in 32598 ms (15.7 tok/s), drafts accepted 0 of 0 (length)
+[strata] 2026-11-17 11:06:46 engine started: /home/dmin/qwen36-strata-project/out/strata --serve --native /models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q4_K_S.gguf --max-context 262144 --prefill 1024 --mtp 2 --cpu-threads 8 --kv int4
+strata-q36: /models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q4_K_S.gguf: 753 tensors (layout checked), 1.66 GiB on the GPU in 17.6 s (the routed experts are placed after the engine's buffers)
+strata: K-quant prompt kernels from /home/dmin/qwen36-strata-project/out/libstrata_kq.so (STRATA_MMQ_KQ=1)
+strata-q36: prompt experts on MMQ (int8)
+strata-q36: context 262144 cells, prompt chunk 1024, KV cache int4, MTP block loaded, 1.72 GiB of VRAM free
+strata-q36: cudaHostAlloc for the 17.45 GiB expert arena FAILED (out of memory); the pool runs in pageable host memory
+strata cpu pool: warning: 8 CPU expert workers are configured, but this CPU has 6 physical cores. Two workers on one core share its memory bandwidth and slow each other down. Recommended: --pool-workers 5 (or leave it out: the engine picks that by itself). It still runs as configured.
+strata-q36: hybrid experts: 0 of 256 per layer in VRAM (0.00 GiB), all 17.45 GiB in pageable host memory, the rest of a batch of <= 128 rows on 9 CPU threads, bigger prompt chunks streamed (0.91 GiB staging); 125.6 s
+strata: q5k multi-token kernel: engaged (STRATA_KQ256=1)
+strata-q36: warmed up in 120.3 s (one prompt chunk, a decode step, a speculative step)
+[strata] 2026-11-17 11:11:37 engine started: /home/dmin/qwen36-strata-project/out/strata_poolms --serve --native /models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q4_K_S.gguf --max-context 262144 --prefill 1024 --mtp 2 --cpu-threads 8 --kv int4
+strata-q36: /models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q4_K_S.gguf: 753 tensors (layout checked), 1.66 GiB on the GPU in 13.6 s (the routed experts are placed after the engine's buffers)
+strata: K-quant prompt kernels from /home/dmin/qwen36-strata-project/out/libstrata_kq.so (STRATA_MMQ_KQ=1)
+strata-q36: prompt experts on MMQ (int8)
+strata-q36: context 262144 cells, prompt chunk 1024, KV cache int4, MTP block loaded, 1.72 GiB of VRAM free
+strata-q36: cudaHostAlloc for the 17.45 GiB expert arena FAILED (out of memory); the pool runs in pageable host memory
