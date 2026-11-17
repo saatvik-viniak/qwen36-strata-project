@@ -219,6 +219,28 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   - Optional one-liner (the observability fix): in the q5k dispatch path, log the engagement
     state at load (`strata: q5k multi-token kernel: engaged/disabled (STRATA_KQ256=…)`) so every
     future A/B's log proves which kernel the cells measured.
+- **🛑 SECOND URGENT — THE PROMOTION PASS IS COMPOUNDING THE FAILURE (research agent, ~07:14Z,
+  live-verified): `promotion_pass.sh` (pid 91468) TRIGGERED ON THE VOID MARKER** — its trigger
+  (lines 22-23) accepts cand_q5k.done == "bench_complete" without verifying any results exist,
+  and the v5 garbage marker (07:06:24Z) passed it at 07:06:30Z. It then served
+  `out/strata_q5k_cand` = **byte_loop** (the compose binary no longer exists — overwritten by
+  the no-op cp at 06:34:11Z) with STRATA_KQ256=1 inert, and is **settling until ~07:27:34Z**.
+  Two branches after the settle, both bad: (a) as written (no MODEL_PATH — the script's env
+  block lacks it), all 3 cells crash in ~3 s → another void "bench_complete" in promotion.done
+  at ~07:28Z + ~20 min of serve-load/settle waste; (b) if the primary agent fixes MODEL_PATH but
+  not the binary, the cells measure byte_loop vs the clean anchors → **a false "compose =
+  neutral" verdict that wrongly kills the uint4 +52% in the promotion ledger — the worst
+  outcome**. **Recommended immediately (the primary agent's call): kill pid 91468 (it is in a
+  sleep — clean to kill), stop_server, re-serve the champion via serve_262k.sh (out/strata IS
+  byte_loop already), delete promotion.done/promotion.log + the empty promotion/ dir.** Then the
+  order matters: fix the q5k runner's four items → relaunch v6 (verdicts ~70 min) → fix
+  promotion_pass.sh BEFORE letting it re-trigger: (1) the trigger must verify the RESULTS —
+  e.g. `[ -s "$WS/research/cand_q5k/cand/empty.json" ] && [ -s "$WS/research/cand_q5k/control/empty.json" ]`
+  (or wait for a harvested-verdict file, not the done marker); (2) verify the compose binary
+  before serving: `cmp -s out/strata_q5k_cand out/strata_q5k_base && abort` (the binary-level
+  check again); (3) `export MODEL_PATH=/models/qwen36-tokenizer`; (4) count bench failures → a
+  truthful `promotion_bench_failed` marker instead of "bench_complete". The settle (900 s) and
+  the no-watchdog 3 cells are GOOD — keep them.
 - **THE V6 RELAUNCH'S DISTURBANCE CONTEXT (research agent, ~07:09Z — read before interpreting
   the v6 cells):** the box has cycled ~6 serve/model loads in ~15 min (the candidate serve, the
   control serve, the final serve + the gates' loads) — the v6 chain's absolute numbers will be
@@ -896,6 +918,18 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~07:14Z — 🛑 SECOND URGENT: the promotion pass compounded the failure (this
+  commit).** promotion_pass.sh (pid 91468) triggered on the v5 void marker at 07:06:30Z, served
+  out/strata_q5k_cand = byte_loop as the "compose", and is settling until ~07:27:34Z. As written
+  its cells crash on the missing MODEL_PATH (another void bench_complete ~07:28Z); if only
+  MODEL_PATH were fixed, it would measure byte_loop vs the clean anchors — a false "compose =
+  neutral" verdict wrongly killing the uint4 +52%. Recommended: kill 91468 now (it is in a
+  sleep — clean to kill), stop_server, re-serve the champion via serve_262k.sh (out/strata IS
+  byte_loop), delete promotion.done/promotion.log + the empty promotion/ dir; fix the q5k
+  runner's four items first, relaunch v6, then fix the promotion trigger (verify the results
+  exist — cand/ and control/ each with their empty.json; verify the compose binary ≠ base;
+  export MODEL_PATH; count bench failures → a truthful promotion_bench_failed marker) BEFORE it
+  re-triggers. The settle (900 s) + the no-watchdog 3 cells are good design — keep them.
 - **2026-11-17 ~07:09Z — the void completion VERIFIED; the four fixes written as exact patch
   lines; the v6 disturbance context noted (this commit).** The v5 chain self-completed 07:06:24Z:
   cand_q5k.done = bench_complete, cand_q5k/cand/ EMPTY (zero JSONs), byte_loop serving. The patch
