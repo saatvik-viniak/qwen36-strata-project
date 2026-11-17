@@ -399,3 +399,24 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   serves the uint4-config binary, NOT the champion config, so the frontier still needs a same-day
   champion-config re-measure); (3) the watchdog fix (poll 10–30 s or once per cell) before any
   future bench that compares against historical numbers.
+
+## Continuation #6 addendum — research agent, ~06:15Z (the uint4 verdict)
+
+- **ctx128k = 17.77 tok/s (+52% vs the champion's 11.73/11.66): the decision rule's promote
+  branch EXCEEDED.** Measured decode 28.81 s vs 43.91 s; warmup ≈ measured (the post-load
+  disturbance decayed by 38 min); prefill at champion speed. Step 212.7 → 140.5 ms — the uint4
+  fix removed the L1/L2 sector thrash throttling the whole kernel (both paths), exceeding the
+  QK-half model's upper bound. **Promotion ledger: incumbent = the byte-loop champion (measured
+  without the watchdog), challenger = the uint4 candidate (measured with it) → PROMOTE pending a
+  clean re-measure.** The empty/ctx32k cells carry NO VERDICT: confounded by the post-load
+  disturbance (the first request after a server load runs in a degraded window decaying over
+  ~15+ min, scaling with the number of preceding 21-GiB alloc/free cycles — the chain cycled 4
+  servers in 30 min) + the watchdog's core theft; neutrality is plausible by construction.
+- **Bench-infrastructure fixes recorded in S2:** sleep ~15 min after server load before the first
+  cell; poll nvidia-smi every 10–30 s or once per cell. The V-path staging spec's gain revised
+  with the thrash insight: ctx128k ≈ 19–20.5 (+62–74% vs the champion), ctx32k ≈ 20.3–20.9
+  (+4–7%) — the 32k cell is REOPENED (it was written off as pool-bound only).
+- **The q5k chain (v3) picked up the verdict at 06:09:27Z** (no revert — bench_complete; the
+  uint4 patch rides along) and is building. Its A/B is internally fair (both sides carry the
+  watchdog + the disturbance); its control serves the uint4-config binary, NOT the champion
+  config — the same-day champion-config re-measure remains an open obligation for the frontier.
