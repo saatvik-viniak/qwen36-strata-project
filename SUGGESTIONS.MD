@@ -132,6 +132,24 @@ per change).
   allows ("per-kernel counts and magnitude where rounding legitimately differs"), plus greedy text
   parity vs the fp32 reference at 32k and needle correctness at 128k. Do not carry the uint4
   candidate's bit-identical claim onto this kernel.
+- **Pre-bench static verification + prediction (research agent, ~05:02Z, commit dd9fee1 read
+  line-by-line):** the candidate's parity claim checks out statically. (1) `k_attn_part` has
+  `constexpr int HD = 256` (q36_engine.cu:391) — both loops fully unroll at compile time, so the
+  `wb[u]` register-indexing resolves statically (no local-memory spill; the classic uint4 pitfall
+  is cleared). (2) Row stride is HD/2 = 128 bytes = a multiple of 16, and `kp` is base + row·128,
+  so the `uint4` casts are 16-byte aligned and never cross a row, a scale, or the `p < npos`
+  guard. (3) Byte `v*16+u` maps to dims `2(v*16+u)`/`+1` — identical to the old loop's `i>>1`
+  mapping; `kv_q4(b,0)` = low nibble → even dim in both; the additions run in the same byte order,
+  same parenthesization → bit-identical is plausible; VERIFY remains the empirical authority.
+  **Prediction for the bench:** QK is only ~half of the attention reads — the V-path accumulate
+  (q36_engine.cu:466) stays byte-granular by design, so the kernel floor stays elevated. From
+  THEORY.md's 128k split (pool ~102 ms + attention ~74–95 ms + overhead ~8 ms): if uint4 cuts the
+  QK half's ~40 ms to ~10–15 ms, step ≈ 150–160 ms → **ctx128k ≈ 15.5–16.5 tok/s (+32–41%)**; a
+  partial win (QK half only partially recovered) still lands ≈ 13.5–14.5 (+15–24%). Anything below
+  ~12.5 means the mechanism didn't engage (check the SASS for spill before rejecting the idea).
+  **If VERIFY+gates+bench pass:** the follow-up candidate is the same uint4 pattern on the V path
+  (per-thread 2-byte load + nibble select keeps each thread's k-loop order → still bit-identical),
+  then S2's split-K on top.
 - **External precedent for reading quantized KV in place** (researched ~04:20Z): llama.cpp has
   shipped quantized-KV flash-attention CUDA kernels since PR #7527 (q4_0/q5_0/q5_1/q8_0 K/V read
   and dequantized in-kernel; "quantizing K makes the performance slightly better"), its
@@ -171,9 +189,14 @@ the literature-backed options to fix the churn).
   edge don't pay at S=2 → **F3 → F2 is the path** (make the churn cheap first, then the CPU
   fallback), and PLAN.md item 6's staging shrink matters only as an enabler for a working slot
   scheme, not as a speedup itself. ctx32k landed (research agent, ~04:39Z): **18.46 tok/s (−5.4% vs
-  19.52)** — trial D loses at BOTH landed cells (empty −8.2%, ctx32k −5.4%); ctx128k was running.
-  Slots at the VRAM edge at S=2 are heading for a full reject → F3 → F2, or abandon the slot
-  scheme for the kernel levers (S1/S2) until F1/F3 make churn cheap.
+  19.52)** — trial D loses at BOTH landed cells (empty −8.2%, ctx32k −5.4%).
+- **Trial D FINAL (research agent, ~05:00Z): FULL REJECT on all three cells** — ctx128k landed
+  11.69 tok/s (−0.4% vs 11.73, peak 7.57 GiB), a near-tie. The mechanism reads cleanly: the
+  rebalance stalls are a FIXED per-step cost (~0.4 ms/step at 128k's 213 ms steps vs ~4 ms at
+  empty's 115 ms steps), so their damage amortizes as context grows — while the swap churn itself
+  grows with context. The slot scheme at S=2 is now measured dead on this box in both prefill
+  regimes (NQ + MMQ); per the tree, the only remaining slot path is the revival sequence below
+  (7 slots + item 6's staging shrink), otherwise S1/S2 carry the climb alone.
 - **Slot-scheme revival sequence (research agent, ~04:55Z) — the un-tried corner:** trial A proved
   7 slots save ~5% at empty; trial D proved 2 slots + MMQ lose at empty; item 6 (staging shrink)
   is the piece that was never combined. The sequence, one change per trial: (1) land item 6's
@@ -465,3 +488,17 @@ next experiment (research agent, ~04:45Z):
   ≈ +5.1% empty with fast prefill) → trial F (decay 0.5→0.9) only if ctx32k still regresses; if
   trial E fails at empty, the slot scheme is dead and S1/S2 carry the climb. Trial D's ctx128k
   still running; the uint4 chain follows (~06:05Z).
+- **2026-11-17 ~05:02Z — trial D FINAL: full reject; S2 gained the pre-bench verification +
+  prediction (this commit).** (1) Trial D ctx128k landed 11.69 (−0.4%, a near-tie): the rebalance
+  stalls are a FIXED per-step cost, so their damage amortizes as context grows — the slot scheme at
+  S=2 is measured dead on this box in both prefill regimes (NQ + MMQ); only the S3 revival sequence
+  (7 slots + item 6's staging shrink) remains as a slot path. (2) I read the uint4 candidate's diff
+  (dd9fee1) line-by-line BEFORE its bench: `constexpr int HD = 256` clears the classic uint4
+  local-memory-spill pitfall (both loops fully unroll; `wb[u]` resolves statically), the uint4
+  casts are 16-byte aligned inside the 128-byte rows, and the byte→dim mapping + addition order are
+  identical to the old loop — parity statically plausible, VERIFY remains the authority. (3) Wrote
+  the bench prediction INTO S2 so the verdict is compared against arithmetic: QK is only ~half of
+  the attention reads (the V path stays byte-granular), so ctx128k ≈ 15.5–16.5 tok/s (+32–41%) if
+  the QK half recovers to ~10–15 ms, ≈ 13.5–14.5 (+15–24%) on a partial win; <12.5 means the
+  mechanism didn't engage (check SASS for spill before rejecting the idea). Follow-up if it passes:
+  the same uint4 pattern on the V path, then split-K. VERIFY phase started 05:00:49Z.
