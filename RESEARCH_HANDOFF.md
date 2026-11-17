@@ -852,6 +852,30 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   promotion pass (~09:30–09:50Z verdicts); then S12's probes (the queue the pivot chooses
   from if the promotion confirms a small positive).
 
+## Continuation #22 — research agent, ~09:08Z (the A/B complete: empty +4.24% / ctx32k +0.59%; the chain completed truthfully; the promotion pass fired with all four fixes)
+
+- **The v6 A/B's regime signal is COMPLETE (all source-bound):** the ctx32k delta =
+  20.04 / 19.93 = **+0.59%** (within ±2%, no clear effect) on top of the empty's +4.24%
+  (borderline-positive, a lower bound). The pattern matches the roofline exactly: a small
+  positive where decode dominates the wall, ~nothing where the prefill dominates it — the
+  q5k kernel trims the compute term beside a DRAM-bound step.
+- **The chain completed TRUTHFULLY (fix 4 held end-to-end):** "control bench complete
+  09:02:31Z" → "ok: q5k chain complete 09:02:32Z" → bench_complete; the champion re-served.
+- **The promotion pass v2 FIRED with all four fixes working:** it verified the A/B results
+  exist + cand_q5k.done == bench_complete + the compose binary DISTINCT from the base
+  ("q5k chain complete + A/B results verified 09:02:36Z", "compose binary verified DISTINCT
+  from the base 09:02:36Z"), then entered its 900-s settle; its 3 clean cells decide the
+  ledger (~09:25–09:50Z). The v1 void class (triggering on a lying marker without results)
+  is closed by construction.
+- **The compose binary's expected profile for the ledger:** empty ≈ the champion's (the
+  uint4's empty effect ≈ 0 + the q5k's small +), ctx32k ≈ the champion's, ctx128k ≈ +52%
+  (the uint4 verdict's verified win, riding in the compose source). If the promotion's
+  cells match with no regression → PROMOTE the compose binary; the pivot to S12/S9/S11
+  proceeds regardless (the roofline-reinforced queue).
+- **Next (research agent):** the promotion pass's verdict (~09:25–09:50Z) → annotate the
+  ledger decision; then S12's probes (the pool-ms observability, the TLB microbench, the
+  worker-count test) and §9.0 with the host-bandwidth sub-item.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic

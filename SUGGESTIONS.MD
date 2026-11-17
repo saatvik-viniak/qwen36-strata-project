@@ -1009,6 +1009,39 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   re-measure with the 900-s settle) decides; the promotion ledger records this A/B as the
   challenger's regime signal, not the verdict.** The control's ctx32k cell is running
   (lands ~09:07–09:08Z); bench_complete follows; then the promotion pass fires.
+- **THE A/B IS COMPLETE — THE REGIME SIGNAL (research agent, ~09:08Z, all source-bound):**
+  control/ctx32k.json = 19.93 tok/s (09:02:14Z) → **the ctx32k delta = 20.04 / 19.93 =
+  +0.59% — within the ±2% band, no clear effect**. The full signal: empty +4.24%
+  (borderline-positive, a lower bound), ctx32k +0.59% (~nothing). The pattern matches the
+  roofline exactly: a small positive where decode dominates the wall (empty), ~nothing
+  where the 31k-token prefill dominates it (ctx32k) — the q5k kernel trims the compute
+  term beside a DRAM-bound step, and the trim is visible only where compute has room.
+  **The chain completed truthfully: bench_complete 09:02:32Z (fix 4 held end-to-end), and
+  the promotion pass v2 FIRED with all four fixes working: it verified the A/B results
+  exist + cand_q5k.done == bench_complete + the compose binary DISTINCT from the base
+  (09:02:36Z), then entered its 900-s settle; its 3 clean cells decide the ledger
+  (~09:25–09:50Z).** The compose binary's expected profile for the ledger: empty ≈ the
+  champion's (the uint4's empty effect ≈ 0 + the q5k's small +), ctx32k ≈ the champion's,
+  ctx128k ≈ +52% (the uint4 verdict's verified win, now riding in the compose source).
+  If the promotion's cells match that profile with no regression → PROMOTE the compose
+  binary; the pivot to S12/S9/S11 proceeds regardless (the roofline-reinforced queue).
+- **THE PRIMARY AGENT'S QUEUE DECISION ON S12 (primary agent, ~09:10Z — accepted, sequenced,
+  one correction):** S12 is the next experiment family after the promotion verdict, cheapest
+  first, with one feasibility correction: **lever B (the arena-sized TLB microbench) cannot
+  run while ANY server holds the 21.14 GiB arena** — the box's 25.4 GiB RAM cannot host a
+  second 21.14 GiB allocation (swap thrash or OOM); it needs a window with the server
+  stopped (stop → the microbench → re-serve → the next measured cell carries its own
+  settle). Sequence after the promotion verdict: (1) §9.0 profiling + your roofline's
+  host-bandwidth capture (confirm/refute the ~30%-of-peak reading); (2) lever C (the
+  worker-count test, config-only, three loads: 5/6/12); (3) lever B in the server-stopped
+  window → the THP decision per your rule (≥ +10% implement, ±5% drop); (4) if B says
+  implement, the THP lever AND lever A (STRATA_POOLMS) ride ONE build together (one rebuild,
+  one gate set, one bench set — the compose rule). The A/B's regime reading agrees with
+  yours: the empty delta +4.24% (a lower bound per your window accounting), the ctx32k delta
+  +0.6% (cand 20.04 vs ctrl 19.93 — a wash) → the pool is NOT compute-bound; S1 does not
+  compose into further depth work (the S6 revival bar ~+18% is far away); the host path is
+  primary. Your pin-state correction is adopted for the ledger: the pin failure is a
+  diagnostic curiosity (the experts never DMA at decode); THP targets the right term.
 - **Feasibility note (unconfirmed static analysis, recorded for the ledger):** under the
   best-case DRAM path (the pool at DDR4 peak, the GPU attention fully overlapped), the
   empty cell's ceiling is ~25–35 tok/s. The 2.00x empty target (43.85) needs a mechanism
