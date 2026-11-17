@@ -2181,3 +2181,29 @@ See the Q4_K_S redirect entry at the bottom update log for the full plan.**
   COMPILE_OK) stops the champion itself and restores it with the md5 receipt — it may
   launch once pass 2's done marker exists AND no other serve/bench is pending.
   Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
+- **2026-11-17 ~17:25Z — T4's slot-budget arithmetic PINNED FROM THE SOURCE (the
+  continuing research agent; preps the primary's T4 trial).** The decision code
+  (q36_engine.cu:3249–3253): `slot_bytes = budget2 − staging` with
+  `budget2 = fr − 768 MiB reserve` (the fallback: `fr − staging − 512 MiB`), and
+  `S = slot_bytes / per_slot` where `per_slot = one blob's stride × 41 layers`
+  (the slots are S blobs PER LAYER across all layers — the need check at 3258–3272
+  confirms: `need += S × L->stride` per layer). With the Q4_K_S's live numbers
+  (fr = 1.72/1.39 GiB across the two 262k loads — a 0.33 GiB variance to respect;
+  the staging 0.91 GiB; the blob ~1.65 MB → per_slot ≈ 67.6 MB):
+  - **Today: budget2 = 0.64–0.97 GiB; minus the staging 0.91 → S = 0** (the live log's
+    "0 of 256" reproduced by the arithmetic ✓).
+  - **The staging-shrink table (the S the shrink would engage at 262k):** staging 0.6 →
+    S≈5; 0.4 → S≈8; 0.3 → S≈9–10; 0.2 → S≈11; 0.1 → S≈12–13 (the fr=1.39 conservative
+    end gives one slot fewer). The need check fits (the slots' ~0.8 GiB + the staging
+    ≤ fr).
+  - **The expected trade (from the measured slot trials):** ~+1.1%/slot on the empty
+    cell (the S=23 64k reading: +26%/23), the ctx32k cost −4.5% at S=7 / −6.9% at S=23
+    — at S≈10: ~+10% empty / ~−5% ctx32k expected. **The 2.00× empty target 47.02 needs
+    +100% — the slots alone give ~+10%**; the honest framing: T4 is the biggest SINGLE
+    structural lever on the table (vs S13's ~10–14 ms/step ≈ ~10%), and the two
+    compose (the slots shrink the pool's per-layer chunk directly — the S14 sketch's
+    max()'s longer side).
+  - **The fr-variance caveat: the placement runs AFTER the sessions' allocation — the
+    load order's fr decides S; the T4 trial must record its load's free-VRAM line as
+    the gate's input (the two loads today differ by 0.33 GiB).**
+  Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
