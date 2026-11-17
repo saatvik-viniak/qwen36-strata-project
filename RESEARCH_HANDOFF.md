@@ -91,6 +91,46 @@ baseline exists.
 7. Keep the lab notebook appended after EVERY run, including failures.
 8. Commit sign-off: all commits authored GLM 5.3 Flash (Maya-s quant), no co-author line.
 
+## Session 2026-11-17 continuation (skill install + ceilings + repeat passes)
+
+- The `inference-optimisation` skill (github.com/sybil-solutions/inference-optimisation-skill)
+  is installed at `C:\Users\Admin\.config\opencode\skills\inference-optimisation\` (loads via
+  the skill tool) and vendored in-repo at `research/skill/inference-optimisation/`. Its loop
+  (ceilings first, ledger, A/B with controls, serialize GPU, watchdog) is applied in
+  `research/hillclimb/` (PLAN.md, THEORY.md, ledger.jsonl, configs/).
+- Baseline repeats: empty 21.86 (0.3% spread, no pass 3 needed); ctx32k pass-2 20.44
+  (recovered from the engine log after the pass-2 background job was KILLED AT A HARNESS
+  CHECKPOINT — archived as research/baseline/pass2/ctx32k.json), pass-3 19.52 → ctx32k
+  median 19.52. ctx128k pass-2/pass-3 re-running detached (`lean_bench128k.sh`).
+- Harness checkpoints kill background jobs at turn end: anything long-running MUST be
+  `setsid nohup`-detached INSIDE WSL, and the launcher must keep the wsl.exe client alive
+  ~4 s past spawn (proven: the probe-spawned server survived its client's exit). Kill the
+  BENCH CLIENT, never the server, mid-run (the server aborts the request cleanly and even
+  reuses the partial prompt's KV: 110592 of 124530 tokens reused after the cancel).
+- `bench.py` runs warmup+measured INTERNALLY per invocation (two engine sessions, reports
+  the second) — an external warmup doubles the ctx128k prefill cost. One invocation per
+  round is the lean protocol; skip pass-3 when the spread vs pass-1 is ≤ 2%.
+- GGUF header parsed (custom KV dialect: STRING=8 u64-len, ARRAY=9; scripts in
+  research/gguf_*.py): 41 blocks, 256 experts top-8, n_ff 512, vocab 248320, 16Q/2KV×256,
+  full-attn every 4th block (≈11 KV layers), GDN rest, nextn MTP block. Expert pool =
+  41×3×268.4M×0.6875 B = 22.70 GB = the engine's 21.14 GiB ✓. KV int4 = 5632 B/token
+  (serve.sh's comment agrees: 5.7 KB) → 0.738 GB per verify step at 128k.
+- Ceiling verdict (research/hillclimb/THEORY.md): the pool STREAMS at 44 GB/s (prior
+  measurement) so reads are ~14 ms/step; the empty/32k wall is the pool's COMPUTE
+  (~3.1 GMACs/verify-step at ~55-80 GFLOPS effective ≈ 102 ms) + overheads; the 128k wall
+  adds the int4 attention kernel (~0.738 GB/step, byte-granular reads ≈ 74-95 ms).
+  2x targets are feasible at pool ~2x compute rate + attention kernel fix.
+- Pool kernel anatomy: Q5_K_S experts fall through to ggml-cpu's per-(row,token) `vec_dot`
+  singleton loop (src/kernels/cpu/native_expert.cpp dispatch; KQ256 opt-in measured
+  1.01-1.13x in parity, "no faster in the engine"). THP is `madvise` with 0 anon hugepages;
+  the 21.14 GiB arena runs on 4k pages; RAM at 24/25 GiB used (hugepages may struggle).
+- Commit identity fixed: `.git/config` now has user.name GLM 5.3 Flash (Maya-s quant)
+  (commits 9f4dac7/b81319b/78f49c2 used the repo's default SpookyTryhards identity before
+  this was noticed; left as-is rather than force-push, noted here for provenance).
+- Trial scripts ready: serve_262k_ct5.sh (CT 5), serve_262k_nommq.sh (slots), serve_262k_mtp3.sh;
+  trial_runner.sh runs them sequentially (waits for lean_bench.done) with a VRAM watchdog
+  (>8090 MiB kills the bench), writing research/trials/<trial>/<cell>.json.
+
 ## Guard status
 
 - Peak VRAM < 7.9 GiB: watching (7520 MiB seen in warmup; cell peaks in the JSONs).
