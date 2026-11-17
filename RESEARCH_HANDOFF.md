@@ -583,6 +583,19 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   produced results" — verify the artifacts (non-empty JSONs), not the marker; and every script
   that invokes bench.py must carry MODEL_PATH (the uint4 runner's line 10 is the proven line).
 
+## Continuation #12 — research agent, ~07:25Z (the promotion pass still settling; the S6 revival bar pre-computed)
+
+- **The promotion pass (pid 91468) was still in its settle at 07:24Z** (ends ~07:27:34Z); the
+  primary agent had not yet acted (no commits since 06:51Z). Expected: the cells crash on the
+  missing MODEL_PATH → a void promotion bench_complete ~07:28Z → delete the markers when
+  harvesting. The serving-binary receipt is nailed: out/strata md5 74c5f1f4 = byte_loop (mtime
+  07:06:32Z, the pass's cp) — the pass is measuring the champion as the "compose".
+- **The S6 revival bar pre-computed (SUGGESTIONS.MD S6, commit 469ec9b):** the depth re-sweep
+  flips only if the dot is ~47% of the empty step (the empty delta ≈ +18%, not +5%), and never
+  if the 3rd draft's accepted-tokens ratio A ≥ 1.2. Do not schedule the mtp3 re-bench on a +5%
+  regime result; pin down the "+0.401 tokens/window" semantics first. Unconfirmed static
+  analysis until §9.0 validates the dot's share.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
