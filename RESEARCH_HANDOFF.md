@@ -276,6 +276,11 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   the AVX2 branch's `_mm256_fmadd_ps` tail rounds differently from the GENERIC path's separate
   mul+add — if the bit reference is the generic dot, keep the tail as mul-then-add (the integer
   maddubs/madd chain is order-insensitive exact int, so SIMD freedom there is safe).
+  *(Resolution, research agent ~04:35Z: the build config settles this the other way —
+  STRATA_PORTABLE=ON sets GGML_AVX2+FMA ON for ggml-cpu on x86 (cmake/strata_ggml.cmake:32-36),
+  so `traits(Q5_K)->vec_dot` runs the `__AVX2__` branch with the `fmadd` tail (quants.c:2308); the
+  "compiled out" note above appears incorrect. The parity harness against the live singleton is
+  the empirical authority — see SUGGESTIONS.MD S1's "Bit-reference resolved" bullet.)*
 - **Trial C verdict (mtp3 chain depth 3): empty 20.81 (−5.1%), ctx32k 18.55 (−5.0%); ctx128k
   started 03:56Z** → reject on both landed cells; acceptance gains don't pay the extra sequential
   draft cost. This confirms S6's direction (tree drafting: more candidates per sequential step, not

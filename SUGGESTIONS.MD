@@ -70,6 +70,19 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
 - **ILP beyond decode-once** (the part that must beat the Q4_K precedent): interleave two tokens
   per j-iteration (same decoded q5 vectors serve both tokens' q8 loads → doubles maddubs/madd per
   q5 fetch), and alternate two accumulators per token to break the `add`-to-`sumi` dependency.
+- **Bit-reference resolved from the build config (research agent, ~04:35Z — this corrects the
+  "AVX1-build generic scalar dot" note in RESEARCH_HANDOFF.md #4):** `build_kit.sh` passes
+  `-DSTRATA_PORTABLE=ON`; on x86 `cmake/strata_ggml.cmake:32-36` sets **GGML_AVX, GGML_AVX2,
+  GGML_FMA, GGML_F16C ON** for ggml-cpu, and `ggml-cpu.c:323` wires `traits(Q5_K)->vec_dot` to the
+  branchy `ggml_vec_dot_q5_K_q8_K` — so the singleton the engine runs SHOULD be the **`__AVX2__`
+  branch** (quants.c:2235-2312), tail included: `acc = _mm256_fmadd_ps(vd, _mm256_cvtepi32_ps(sumi),
+  acc)` per block (line 2308, fused single-rounding — note Q4_K's branch uses separate
+  `_mm256_mul_ps`+`_mm256_add_ps` at line 2195; mirror each branch exactly as-is) and
+  `*s = hsum_float_8(acc) + summs` (2312). The decisive check is empirical and cheap: the existing
+  parity harness compares the candidate against the live singleton, whatever branch it runs — if a
+  candidate mirroring the AVX2-branch chain reports diffs, the singleton took a different branch;
+  check that before chasing a different reference (only the ISA_FLOOR/portable-ARM builds could
+  differ on this rig, and neither applies).
 - **Dispatch:** gate/up `kq && (f.gu_type == 12 || f.gu_type == 13)`; down `f.d_type == 7 || 8 ||
   13` (new Q5_K down-rows kernel — today down type 13 has no native kernel at all). Keep the
   STRATA_KQ256 gate, `nt >= 2`, and the #152 rule for WindowInvariant arithmetic, as the Q4_K path
@@ -157,7 +170,10 @@ the literature-backed options to fix the churn).
   slots' hit-saving (~6% hit probability per layer-window at S=2). Per the tree: slots at the VRAM
   edge don't pay at S=2 → **F3 → F2 is the path** (make the churn cheap first, then the CPU
   fallback), and PLAN.md item 6's staging shrink matters only as an enabler for a working slot
-  scheme, not as a speedup itself. ctx32k/ctx128k cells were still running when this was written.
+  scheme, not as a speedup itself. ctx32k landed (research agent, ~04:39Z): **18.46 tok/s (−5.4% vs
+  19.52)** — trial D loses at BOTH landed cells (empty −8.2%, ctx32k −5.4%); ctx128k was running.
+  Slots at the VRAM edge at S=2 are heading for a full reject → F3 → F2, or abandon the slot
+  scheme for the kernel levers (S1/S2) until F1/F3 make churn cheap.
 - **Mechanism:** trial A proved 7 slots help empty (+5.1%) but the blocking swaps cost 32k (−4.5%).
   Remove the stall and the composition (MMQ staging shrink ~4x → more slots + fast MMQ prefill) is
   the single largest decode lever for both empty and 32k.
@@ -394,3 +410,12 @@ next experiment (research agent, ~04:45Z):
   each settling one next experiment: dot share → S1; TLB faults → S9; k_attn_part throughput →
   split-K vs stop; stall reasons → cp.async vs vectorization; swap blocks → S3-F1; GDN share →
   the delta-net port idea). ctx32k/ctx128k of trial D still running; the uint4 chain follows.
+- **2026-11-17 ~04:40Z — S1's bit-reference resolved from the build config (this commit).** The
+  implementer's first question is now settled with evidence, not assumption: STRATA_PORTABLE=ON
+  sets GGML_AVX2+FMA ON for ggml-cpu on x86 (cmake/strata_ggml.cmake:32-36), and
+  ggml-cpu.c:323 wires Q5_K to the branchy dot → the singleton SHOULD run the __AVX2__ branch
+  (fmadd tail, quants.c:2308), correcting the handoff's "compiled out / generic scalar" note
+  (marked as resolved in RESEARCH_HANDOFF.md #4). The parity harness against the live singleton
+  remains the empirical authority. Also annotated: trial D ctx32k 18.46 (−5.4%) → both landed
+  cells lose; branch 2 confirmed. Remaining live: trial D ctx128k (04:34:55Z), then the uint4
+  chain (S2's sequencing follows its verdicts).
