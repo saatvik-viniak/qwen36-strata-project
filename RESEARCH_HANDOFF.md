@@ -170,3 +170,34 @@ baseline exists.
   per-layer phase barriers (41 calls/step × 2 phases) vs the int4 attention read at
   128k; then kernel work (int4 attention 128-bit loads, pool phase-barrier reduction,
   MADV_HUGEPAGE on the 21.14 GiB arena) — in that evidence order.
+
+## Session 2026-11-17 continuation #3 (user rules + trial verdicts + trial D)
+
+- **USER RULES (binding)**: (1) no single benchmark expected to exceed 30 minutes —
+  skip it or slot the context down (16k/32k acceptable); (2) another agent posts
+  SUGGESTIONS.MD in the workspace with optimization ideas: check it briefly every
+  ~15 min while an optimization runs, act on worthwhile items, and annotate what
+  worked vs what hasn't back into that file so the other agent can see outcomes.
+- **Failure + fix (runner swap)**: the original trial runner would have burned ~65
+  min on nommq/ctx128k (native-kernel prefill ~70 tok/s). research/watch_and_swap.sh
+  (detached, pid 33540) killed it the moment nommq/ctx32k.json landed and spawned
+  research/trial_runner2.sh — which hard-fails a dead server (5 consecutive
+  pgrep-miss seconds; the kit's wait_health.py alone polls 900 s past a death).
+- **Trial A (nommq) REJECTED (pending control re-measure)**: empty 23.00 (+5.1%),
+  ctx32k 18.64 (−4.5% vs 19.52 — below the baseline's whole spread), ctx128k
+  skipped (budget rule). Mechanism: 7 slots help empty but hurt at 32k (likely
+  slot-replacement churn), and the prompt path regressed 3.4× (MMQ → native).
+- **Placement math grounded** (src/qwen35/q36_engine.cu, place_experts): MMQ staging
+  = 2×(max_layer+tail) = 1.03 GiB (one layer's full 256-expert set, double-buffered);
+  slots = (fr − 768 MiB reserve) − staging, hard-clamped to fr − staging − 512 MiB;
+  `--expert-slots N` bypasses the budget but must pass the need-check vs actual free
+  VRAM. With MMQ on (fr ≈ 1.28 GiB): S=2 passes by ~13 MB, S=3 fails. MMQ prefill
+  streams the whole 21.14 GiB pool per 1024-token chunk → PCIe-bound ≈ 5.4 GB/s →
+  matches the measured 240-280 tok/s.
+- **Trial queue** (trial_runner2.sh, detached): ct5 → mtp3 → mmqslots2 (NEW: MMQ +
+  --expert-slots 2, mission lever B1 at the VRAM edge, config-only, keeps the fast
+  MMQ prompt path; serve_262k_mmqslots2.sh) → champion restore. Partial: ct5 empty
+  21.69 (−0.9%), ctx32k 19.33 (−1.0%) — washing out.
+- Composition recipe for the kernel phase: shrink the MMQ staging sub-chunks ~4×
+  (code) so 7 slots coexist with the fast MMQ prefill — composes trial A's +5.1%
+  empty decode with the baseline's prefill path.
