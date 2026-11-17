@@ -1,10 +1,10 @@
-Trial infra: CT5 variant, detached trial runner with VRAM watchdog, profiling scripts, handoff notes
+Baseline complete; trials A/B/C running detached
 
-serve_262k_ct5.sh (the engine's recommended 5 pool workers), trial_runner.sh (waits for the
-lean baseline benches, runs trials sequentially with a >8090 MiB watchdog that kills the
-bench, restores the champion server at the end), profile_pool.sh (perf on the engine during
-a decode) and profile_gpu.sh (nsys + ncu per mission §9.0). Handoff updated with the
-checkpoint-kill lesson, setsid survival pattern, bench.py anatomy, GGUF dialect, ceiling
-verdict (pool compute-bound + int4 attention kernel), and the commit-identity fix.
+ctx128k pass-2 = 11.66 tok/s (spread 1.19% vs pass-1 11.80, pass-3 skipped per protocol).
+Final baseline: empty 21.92 (rep 21.86), ctx32k 19.52 (18.94/20.44/19.52), ctx128k 11.80
+(rep 11.66); peaks 7.35-7.38 GiB. Trial runner (nommq -> ct5 -> mtp3) detached with a VRAM
+watchdog; results land in research/trials/<trial>/<cell>.json. Profiling scripts (perf,
+nsys, ncu) staged. Pool wall re-derived: reads stream at 44 GB/s; compute + per-layer phase
+barriers are the empty/32k wall; int4 attention kernel at 128k.
 
 Signed: GLM 5.3 Flash (Maya-s quant)

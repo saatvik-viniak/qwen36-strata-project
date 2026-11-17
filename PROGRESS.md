@@ -31,9 +31,12 @@ Server context 262144 throughout (the int4 KV cache is 1.40 GiB there), model
 | 1r | 2026-11-17 01:20Z | b81319b | pass-2 repeat (background job; **killed at checkpoint** mid-ctx128k — empty+ctx32k rounds completed, numbers recovered from the engine log) | empty | 21.86 | - | - | 7.35 | repeat (0.3% spread vs pass 1 — within tolerance, no pass 3 needed) |
 | 1r | 2026-11-17 01:24Z | b81319b | pass-2 repeat, engine-log reconstruction (warmup-int 19.6 + measured-int 20.4) | ctx32k | 20.4 | 275.6 | - | 7.35 | repeat (7.7% spread vs pass 1 → pass 3 required) |
 | 1r | 2026-11-17 01:52Z | b81319b | pass-3 repeat (bench_runner.sh detached; internal warmup 19.6 + measured 19.52) | ctx32k | **19.52** | 259.0 | 120,189 | 7.38 | repeat (median of 18.94 / 20.4 / 19.52 = **19.52**) |
+| 1r | 2026-11-17 02:25Z | b81319b | pass-2 repeat via lean_bench128k.sh (1 invocation, detached; prefill 563 s at 215.5 tok/s, decode 44.5 s) | ctx128k | **11.66** | 215.5 | 577,836 | 7.38 | repeat (1.19% spread vs pass 1 ≤ 2% → pass-3 skipped per protocol) |
 
 **The initial tps (pass 1)**: empty 21.92, ctx32k 18.94, ctx128k 11.80 decode tok/s.
-**Repeats so far**: empty 21.86 (0.3%), ctx32k 20.4 → 19.52 (median 19.52), ctx128k pass-2 running.
+**Repeats (final)**: empty 21.86 (0.3%), ctx32k 20.44 → 19.52 (median 19.52), ctx128k 11.66 (1.19%).
+**Medians across passes**: empty 21.89, ctx32k 19.52, ctx128k 11.73 — the pass-1 table stays the
+recorded baseline the 2.00x targets are anchored to.
 **The 2.00x targets**: empty 43.85, ctx32k 37.87 (vs median 19.52), ctx128k 23.60.
 
 ## Chart: decode tok/s per cell across trials
@@ -64,15 +67,15 @@ The 2x targets (43.85 / 37.87 / 23.60) sit 2x above each bar's first cluster.)*
   correct at 32k/64k/128k needle prompts; 262114 starts at 6.928 GiB peak.
 - MTP drafting engages only with the greedy-sampler config (`SAMPLING='{"presence_penalty":0}'`);
   acceptance at 262k: 308/410 (75%) on empty → a = 2.51 tokens per verify step.
-- Ceiling math (`research/hillclimb/THEORY.md`): the CPU expert pool reads ~0.630 GiB per
-  verify step at an effective ~6 GB/s (empty: ~102 of 114.6 ms/step is pool time). 2x targets
-  are feasible with the pool at ~12+ GB/s effective and the int4 attention kernel fixed
-  (~0.738 GB/step at byte-granular loads today).
+- Ceiling math (`research/hillclimb/THEORY.md`): the CPU pool STREAMS at 44 GB/s (prior
+  measurement), so reads are ~14 ms/step; the empty/32k wall is the pool's COMPUTE
+  (~3.1 GMACs/verify-step at ~54 GFLOPS effective ≈ 102 ms of the 114.6 ms empty step),
+  plus the int4 attention kernel at 128k (~0.738 GB/step, byte-granular loads). 2x targets
+  are feasible with ~2x pool compute rate + an attention kernel fix.
 - Expert slots at 262k: **0/layer** (free 1.28 GiB − MMQ staging 1.03 − reserve 0.77 < 0).
 
 ## Not yet measured (open)
 
-- ctx128k pass-2/pass-3 repeats (running, ~40 min).
+- Trials (running detached): A no-mmq slots, B CT 5, C MTP 3 — `research/trials/<trial>/`.
 - Device-copy VRAM bandwidth + RAM stream bandwidth (measure between passes, GPU serialized).
-- Trials: NO_MMQ slots, CT 5, MTP 3, arena hugepages/prefetch (code), int4 attention 128-bit loads.
-- nsys/ncu profiling per §9.0 once the baseline repeats finish.
+- nsys/ncu/perf profiling per §9.0 (scripts in research/profile_*.sh) after the trials.
