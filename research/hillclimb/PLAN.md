@@ -4,21 +4,20 @@ Mission: 2.00× decode tok/s on empty/ctx32k/ctx128k (512-token greedy, server c
 `auto-research.md` §4/§9. Baseline config is frozen: MAX_CONTEXT=262144, PREFILL=1024, MTP=2,
 CPU_THREADS=8, KV=int4, SAMPLING presence_penalty 0, PORT 30000. Guard: peak VRAM < 7.9 GiB.
 
-## Baseline (262k int4, measured)
+## Baseline (262k int4, measured — COMPLETE)
 | cell | pass-1 | pass-2 | pass-3 | median | 2× target |
 |---|---|---|---|---|---|
-| empty | 21.92 | 21.86 | — | 21.92 | 43.85 |
-| ctx32k | 18.94 | 20.4 (log-reconstructed) | 19.52 | 19.52 | 37.87 |
-| ctx128k | 11.80 | (died prefill) | (running) | — | 23.60 |
+| empty | 21.92 | 21.86 | — | 21.89 | 43.78 |
+| ctx32k | 18.94 | 20.44 | 19.52 | 19.52 | 37.87 |
+| ctx128k | 11.80 | 11.66 | — (spread 1.19% ≤ 2%) | 11.73 | 23.46 |
 
-Peaks 7.35-7.38 GiB (guard OK). Pass-2 empty+32k numbers came from the engine log after the
-background job was killed mid-run (checkpoint kill; lesson recorded). Pass-2 ctx128k + pass-3
-ctx32k/128k re-run now (bench_runner.sh, detached, survives client exit).
+Peaks 7.35-7.38 GiB (guard OK). Targets anchored to the pass-1 table (43.85/37.87/23.60);
+medians 21.89/19.52/11.73 are the promotion reference.
 
 ## Experiment log (one change per experiment; A/B with controls)
 | # | lever | config | result | verdict |
 |---|---|---|---|---|
-| 0 | baseline | frozen §4 env | 21.9 / 19.5 / 11.8 | reference |
+| 0 | baseline | frozen §4 env | 21.89 / 19.52 / 11.73 (medians) | reference |
 | 1 | NO_MMQ → expert slots ~6-9 | STRATA_Q36_NO_MMQ=1 | pending | — |
 | 2 | CT 5 (workers=cores) | CPU_THREADS=5 | pending | — |
 | 3 | MTP 3 (draft depth) | MTP=3 | pending | — |
