@@ -235,3 +235,21 @@ baseline exists.
 - The uint4 candidate's parity claim to verify: same nibble order + same
   accumulation order → bit-identical; 16× fewer L1 transactions on a kernel measured
   45-57× above the 448 GB/s DRAM floor.
+- **Next kernel lever, fully grounded (the empty/32k compute wall)**: the model's
+  experts are Q5_K (type 13) ×41 gate/up AND down; the pool's dispatch has
+  multi-token AVX-2 kernels only for IQ/trellis/NVFP4/kq types 12/7/8 — Q5_K falls
+  to ggml-cpu's **AVX1-build generic scalar dot** per (row, token) (the vendored
+  ggml's AVX2 branch exists but is compiled out; third_party/strata-ggml/.../arch/
+  x86/quants.c:2216). block_q5_K = {d, dmin, scales[12], qh[32], qs[128]} = 176 B
+  (0.6875 B/val ✓); activation = q8_K. Project: a Q5_K multi-token AVX-2 kernel in
+  kq_avx2.cpp (mirror q4k_dot's NT structure; the bit reference is the GENERIC path
+  — the AVX2 branch rounds differently per #2215's guard) + dispatch in
+  native_expert.cpp (gu: f.gu_type == 13, nt ≥ mt_min; down: extend the kq256
+  branch to d_type == 13). Precedent: the existing kernels measure 2.0-2.4× ggml at
+  3 tokens; MTP 2 always runs 3-token windows. Expected: pool ~102 ms/step →
+  ~45-55 ms → empty ~30-38 tok/s.
+- **Pipeline state** (all detached): trial_runner3 (pid 46258): mtp3 empty 20.81
+  (−4.9%, reject pending cells) → mmqslots2 → champion restore →
+  trial_runner3.done; then cand_runner (pid 46326) runs the uint4 chain (build →
+  VERIFY → gates → 3-cell bench) → cand_uint4.done. Estimated all-done ~05:45Z.
+  SUGGESTIONS.MD still absent (checked every turn).
