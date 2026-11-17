@@ -1,35 +1,28 @@
-[Engine] S12-B decided: DROP S11-3 (STRATA_THP); S12-C launched; the profiling tool reality recorded
+[Docs] the report completed: the trials' verdicts, the champion ledger row, the chart, S12-C's negative record; the s12c ledger entry
 
-The arena-sized TLB microbench (research/s12b_microbench.c) ran twice with
-every server stopped (the 21.14 GiB precondition honored). Run 2, with two
-untimed warm-up passes and per-pass minor-fault counters after run 1's
-cold-start anomaly, gives the verdict: THP-off medians 28.41 (5 threads) /
-28.05 (8 threads) GB/s vs THP-on 27.86 / 27.34 - deltas -1.9% / -2.5%,
-within the S12-B rule's +/-5% band, so STRATA_THP is dropped (the implement
-bar was >= +10%). THP engagement was verified from /proc/vmstat (10,823 x
-2 MiB pages = 21.6 GiB), so the null is measured against a working
-treatment. Both run logs are kept (s12b_run1.log, s12b.log).
+PROGRESS.md now carries the complete session record: the four pre-promotion
+trials' rows (nommq rejected - empty +5.0% but ctx32k -4.5% with the prefill
+collapsed to 96.8 tok/s and no 128k cell; ct5 a wash within +/-2%; mtp3 a loss
+on all three cells - MTP stays 2; mmqslots2 a loss - peak up to 7.57 GiB), the
+champion ledger's PROMOTE row (the compose binary 8833c30b vs the base
+74c5f1f4, same-day same-protocol: +4.4% / +10.0% / +46.4%, the median win
++10.0% >= the 2% bar, the cmp gate 10/10 bit-identical), the chart's champion
+cluster, the evidence bullets (the S12-B measured refinement with the
+supplementary agent's unit-slip correction adopted: the pool's effective rate
+bracket 6.0-18 GB/s, the earlier 14-16 GB/s figure slipped units), and the
+open-items rewrite (Lever A = STRATA_POOLMS is the next measurement).
 
-Measured refinement of the roofline: the warmed-stream ceiling is ~28 GB/s
-(55% of the 51 GB/s DDR4 peak) independent of page size - the 4K TLB/
-page-walk cost does not bind sequential streams - so the pool (effective
-~14-16 GB/s per the roofline arithmetic) is pattern/latency-bound, not
-bandwidth-ceiling-bound; the decisive next measurement is Lever A
-(STRATA_POOLMS) on the next build. Pure streaming shows 5 ~ 8 threads;
-lever C's live-decode test decides the worker count where the pattern is
-the pool's.
+The S12-C harvest is decided as the negative record: w=5 22.91 (+1.7%, below
+the +3% screen bar), w=6 20.90 (-7.2%), w=12 12.07 (-46.4%) - the ladder is
+non-monotonic and the champion config stays CPU_THREADS=8. The engine's
+warnings prove it counts its own main thread as a pool worker; the w=6 dip
+stays open. The notebook, handoff #21, SUGGESTIONS.MD and the ledger carry
+the same verdicts; the ledger gains the s12c entry (24 entries, JSON valid).
 
-Section 9.0's tool reality is recorded honestly: perf and ncu are absent on
-this box, so profile_pool.sh/profile_gpu.sh and the ncu V-path counters
-(the S2 dispute decider) cannot run here; the feasible halves are S12-B
-(done) and Lever A's pool-ms accounting (the next build).
-
-S12-C (the worker-count screen: 5/6/12 on the champion compose binary,
-one load + one empty cell each, the promotion protocol per config, the
-per-config engine-log slice as the config-engagement proof) is running;
-the w=8 anchor is reused from the promotion compose-clean cell (22.53
-tok/s, same binary, same protocol, same day). New scripts: serve_262k_q5k_w.sh
-(CPU_THREADS from the environment, default 8), s12c_runner.sh,
-run_s12c_sup.sh, poll_s12c.sh.
+WSL recovered (verified 13:52Z): out/strata = strata_q5k_cand = 8833c30b
+intact; the champion's 262k config is not serving - a 65536-ctx server on
+30001 (purpose unrecorded, the supplementary agent's launch) will be stopped
+before the champion restore + Lever A's gate (the 21.14 GiB arena
+precondition; the reason recorded in handoff #21).
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)

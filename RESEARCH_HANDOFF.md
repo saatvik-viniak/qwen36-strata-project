@@ -1269,3 +1269,47 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   precedent; one rebuild + gates + one decode capture) → the pool/attention split + the
   pool's effective GB/s settle the roofline's remaining term → the next kernel/config
   lever by the evidence. THP is dropped; the compose binary stays the champion.
+
+## Continuation #21 — primary agent, ~13:55Z (S12-C harvested: the negative record; the four trials decided; the report completed; WSL recovered; Lever A next)
+
+- **S12-C IS DECIDED — THE WORKER COUNT IS NOT A LEVER (harvested 13:03:01Z, s12c.done =
+  bench_complete, truthful):** w=5 22.91 (+1.7% vs the reused w=8 anchor 22.53 — below the
+  pre-declared +3% screen bar, no confirm pass), w=6 20.90 (−7.2%), w=12 12.07 (−46.4%).
+  The ladder is non-monotonic (w5 > w8 > w6 > w12) → **the champion config stays
+  CPU_THREADS=8**. The per-config engine-log slices prove each config engaged AND the
+  counting rule: the engine counts its own main thread as a pool worker (at w=6 it warns
+  "6 workers… 6 physical cores" = 6+1 threads; its recommendation 5 = 5 workers + the host
+  = exactly the 6 cores; at w=12 "the extra workers spin"). The w=6 dip is open (mechanism
+  unexplained). A w=5 promotion decision would need the full 3-cell pass for a
+  likely-sub-2% median → not justified; the negative result stands at its tested scope
+  (one empty cell per config, the screen bar).
+- **THE FOUR PRE-PROMOTION TRIALS DECIDED (recovered from research/trials/, PROGRESS.md
+  rows 4t):** nommq (STRATA_Q36_NO_MMQ=1) rejected — empty 23.00 (+5.0% vs the median
+  21.89) but ctx32k 18.64 (−4.5%) with the prefill collapsed to 96.8 tok/s (MMQ ~250), no
+  ctx128k cell; ct5 (CPU_THREADS=5) a wash — 21.69/19.33/11.71, all within ±2%; mtp3
+  (MTP=3) a loss on all three cells — 20.81/18.55/10.92 (MTP stays 2); mmqslots2
+  (EXPERT_SLOTS=2) a loss — 20.11/18.46/11.69, peak up to 7.57 GiB. None promoted; the
+  uint4 compose remains the champion.
+- **THE REPORT IS COMPLETE (the user's "report the results" request):** PROGRESS.md now
+  carries the measurement rows (the uint4 trial, the promotion compose-clean + base-clean
+  triples, the S12-C screen, the trials' rows 4t), the champion block, the champion
+  ledger's PROMOTE row, the chart's champion cluster, the evidence bullets (the S12-B
+  measured refinement with the supplementary agent's unit-slip correction adopted: the
+  pool's effective rate bracket 6.0–18 GB/s — the earlier 14–16 GB/s figure slipped
+  units), and the open-items rewrite (the trials' verdicts + Lever A as the next
+  measurement).
+- **WSL OUTAGE + RECOVERY:** the wsl client wedged ~13:10Z (WSAETIMEDOUT on every call,
+  confirmed twice) — the report stayed unblocked because every record file + git live on
+  the Windows-side checkout. Recovered ~13:38Z (the supplement's observation; verified
+  13:52Z). The box state at 13:52Z: out/strata = strata_q5k_cand = 8833c30b (intact), the
+  champion's 262k config NOT serving — a 65536-ctx server (--cpu-threads 5, pid 668) runs
+  on port 30001 with its purpose unrecorded (the supplement's #27 amendment) → it will be
+  stopped before the champion restore + Lever A's gate (the 21.14 GiB arena precondition;
+  two engines cannot coexist in 25.4 GiB), recorded here so the supplement sees the reason.
+- **THE QUEUE (the supplement's S13/S14 refinement adopted):** Lever A (STRATA_POOLMS on
+  the next build) → S13-(a)'s pattern-realistic microbench (the SPLIT phase k=24 distinct
+  blobs round-robin over 8 workers vs the SHARED phase k=8, the layer-span scatter, the
+  S12-B reader and protocol verbatim; the decision rules: ≥~25 GB/s → the item dies,
+  ~14–20 → the levers proceed, ≤~10 → the within-reader prefetch-distance lever is the big
+  one) → S14 stays PARKED (the reopening condition: Lever A shows the pool ≥ ~60% of the
+  step AND S3's slot path stays blocked).
