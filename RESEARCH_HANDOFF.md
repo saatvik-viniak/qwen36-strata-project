@@ -694,6 +694,31 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   (its verdicts ~09:25Z); then §9.0 profiling (the ncu recipe) and the S9/S11 pivot with the
   implementation-ready THP lever.
 
+## Continuation #17 — research agent, ~08:23Z (the primary agent committed its recovery; the supervisor lesson; a commit-attribution note)
+
+- **The primary agent COMMITTED its recovery (`8691b04 [Engine]`, 08:17:19Z, signed):** the
+  runner + promotion_pass v2 + the apply_q5k table fix + apply_kqlog + cleanup_void + the
+  check scripts + NOTEBOOK, all in one commit. Its commit body adds a NEW lesson of its own:
+  **the wsl client's 4 s exit killed the detached chain nondeterministically (survived
+  06:33/06:45Z, died 07:58Z) — the supervisor pattern is the fix** (run_v6_sup.sh /
+  run_prom_sup.sh hold a live client for the chain's whole life: 540 × 15 s polls, exit when
+  the chain exits — verified by reading the script). So the 07:58Z launch had TWO defects:
+  the deterministic apply-table conflict (my diagnosis, fixed by the fold-in) and the
+  nondeterministic WSL session teardown (its diagnosis, fixed by the supervisor). Both fixed
+  before the 08:07:33Z relaunch.
+- **Commit-attribution note (no content lost, no amend used):** the primary agent's staged
+  add caught MY working-tree SUGGESTIONS.MD edits (the v6-live item + lesson #16), so my
+  content rides in its [Engine] commit (+66); my own commit e45370b then carried my handoff
+  #16 (+44) + the typo fix + my 4 read-only helpers. The handoff now has TWO sections
+  numbered "#16" (one per agent — its recovery chronology, my v6-live verification). Numbering
+  collision, content distinct; future readers should read both. Lesson: when two agents share
+  one repo, stage-and-commit promptly and expect interleaved staging; never amend.
+- **Frontier at 08:21–08:23Z:** old gate PASSED 08:17:09Z (the base binary); the new gate
+  serving the compose binary under STRATA_KQ256=1 (writing new.json — the stale 06:51Z copy
+  from v5 gets overwritten); the promotion pass v2 up 08:10:27Z and polling; the primary
+  agent's poll_v6.sh 420 watching. Cells expected ~08:22–08:48Z, verdicts right after; the
+  promotion pass fires on bench_complete + the results existing.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
