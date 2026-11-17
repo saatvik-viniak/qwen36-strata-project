@@ -342,10 +342,15 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   448 GB/s vs the ~41–47 ms expert stream. **Conclusion (if the arithmetic holds): the
   empty cell is host-expert-streaming-bound at ~90–95% of its ceiling; the remaining
   headroom is in the HOST path (pinning, THP, streaming efficiency, staging overlap), not
-  in GPU kernel work.** This reorders the queue: S9/S11 (the host path) primary, S6 and the
-  GPU kernels secondary. It also sharpens the uint4 +52% mechanism: the sector-thrash
-  penalty ADDED to the streaming-bound step and scaled with ctx (bigger KV → more thrash),
-  which is why it was worth +52% at ctx128k and ~0 at empty. §9.0's ncu recipe gains a
+  in GPU kernel work.** [SUPERSEDED (research agent, ~13:25Z): this item's rate pairing
+  carried the unit slip (a per-step volume divided by the per-token time) and the
+  shared-expert term later proven GPU-side — see S12's second correction and S13's refined
+  brackets (the host volume = 660 MB–1.98 GB/step, the rate = 6.0–18 GB/s pending Lever A);
+  this early item stays as the record of the original frame.] This reorders the queue: S9/S11
+  (the host path) primary, S6 and the GPU kernels secondary. It also sharpens the uint4 +52%
+  mechanism: the sector-thrash penalty ADDED to the streaming-bound step and scaled with ctx
+  (bigger KV → more thrash), which is why it was worth +52% at ctx128k and ~0 at empty.
+  §9.0's ncu recipe gains a
   sub-item: capture the per-step host-read bandwidth (the sectors/bytes counters) to
   confirm or refute this roofline before spending on GPU-side levers.
 - **THE PIN STATE IS SYSTEMIC — and it VALIDATES the anchors and the THP target (research
@@ -996,6 +1001,16 @@ the primary agent's recording).**
   "6.2 GB/s effective" figure is superseded — it is incompatible with the champion's
   measured 21.89 tok/s (it would imply a ~100 ms/step pool); re-derive from the pool-ms
   lines this item adds.
+  **SECOND CORRECTION (research agent, ~13:25Z, from the S13 source read — the rate figure
+  above carried a probable unit slip): "650–745 MB in that time" divided a per-STEP volume by
+  the per-TOKEN time (44–49 ms). Per q36_engine.cu's deduped-job dispatch, the per-step host
+  volume = the DISTINCT routed experts per layer (8–24) × 41 × 2.01 MB = 660 MB–1.98 GB, and
+  the champion's step time ≈ 110 ms (512 generated in 22,353 ms ÷ ~204 steps, drafts accepted
+  308 of 410) → the pool's effective rate bracket is 6.0–18 GB/s (21–64% of the S12-B
+  measured 28 GB/s warmed ceiling), pending Lever A's bytes/step + ms/step lines. The
+  "TLB/latency-bound" wording should read pattern/latency-bound (S12-B's page-size-independent
+  ceiling already removed the pure TLB story for sequential streams). The 25.4 ms/accepted-
+  token figure above stays as written (it is the per-ACCEPTED-token wall, not the step).**
 - **Lever A (observability, one fprintf, env-gated `STRATA_POOLMS=1`, default OFF):** log the
   pool's per-step wall ms + the bytes it read + the effective GB/s — one line per step in
   the pool's step path. This gives the pool's SHARE of the 25.4 ms step on every future
@@ -1219,32 +1234,87 @@ the primary agent's recording).**
 
 ## S13 — The pool's pattern lever: the scattered-read cost the S12-B ceiling exposes (the empty-cell follow-up)
 
-**Status: NEW (research agent, ~13:08Z) — S12-B measured the ceiling, S12-C killed the
-worker-count lever; this item is the lever family the remaining gap implies.**
+**Status: REFINED with the source read (research agent, ~13:25Z) — three corrections from
+q36_engine.cu's hybrid dispatch path; the microbench spec is now pattern-exact.**
 
-- **The arithmetic (unconfirmed static analysis, to be re-derived from Lever A's lines):** the
-  pool reads ~742 MB/step (369 × 2.01 MB: 328 routed + 41 shared expert slots across 41
-  layers) in the champion compose's ~44.4 ms step (22.53 tok/s empty × ~1.75 accepted/step
-  from the drafts-accepted 308-of-410 ratio) = **~16.7 GB/s effective = 60% of the S12-B
-  warmed-stream ceiling (28 GB/s = 55% of the 51 GB/s DDR4 peak)**. The ceiling is
-  page-size-independent (S12-B's finding) → the gap is the SCATTERED pattern's cost: 369 ×
-  2 MiB chunks scattered across the 21.14 GiB arena defeat the hardware prefetcher and pay
-  DRAM row-miss/bank-conflict terms a sequential stream does not.
-- **Candidate levers, cheapest first:** (a) a pattern-realistic microbench FIRST (369
-  scattered 2 MiB reads per round, 5 vs 8 worker threads, server-stopped, the S12-B harness
-  extended almost verbatim) — if it lands ~16–17 GB/s the pattern cost is quantified and
-  real; if ~28 GB/s the pool's rate is bounded elsewhere (sync/launch/imbalance) and this
-  item dies; (b) software prefetch of the NEXT layer's expert rows during the current
-  layer's dot (the 8 routed + 1 shared addresses are known after each layer's router; ~16
-  MB/layer to fetch behind ~1 ms of compute); (c) an arena layout that groups the shared
-  experts (the 41 always-read rows) contiguously — a load-time re-pack, zero per-step cost.
+- **Correction 1 — the shared expert is GPU-side (the host volume drops):** `src/kernels/cuda/
+  shared_expert.cu` is a CUDA kernel ("inside the 4.5 GiB arena" — the GPU arena), so the
+  "41 shared expert reads" in the old roofline note are NOT host DRAM reads. The host pool's
+  per-step reads = the ROUTED experts only.
+- **Correction 2 — the jobs are deduped, contiguous, and bounded 8–24 per layer:** the hybrid
+  dispatch (q36_engine.cu ~2544–2570) builds ONE `ExpertJobMulti` per DISTINCT missed expert
+  (`open.find(x)`; multiple rows attach via `j.nact[j.nt]`), each blob CONTIGUOUS at
+  `L.hblobs + x * L.stride` — so the per-step host volume = (the distinct routed experts per
+  layer, 8 if the MTP rows route identically, up to 24 if they differ) × 41 layers × 2.01 MB
+  = **660 MB … 1.98 GB per step**. With the champion's step time (512 generated in 22,353 ms,
+  drafts accepted 308 of 410 → ~204 steps → ~110 ms/step), the pool's effective read rate is
+  **6.0 … 18 GB/s = 21–64% of the S12-B warmed-stream ceiling (28 GB/s)**.
+- **Correction 3 — the old roofline pairing probably slipped units:** the earlier note's
+  "650–745 MB/step at 14.4–16.3 GB/s" divided a per-STEP volume by the per-TOKEN time
+  (44–49 ms). The honest rate bracket is Correction 2's; **Lever A's STRATA_POOLMS
+  bytes/step + ms/step lines pin the real case** (they also answer whether the MTP rows
+  route identically — the volume line is the discriminator).
+- **The pool is synchronous per layer:** `pool->run_split_multi_native(...)` at q36_engine.cu:2570
+  returns when the jobs are done (`hy_cpu_ms += ms_since(t0)`), then the H2D copies + `k_merge_cpu`
+  run on the engine's stream — during the pool's FFN the GPU has no next work (layer N+1's
+  attention needs layer N's FFN output) → the step serializes GPU-attention → pool-FFN per layer.
+  Consequence: the pool's share is the step's direct lever, and the VRAM-slot path (S3's revival,
+  trial A's +5.1% empty at S=7) moves work OFF the pool entirely.
+- **The microbench spec (a), pattern-exact (research agent, ~13:25Z, extending
+  `research/s12b_microbench.c`):** arena 21.14 GiB, THP off (the champion state); the layer span
+  = 21.14/41 = 516 MiB; per timed "step", 41 phases; per phase, k DISTINCT 2.01 MB blocks at
+  pseudo-random 2 MiB-aligned offsets within the layer's span (a fixed seed per rep — the real
+  router varies per step; noted). TWO thread patterns bracket the unresolved worker-split
+  granularity: **SPLIT** — k = 24 blocks split round-robin over 8 workers (3 per worker per
+  layer, 123 scattered blobs per worker per step — the rows-split model the source implies);
+  **SHARED** — k = 8, every worker reads all 8 (tests the L3-absorption case). The reader keeps
+  the harness's stride-64 loop for comparability with the S12-B sequential medians (28.41/28.05
+  GB/s = the ceiling anchor in the same harness). Protocol: 2 untimed warm-up steps + 3 timed
+  reps per pattern, the minor-fault counters alongside, server-stopped (the S12-B precondition).
+  **Decision rules:** SPLIT ≥ ~25 GB/s → the pattern cost is small → the pool's rate is bounded
+  elsewhere (sync/launch/imbalance) → this item dies (record the negative; Lever A's share
+  decides); SPLIT ~14–20 GB/s → the pattern cost matches the pool's observed rate → the levers
+  below proceed; SPLIT ≤ ~10 GB/s → the pattern cost dominates → (b) is the big lever.
+- **Lever (b) re-scoped (contingent on (a)):** the next-LAYER prefetch idea is IMPOSSIBLE for the
+  routed experts — layer N+1's router runs on layer N's output, so its expert addresses do not
+  exist during layer N's dot. The feasible form is WITHIN-reader prefetch-distance: issue the
+  next blob's leading cache lines while the current blob's dot consumes the current one (a
+  one-problem-per-change, STRATA-gated reader change; the parity gate is untouched — prefetches
+  move no data). Spec-review only after (a)'s verdict.
+- **Lever (c) DEAD as spec'd:** the shared-expert re-pack motivation is gone (the shared expert is
+  GPU-side), and the routed scatter cannot be re-packed away (the router picks arbitrarily within
+  the layer's span). The slot path (S3's revival) is the layout lever that remains.
 - **Bounded by Lever A's split:** if the pool is ~100% of the empty step the ceiling ratio is
-  the prize (+60–70% IF (a) confirms the pattern cost); if ~50%, halve it. The dot compute
-  (~14% of CPU peak, per the notebook's 54-of-384 GFLOPS reading) overlaps the reads inside
-  the 8 workers, so the pattern lever and S1's kernel trim do not double-count.
-- **Sequence:** Lever A's STRATA_POOLMS lines (the pool's per-step ms+bytes+GB/s) validate the
-  ~16.7 GB/s reading first; then (a)'s microbench decides whether this item lives. Both fit
-  the between-benches rule; neither touches the default path.
+  the prize (the bracket says up to +36–88% IF (a) confirms the pattern cost at the SPLIT
+  pattern); if ~50%, halve it. The dot compute (~14% of CPU peak, per the notebook's
+  54-of-384 GFLOPS reading) overlaps the reads inside the workers, so the pattern lever and
+  S1's kernel trim do not double-count.
+- **Sequence:** Lever A's STRATA_POOLMS lines (the pool's per-step ms+bytes+GB/s) pin the volume
+  case first; then (a)'s microbench decides whether this item lives. Both fit the
+  between-benches rule; neither touches the default path.
+
+## S14 — The layer-serial structure: the GPU idles through the pool's FFN (parked pending Lever A)
+
+**Status: PARKED (research agent, ~13:25Z) — a mechanism observation from the S13 source read,
+not a patch proposal; the overlap restructure is deep and its prize is unknown until Lever A
+splits the step.**
+
+- **What the source shows:** the hybrid layer path is synchronous per layer — the GPU's attention
+  → the router → the CPU pool's FFN (the jobs' blobs read + the dots) → the H2D copies +
+  `k_merge_cpu` (q36_engine.cu:2570–2574). Layer N+1's attention needs layer N's FFN output, and
+  the pool call blocks the host until the workers finish → the GPU has nothing to run during the
+  pool's FFN and the CPU idles during the GPU's attention. With 0 VRAM slots this session, the
+  pool's FFN is the step's dominant half (Lever A's lines quantify it).
+- **Why parked, not proposed:** the dependency chain attn(N) → ffn(N) → attn(N+1) is strictly
+  serial across layers, so no per-layer overlap exists; the only overlap axes are the MTP rows
+  (the batch's rows are independent per layer until the combine — pipelining rows across the
+  CPU/GPU boundary needs a per-row stream split, a restructure of the pool's job model, not a
+  patch) and the VRAM slots (S3's revival — the recorded path). Both need Lever A's pool-share
+  first: if the pool is ~50% of the step, the overlap's ceiling is ~2× but the restructure cost
+  is high; if ~100%, S3's slot path dominates the queue anyway.
+- **Reopening condition:** Lever A's lines show the pool ≥ ~60% of the step AND S3's slot path
+  stays blocked (the staging-shrink surgery stalls) → re-read q36_engine.cu's layer loop and
+  pool.cpp's task model for a concrete row-pipelining sketch.
 
 ## Already present (do NOT propose these again)
 
@@ -1637,3 +1707,29 @@ worker-count lever; this item is the lever family the remaining gap implies.**
   then the next-layer software prefetch / the shared-expert arena re-pack. Bounded by Lever
   A's STRATA_POOLMS split (the decisive next build lever). S13 recorded as a full item above
   the already-present list. Signed: GLM 5.3 Flash (Maya-s quant), research agent.
+- **2026-11-17 ~13:30Z — S13 REFINED with the source read + S14 parked + the roofline unit
+  slip corrected (research agent, this commit).** (1) **The shared expert is GPU-side**
+  (src/kernels/cuda/shared_expert.cu — "inside the 4.5 GiB arena") → the host pool's per-step
+  reads = the ROUTED experts only. (2) **The jobs are deduped and contiguous** (q36_engine.cu
+  ~2544–2570: one ExpertJobMulti per DISTINCT missed expert, the blob at L.hblobs + x·L.stride)
+  → the per-step host volume = 8–24 distinct experts/layer × 41 × 2.01 MB = **660 MB–1.98
+  GB/step**, and the champion's step ≈ 110 ms (512 generated in 22,353 ms ÷ ~204 steps) → the
+  pool's effective rate bracket = **6.0–18 GB/s = 21–64% of the S12-B 28 GB/s warmed ceiling**.
+  (3) **The old roofline pairing slipped units** (a per-step volume over the per-token time →
+  the 14.4–16.3 GB/s figure) — corrected in S12 + the early item superseded in place.
+  (4) **The layer path is synchronous per layer** (the pool call blocks; then the H2D +
+  k_merge_cpu; the GPU idles through the pool's FFN) → recorded as **S14, PARKED** (the
+  row-pipelining overlap = a restructure, not a patch; the reopening condition = Lever A shows
+  the pool ≥ ~60% of the step AND S3's slot path stays blocked). (5) **The S13 microbench spec
+  is pattern-exact now**: the SPLIT phase (k=24 distinct blobs, round-robin over 8 workers, 3
+  per worker per layer) vs the SHARED phase (k=8, every worker reads all — tests L3
+  absorption), the layer-span scatter, the S12-B reader and protocol verbatim, the decision
+  rules (≥~25 GB/s → the item dies; ~14–20 → the levers proceed; ≤~10 → (b) is the big
+  lever). (6) **Lever (b) re-scoped**: the next-layer prefetch is impossible (layer N+1's
+  router runs on layer N's output — the addresses do not exist yet); the feasible form =
+  within-reader prefetch-distance, contingent on (a). **Lever (c) dead** (the shared expert is
+  GPU-side; the routed scatter cannot be re-packed away). (7) WSL wedged twice this turn
+  (WSAETIMEDOUT + a 90-s timeout) — the Windows-native tools on the C: checkout carried all
+  reads/edits/commits; the engine-log and process inspection (the /home side) is BLOCKED
+  until WSL recovers — recorded as the session's standing constraint. Signed: GLM 5.3 Flash
+  (Maya-s quant), research agent.

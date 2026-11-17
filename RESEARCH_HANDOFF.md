@@ -1004,6 +1004,51 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   semantics (cp strata_q5k_cand → out/strata + serve_262k_q5k.sh) visible for every future
   chain.
 
+## Continuation #27 — research agent, ~13:32Z (S13 refined with the source read; S14 parked; the roofline unit slip corrected; WSL wedged)
+
+- **WSL BLOCKED mid-turn (twice): `wsl -d Ubuntu` returned WSAETIMEDOUT, then a 90-s timeout —
+  the second wedge this session. All reads/edits/commits continued on the Windows-native side
+  (the C: checkout carries SUGGESTIONS.MD, RESEARCH_HANDOFF.md, research/*, src/*, and git).
+  STILL BLOCKED until WSL recovers: the engine log (/home/dmin/.../strata-qwen36.log), the
+  process inspection, and any WSL command. The recovery pattern: retry once, fall back to the
+  native tools, never block the turn on WSL.**
+- **S13 REFINED with the source read (three corrections, all source-bound):**
+  (a) the shared expert is GPU-side (`src/kernels/cuda/shared_expert.cu`, "inside the 4.5 GiB
+  arena") → the host pool's reads = the routed experts only;
+  (b) the jobs are DEDUPED and contiguous (q36_engine.cu ~2544–2570: one `ExpertJobMulti` per
+  distinct missed expert, the blob at `L.hblobs + x * L.stride`) → the per-step host volume =
+  8–24 distinct experts/layer × 41 × 2.01 MB = **660 MB–1.98 GB/step**; with the champion's
+  ~110 ms step (512 generated in 22,353 ms ÷ ~204 steps) the pool's effective rate bracket =
+  **6.0–18 GB/s = 21–64% of the S12-B 28 GB/s warmed ceiling**;
+  (c) the old roofline pairing slipped units (a per-step volume over the per-token time → the
+  14.4–16.3 GB/s figure) — corrected in S12 + the early item superseded in place.
+- **The microbench spec (S13-(a)) is pattern-exact now**: the SPLIT phase (k=24 distinct blobs,
+  round-robin over 8 workers = 3 per worker per layer, 123 scattered blobs per worker per step)
+  vs the SHARED phase (k=8, every worker reads all — tests L3 absorption); the layer-span
+  scatter (516 MiB/layer, pseudo-random 2 MiB-aligned offsets, a fixed seed per rep); the
+  S12-B reader and protocol verbatim (2 warm-ups + 3 reps, the minor-fault counters,
+  server-stopped); the decision rules: SPLIT ≥ ~25 GB/s → the item dies (the rate is bounded
+  elsewhere); ~14–20 → the levers proceed; ≤ ~10 → (b) is the big lever.
+- **Lever (b) re-scoped**: the next-layer prefetch is impossible (layer N+1's router runs on
+  layer N's output — the addresses do not exist during layer N's dot); the feasible form =
+  within-reader prefetch-distance, contingent on (a). **Lever (c) dead** (the shared expert is
+  GPU-side; the routed scatter cannot be re-packed away).
+- **S14 PARKED (a new item)**: the layer path is synchronous per layer (the pool call at
+  q36_engine.cu:2570 blocks the host; then the H2D + `k_merge_cpu`; the GPU idles through the
+  pool's FFN; the dependency chain attn(N) → ffn(N) → attn(N+1) is strictly serial). The
+  overlap axes = the MTP rows (independent per layer until the combine — a per-row stream
+  split, a restructure) and the VRAM slots (S3's revival — the recorded path). Reopening
+  condition: Lever A shows the pool ≥ ~60% of the step AND S3's slot path stays blocked.
+- **The queue:** Lever A's STRATA_POOLMS build (the primary agent's next build) → its first
+  lines pin the volume case (660 MB vs 1.98 GB per step = the routing-sharing discriminator) →
+  S13-(a)'s microbench decides the pattern cost → S3's slot revival / S14's park decision
+  follow. The WSL wedge blocks the engine-log side until it recovers; the C:-side work
+  continues.
+- **Next (research agent):** when WSL recovers, re-check the frontier (the primary agent may
+  have started Lever A's build); annotate the first pool-ms lines when they land; keep the
+  promotion ledger's integration semantics (cp strata_q5k_cand → out/strata +
+  serve_262k_q5k.sh) visible for every future chain.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
