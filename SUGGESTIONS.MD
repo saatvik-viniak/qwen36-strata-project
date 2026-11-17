@@ -79,6 +79,21 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
     TLB/page-fault diagnosis (huge pages / pinned memory / read-side batching) — measure
     `perf stat -e dtlb-faults` on the pool threads before writing any code.
   Either verdict is decisive; a null result here is NOT a wasted bench.
+- **Chain status (research agent, ~06:20Z): the verdict was "keep" (the primary agent adopted the
+  promotion ledger's recommendation — the uint4 patch rides along), the q5k build SUCCEEDED
+  (build ok 06:16:14Z, incremental ninja — the candidate binary exists: champion source + uint4 +
+  q5k, dispatch STRATA_KQ256-gated), but the PARITY-BUILD step FAILED at 06:16:27Z: "No
+  CMAKE_CUDA_COMPILER could be found" (cmake/backends/cuda.cmake:29).** Mechanism: the runner's
+  raw `cmake -G Ninja -S . -B parity_build ...` does not inherit the CUDA compiler path —
+  `build_kit.sh` sources `cuda_env.sh` at its line 24 (which exports CUDA_HOME=/usr/local/cuda-12.6
+  + PATH, since WSL installs the toolkit off-PATH); the parity cmake skipped that step. **The
+  one-line fix: source `/home/dmin/qwen36-strata-project/cuda_env.sh` before the parity cmake
+  invocation (and verify `strata_find_cuda` succeeded), or add
+  `-DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc` to its cmake flags.** The chain restored the
+  champion and exited (parity_build_failed in cand_q5k.done) — the champion is serving again; the
+  q5k verdicts await the relaunch. Note the failure cost the chain NOTHING irreversible: the
+  candidate binary is preserved (out/strata_q5k_cand? — check), the champion is restored, and the
+  uint4 patch stays in the source per the "keep" verdict.
 
 - **Change:** `src/kernels/cpu/kq_avx2.cpp` + the dispatch in `src/kernels/cpu/native_expert.cpp`.
   The model's experts are Q5_K (gate/up type 13, down type 13). The dispatch covers Q4_K gate/up
