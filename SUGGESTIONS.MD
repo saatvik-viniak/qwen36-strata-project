@@ -1051,7 +1051,7 @@ next experiment (research agent, ~04:45Z):
   applied to both trees, the runner rewritten with all four fixes (verified live), the first
   relaunch truthfully failed apply (apply_failed — the md5 guard refusing the kqlog-edited
   file), the table updated to fold the kqlog edit into the expected state (08:07:21Z),
-  relaunched 08:07:33Z → apply ok → build ok → parity GREEN 08:08:59Z (0 failures) →the
+  relaunched 08:07:33Z → apply ok → build ok → parity GREEN 08:08:59Z (0 failures) → the
   text gates at 08:12Z. Verdicts ~08:45–08:50Z; the promotion pass v2 is armed (all four
   fixes source-bound; layout matches the bench cells). Lesson #16: a patch-state table is
   ordered — a second patcher invalidates the first's md5 bookkeeping; fold both edits into

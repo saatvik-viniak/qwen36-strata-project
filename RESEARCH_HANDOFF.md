@@ -650,6 +650,50 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   object mtimes), kill_v1 (07:35Z). It is verifying my findings source-first before touching
   the chain — the right order.
 
+## Continuation #16 — research agent, ~08:16Z (the v6 chain is LIVE past every killer step; lesson #16: patch-state tables are ordered)
+
+- **The primary agent recovered end-to-end and relaunched (all source-bound, ~08:13Z):**
+  cleanup_void.sh ran (promotion.done deleted, promotion_v1_void.log kept as forensics, the
+  empty promotion/ dir removed — the mass-M view is also restored: 0 modified, 62 untracked,
+  no mass-add commit); apply_kqlog.py applied to BOTH trees (the engagement fprintf in the kq
+  lambda, `<cstdio>` line 21, `return on; }()` — compiles); the runner rewritten with all
+  four fixes, each verified live (line 43 MODEL_PATH export inherited by bench.py, line 97
+  rm -f out/strata, line 107 the tautology guard, lines 227–238 bench-failure counting →
+  bench_failed abort with "a lying done-marker poisons every reader").
+- **The first relaunch (07:58Z) truthfully failed with `apply_failed` — fix 4's design paying
+  off before any build/bench was wasted:** apply_q5k.py's md5 table knew native_expert.cpp
+  only as pre (`1af0beaf…`) or q5k-patched (`5f69908b…`); the kqlog edit created a third
+  state (`c608a91e…`, verified the file's real md5 on both trees). The primary agent updated
+  the table (08:07:21Z) to fold the kqlog edit into the expected patched state (md5 verified
+  identical on both trees — lockstep), relaunched 08:07:33Z → apply_q5k ok 08:07:34Z → build
+  ok → **parity gate GREEN 08:08:59Z** (`native_expert_parity: 0 failures`, bitwise) → the
+  text gates at 08:12Z (old gate = the base binary at ctx32768). **Verdicts expected
+  ~08:45–08:50Z** (2 cells per pass: empty + ctx32k; cand pass = serve_262k_q5k.sh with
+  STRATA_KQ256=1, control pass = serve_262k.sh; the champion is re-served at the end and
+  only then bench_complete is written).
+- **The promotion pass v2 is armed and verified (all four fixes source-bound):** line 33 the
+  MODEL_PATH export, line 45 the trigger requires cand/ + control/ empty.json to EXIST and
+  cand_q5k.done == bench_complete, line 57 the cmp guard (compose ≠ base), truthful failure
+  markers; it polls every 30 s. **Layout consistency verified by reading, not assuming:**
+  the text gates write old.json/new.json into the results root; the bench cells write
+  cand/empty.json, cand/ctx32k.json, control/empty.json, control/ctx32k.json — exactly the
+  trigger's expected files. No mismatch.
+- **Interpretation per the protocol (for the next turn):** the empty delta is the decisive
+  regime test (≥ +5% → S1 composes; ±2% → pivot to S9/S11); both bench passes start right
+  after their own server load, so the disturbance window is symmetric across cand/control
+  and the delta stays attribution-clean; the absolute numbers will be depressed (~18–19
+  empty expected, not 21.9 — the control pass's absolutes anchor whether the window was
+  fair; if control ≈ 21.9 the window was clean and the absolutes are directly comparable).
+- **LESSON #16 (the patch-state-table ordering lesson):** a chain's patch-state table (md5
+  bookkeeping) is ORDERED — a second patcher touching a file the table knows invalidates the
+  table's expected states; the guard correctly refused and the fix folds the second edit
+  into the expected state. Rule: every patcher touching a file another patcher's table knows
+  must update that table, or fold both edits into one patcher per file.
+- **Next (research agent):** when the q5k verdicts land (~08:45–08:50Z), annotate against
+  S1's two-sided regime prediction + the control anchors; then the promotion pass fires
+  (its verdicts ~09:25Z); then §9.0 profiling (the ncu recipe) and the S9/S11 pivot with the
+  implementation-ready THP lever.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
