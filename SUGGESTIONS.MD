@@ -249,6 +249,20 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   control pass's absolute numbers anchor the window (≈21.9 → clean, fair delta; ≈18-19 →
   disturbance-limited, the clean promotion pass decides); the promotion pass must wait ~15 min
   after the chain ends before its first cell.
+- **THE V5 SAGA CLOSED — THE VOID COMPLETION VERIFIED, NO FALSE VERDICT (research agent,
+  ~07:31Z):** the promotion pass took branch (a) exactly as predicted — all 3 cells crashed on
+  the missing MODEL_PATH (HFValidationError on '', "bench ctx128k FAILED" et al.), it restored
+  byte_loop at 07:29:00Z (md5 74c5f1f4 — the champion config is serving), and wrote a VOID
+  bench_complete into promotion.done (the promotion/ dir has zero JSONs). The false "compose =
+  neutral" verdict never materialized — the MODEL_PATH defect ironically protected the uint4
+  +52% claim. Both void markers (cand_q5k.done, promotion.done) must be deleted at harvest —
+  neither says anything about the compose. **The v6 readiness receipt (verified): the relink
+  prerequisites are intact — out/libstrata_engine.a + out/libstrata_kernels_cpu.a (both mtime
+  06:16Z, the compose objects), the source carries q5k_dot (×7), the uint4 pattern (×3), and the
+  STRATA_KQ256/kq256_supported gate (×4) — so fix (1) (`rm -f out/strata` + the build) WILL
+  produce the compose binary in ~seconds. The recovery path stands: the four runner fixes →
+  relaunch v6 → verdicts ~70 min → fix the promotion trigger + MODEL_PATH → the clean promotion
+  pass. The box is idle-safe: byte_loop serving, nothing to undo before the relaunch.**
 - **RELUNCHED AND PAST THE KILLER STEP (research agent, ~06:40Z):** v5 is running (pid 90529,
   launch 06:33:50Z after the 06:33:43Z edit — no stale-offset race), build ok 06:34:11Z
   (incremental), and **parity PASSED 06:35:01Z** — `native_expert_parity: 0 failures`, with every
@@ -934,6 +948,16 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~07:31Z — the v5 saga CLOSED: the promotion pass void-completed (branch a), no
+  false verdict; the v6 readiness receipt verified (this commit).** The promotion pass's 3 cells
+  crashed on the missing MODEL_PATH (the false "compose = neutral" verdict never materialized —
+  the MODEL_PATH defect ironically protected the uint4 +52% claim); byte_loop serving since
+  07:29:00Z; promotion.done = bench_complete with an EMPTY promotion/ dir — both void markers
+  (cand_q5k.done + promotion.done) must be deleted at harvest. The v6 readiness receipt: the
+  compose objects (both 06:16Z) + the patched sources (q5k_dot ×7, uint4 ×3, the gate ×4) are
+  intact — fix (1)'s relink WILL produce the compose binary in ~seconds. The recovery path
+  stands: the four runner fixes → v6 (verdicts ~70 min) → the promotion fixes → the clean
+  promotion pass. The box is idle-safe.
 - **2026-11-17 ~07:21Z — the S6 revival bar pre-computed: the depth re-sweep needs an ≈+18%
   empty delta, not +5% (this commit).** Static derivation from the measured numbers (trial C's
   0.9505 tok/s ratio, the scratch f ≈ 1.5, the row-scaling assumption): the flip condition
