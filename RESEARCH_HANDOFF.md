@@ -206,3 +206,32 @@ baseline exists.
   churn needs a B2-style fix (non-blocking swap stream / weaker decay / context-
   scaled kRebalanceEvery) or the composition inherits trial A's 32k regression.
   Trial D's ctx32k (S=2, MMQ prefill) is the cheap sign test.
+
+## Session 2026-11-17 continuation #4 (ct5 verdict + runner death + candidate staged)
+
+- **Trial B (ct5) REJECT — complete**: empty 21.69 (−0.9%), ctx32k 19.33 (−1.0%),
+  ctx128k 11.71 (−0.2%). The engine's own 5-worker recommendation does not beat the
+  frozen CT 8 on this workload. CT 8 stays.
+- **FAILURE (self-inflicted), root cause + lesson**: trial_runner2 died at 03:30:23Z —
+  I REWROTE the script with the write tool at ~03:05Z while it was executing (started
+  02:54Z); bash resumed at its saved byte offset in the CHANGED file and died on a
+  syntax error ("syntax error near unexpected token '&&'"). mtp3 + mmqslots2 never
+  ran; the champion restore never ran; the CT 5 server stayed on the port. LESSON
+  (violated my own rule): NEVER edit or rewrite a running script — write the NEXT
+  script complete instead.
+- **Recovery**: trial_runner3.sh (mtp3 → mmqslots2 → champion restore; written
+  complete up front; pid 46258) runs detached; cand_runner.sh (pid 46326) waits for
+  trial_runner3.done and then runs the uint4 candidate chain: preserve
+  out/strata_byte_loop → build_kit.sh → stop the champion (VRAM must be free) →
+  STRATA_Q36_VERIFY=1 (--tokens 1..8 --n 16; 0 mismatches required) →
+  q36_solo_gate.py on both binaries + q36_cmp_gate.py (bit-identical required) →
+  serve the champion config on the new binary → bench empty/ctx32k/ctx128k (each
+  fits the 30-min rule). Any verification failure restores the byte-loop champion.
+- **WSL clone trap (do not pull)**: the clone ~/qwen36-strata-project carries the
+  int4 KV work as LOCAL UNCOMMITTED edits (its HEAD d548533 predates it; dirty:
+  serve.sh, src/kernels/cuda/iq_kernels.cu, src/qwen35/q36_engine.cu). A git pull
+  would conflict with the dirty q36_engine.cu — the uint4 candidate (dd9fee1) was
+  applied there directly via research/apply_uint4.py (idempotent string replace).
+- The uint4 candidate's parity claim to verify: same nibble order + same
+  accumulation order → bit-identical; 16× fewer L1 transactions on a kernel measured
+  45-57× above the 448 GB/s DRAM floor.
