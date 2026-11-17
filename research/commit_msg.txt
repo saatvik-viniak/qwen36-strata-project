@@ -1,10 +1,7 @@
-[Benchmark] Fix "port 30000 already in use" race: all serve scripts wait for the port to free
+[Benchmark] Trial A nommq empty cell: 23.00 tok/s (+5.1% vs baseline 21.89), 7 expert slots in VRAM
 
-The nommq trial server died at startup because the previous server needed
->2 s past SIGTERM to release the socket; the old scripts slept only 2 s.
-All five serve_262k*.sh now call research/stop_server.sh, which kills the
-server and engine, then polls port 30000 until it is free (max 60 s).
-Also add the trial-runner kill/status helpers used to recover the stuck
-runner (pid 27702).
+The relaunched trials run detached (pid 27821); port-race fix verified in production
+(nommq server bound cleanly after stop_server.sh's port-free poll). Add
+check_verdicts.sh to summarize trial cells vs baseline medians with A/B deltas.
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)
