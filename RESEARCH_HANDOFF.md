@@ -1,6 +1,6 @@
 # RESEARCH_HANDOFF — qwen36-strata hill climb (262k int4 KV, 2x decode target)
 
-Status at handoff: **in progress — Phase 2 (262k baseline) mid-measurement**.
+Status at handoff: **in progress — Phase 3 (hill climb): config trials A/B/C running detached**.
 Session date: 2026-11-16/17 (rig local CST is UTC-6; bench timestamps UTC).
 
 ## What this run is
@@ -138,3 +138,35 @@ baseline exists.
 - No OOM, no truncated cache: the engine refuses loudly (never bypass it).
 - Text parity: gates at 32k done (prior session); per-cell evidence = needle answers +
   the fixed prompt set; the fp32@262k reference does not exist (11 GiB cache).
+
+## Session 2026-11-17 continuation #2 (baseline complete + port-race fix + trials running)
+
+- BASELINE COMPLETE (262k server ctx, KV int4, MTP 2, CT 8, greedy sampler, peaks
+  7.35-7.38 GiB): empty 21.92 (rep 21.86, spread 0.3% → no pass 3), ctx32k median 19.52
+  of {18.94, 20.44, 19.52}, ctx128k median 11.80/11.66 (spread 1.19% → pass 3 skipped).
+  Promotion medians: 21.89 / 19.52 / 11.73. Evidence in research/baseline/pass*/.
+- **Failure + root cause (trial A nommq, first launch)**: the trial server died at
+  startup with "port 30000 already in use" — the still-running baseline server needed
+  >2 s past SIGTERM to release the socket; the old serve scripts slept exactly 2 s, and
+  trial_runner burned its 900 s health wait polling a dead port. The stuck runner (pid
+  27702) was killed; client-side only (kill_trials.sh).
+- **Fix (commit f73a906)**: research/stop_server.sh kills the server + engine and then
+  POLLS port 30000 until free (max 60 s); ALL five serve_262k*.sh call it before
+  `exec ./serve.sh`. Helper scripts added: kill_trials.sh, check_trials.sh,
+  check_trialserver.sh, check_soon.sh (commit f448c10).
+- Shell-tool lesson (new): `wsl bash -c "sleep 210 && ..."` loses the inner quotes to
+  cmd — always put sleeps/logic in a script file and run
+  `wsl -d Ubuntu bash /mnt/c/.../script.sh`.
+- **Trials A (nommq) → B (ct5) → C (mtp3) relaunched detached** (pid 27821, 4-s
+  keep-alive; runner gate lean_bench.done passes immediately). Results land in
+  research/trials/<trial>/<cell>.json + vram.log; the runner restores the champion
+  baseline server at the end and writes trial_runner.done.
+- Verdict rules for the trials (skill §A/B): each trial is a one-change A/B vs the
+  baseline medians; a winner needs control-candidate-control re-measure before
+  promotion (recorded in research/hillclimb/ledger.jsonl); any peak > 8090 MiB →
+  rejected by watchdog, recorded as such.
+- Next after the trials: §9.0 profiling (research/profile_pool.sh via perf during a
+  live decode; research/profile_gpu.sh via nsys/ncu) to split pool compute vs
+  per-layer phase barriers (41 calls/step × 2 phases) vs the int4 attention read at
+  128k; then kernel work (int4 attention 128-bit loads, pool phase-barrier reduction,
+  MADV_HUGEPAGE on the 21.14 GiB arena) — in that evidence order.
