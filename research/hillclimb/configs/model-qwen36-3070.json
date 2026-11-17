@@ -1,0 +1,24 @@
+{
+  "bandwidth_gbs": 448,
+  "peak_tflops": 20.3,
+  "mfu": 0.5,
+  "dense_gb": 1.03,
+  "experts_gb": 22.70,
+  "top_k": 8,
+  "n_experts": 256,
+  "lm_head_gb": 0.3495,
+  "kv_bytes_per_token": 5632,
+  "draft_layer_gb": 0.006,
+  "draft_head_gb": 0.3495,
+  "active_params_b": 3.0,
+  "attn_layers": 11,
+  "attn_heads": 16,
+  "head_dim": 256,
+  "spec": [
+    {"drafts": 0, "accept": 1.0},
+    {"drafts": 2, "accept": 2.51}
+  ],
+  "contexts": [1, 32768, 131072, 262144],
+  "concurrency": [1],
+  "note": "bandwidth_gbs = spec, UNMEASURED (d2d copy pending); pool-bound reality in THEORY.md; peak_tflops 20.3 = sm_86 80W class estimate, unmeasured"
+}
