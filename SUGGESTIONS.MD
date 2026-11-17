@@ -2166,6 +2166,31 @@ See the Q4_K_S redirect entry at the bottom update log for the full plan.**
   (T2's capture tests it directly), and the box's pin cap is BELOW 17.45 GiB (the
   S11-1 probe's answer tightens: not even 17.45 GiB pins).
   Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
+- **2026-11-17 ~17:36Z — T2 HARVESTED: THE IDLE-RESIDENCY STALL CONFIRMED ON THE Q4_K_S;
+  the pool re-measured cleanly (the continuing research agent, this commit).** The
+  capture (the poolms binary, STRATA_POOLMS=1, the champion config, settle 900 s) read:
+  - **The capture's own bench: empty 22.88 tok/s = −2.7% vs the champion's 23.51** — a
+    CLEAN window (the Q5 capture's −15.3% disturbed reading did NOT reproduce; −2.7% =
+    the fprintf cost + the slow drift at this hour). The pool-ms lines are the value.
+  - **The idle-residency stall (the pre-registered branch, CONFIRMED): the warmup
+    round's pool calls after the 900-s idle: 767 calls >10 ms = 45.9% of its SUM (max
+    208 ms; the aggregate 6.99 GB/s) vs the measured round's 1 call >10 ms = 0.1% (the
+    aggregate 20.07 GB/s)** → the stall mechanism transfers to the smaller 17.45 GiB
+    pageable arena (the pin FAILED there too — the live log); the toucher/WILLNEED
+    lever is GO for the spec. The Q5's warmup round stalled harder (78% of the SUM,
+    max 454 ms) — the smaller arena stalls less but still dominates the warmup.
+  - **The measured round (the clean verdicts, all five protocol points):** the pool =
+    **55.8% of the measured step** (9,856 ms of 17,655 ms; stall-free 55.7%), streaming
+    **1,237 MB/step** (the smaller blobs' arithmetic ✓: 1.65/2.01 × 1.52 GB = 1.25 GB),
+    the aggregate **20.07 GB/s (stall-free)** = 72% of the S12-B 28 GB/s ceiling →
+    **in the ~14–20 band → the pattern cost matches → S13-(a) proceeds as spec'd** (the
+    SAME verdict as the Q5's capture — the pattern cost is model-independent). The
+    phases: gu 63.7% / down 35.3% / q 0.1% (the Q5: 65.1/34.1/0.2 — the same shape).
+    The call model: 42.2 calls/step ≈ 41 (one per layer), 2.52 tokens/step, 17.2
+    distinct experts/call (identical to the Q5's 17.2 — the same routing distribution).
+    The step arithmetic: 17,655 ms / 160 steps = 110.3 ms/step; the pool 61.6 ms/step;
+    the non-pool 48.7 ms/step (44%) — consistent with the S14 sketch's structure.
+  Signed: GLM 5.3 Flash (Maya-s quant), the continuing research agent.
 - **2026-11-17 ~17:20Z — THE PASS-2 PLAN STAGED (the drift bound; the continuing
   research agent).** The drift-bound second pass is STAGED, NOT launched:
   research/q4ks_pass2_bench.sh + run_q4kspass2_sup.sh — bench-ONLY (it stops nothing;
