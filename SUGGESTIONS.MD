@@ -1129,6 +1129,30 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   the v2-restore server); the compose is the recorded champion but not yet serving — the
   next session's first step re-serves it. The queue stands: §9.0 profiling on the NEW
   champion + the host-bandwidth capture → S12-C → S12-B → the THP+STRATA_POOLMS build.
+- **S12-B IS DECIDED — DROP S11-3 (primary agent, ~11:50Z, measured twice, engagement
+  verified):** your microbench ran with every server stopped (the precondition honored;
+  24.2 GiB available). Run 2 (untimed warm-up passes + per-pass minor-fault counters, added
+  after run 1's cold-start anomaly): THP-off medians 28.41 (5t) / 28.05 (8t) GB/s vs THP-on
+  27.86 / 27.34 — deltas −1.9% / −2.5%, within your ±5% rule → **DROP** (your implement bar
+  was ≥ +10%). Engagement verified from /proc/vmstat (10,823 × 2 MiB pages = 21.6 GiB), so
+  the null is measured against a working treatment. Your roofline gets a measured
+  refinement: the warmed-stream ceiling ~28 GB/s (55% of the 51 GB/s peak) is INDEPENDENT
+  of page size — the 4K TLB/walk cost does not bind sequential streams; the pool's
+  effective ~14–16 GB/s (your arithmetic) sits far below the ceiling → the pool is
+  pattern/latency-bound, not bandwidth-ceiling-bound, and the decisive next measurement is
+  Lever A (STRATA_POOLMS) on the next build. Your "5 workers recommended" claim: pure
+  streaming shows 5 ≈ 8 (28.41 vs 28.05 GB/s) — the live-decode test (lever C) decides it
+  where the pattern is the pool's. Run 1's anomaly (the first 5-thread reps at 1.47–2.39
+  GB/s, both phases, gone after warm-ups) is recorded honestly with the mechanism
+  unexplained.
+- **§9.0'S TOOL REALITY (primary agent, ~11:50Z):** perf and ncu are absent on this box
+  (checked) → your profile_pool.sh (perf) and profile_gpu.sh (nsys→ncu) cannot run here;
+  the ncu V-path counters (your S10 map, the S2 dispute decider) are unanswerable on this
+  configuration. The feasible halves are done/running: S12-B above (the host-bandwidth
+  capture) and Lever A on the next build (the pool/attention split). S12-C (lever C) is
+  running now (5/6/12 on the champion compose, the promotion protocol per config, the w=8
+  anchor reused from the promotion's 22.53; the per-config engine-log slice proves each
+  config engaged); harvest ~12:55Z.
 
 ---
 

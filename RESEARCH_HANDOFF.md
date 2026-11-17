@@ -1092,3 +1092,47 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
 - **Records (one commit, pushed):** the ledger's two promotion entries, the notebook's
   promotion row, the SUGGESTIONS outcome annotation (the demand resolved), the runner
   header's new-champion note.
+
+## Continuation #20 — primary agent, ~11:50Z (S12-B decided: DROP S11-3; §9.0's tool reality recorded; S12-C running)
+
+- **S12-B IS DECIDED — DROP S11-3 (STRATA_THP):** the arena-sized TLB microbench ran twice
+  with every server stopped (the 21.14 GiB precondition honored; 24.2 GiB available).
+  Run 1 (11:33Z) hit a cold-start anomaly: the first 5-thread reps read 1.47–2.39 GB/s vs
+  26.77 steady, in BOTH THP phases — recorded, mechanism unexplained. Run 2 (11:41Z) added
+  two untimed warm-up passes + per-pass minor-fault counters: all reps fast, fault counts
+  ~2–8 per pass (the /proc reads themselves — no read-time paging). The verdict:
+  THP-off medians 28.41 (5t) / 28.05 (8t) GB/s vs THP-on 27.86 / 27.34 — deltas −1.9% /
+  −2.5%, within ±5% → **the rule says DROP** (a THP-on win ≥ +10% would have implemented
+  STRATA_THP). THP engagement was VERIFIED, not assumed: 10,823 × 2 MiB pages = 21.6 GiB
+  (/proc/vmstat's nr_anon_transparent_hugepages), so the null result is measured against a
+  working treatment.
+- **THE ROOFLINE REFINED BY MEASUREMENT:** the warmed-stream ceiling is ~28 GB/s ≈ 55% of
+  the 51 GB/s DDR4 peak, INDEPENDENT of page size (4 KiB vs 2 MiB) — the 4K TLB/page-walk
+  cost does not bind sequential streams (the walk caches absorb them). The pool's effective
+  ~14–16 GB/s (the roofline's arithmetic from the promotion numbers) sits far below that
+  ceiling → the pool is NOT bandwidth-ceiling-bound; its rate is pattern/latency-bound. The
+  direct measurement of the pool's share and effective GB/s is Lever A (STRATA_POOLMS) —
+  it rides the next build.
+- **§9.0'S TOOL REALITY (recorded honestly):** perf and ncu are ABSENT on this box
+  (checked: neither binary exists in WSL) → profile_pool.sh (perf) and profile_gpu.sh
+  (nsys→ncu) cannot run; the ncu V-path sector counters (the S2 dispute decider, S10's
+  counter map) are unanswerable on this configuration. The feasible §9.0 halves: S12-B's
+  microbench (the host-bandwidth capture — done above) and Lever A's pool-ms accounting
+  (the pool/attention split — the next build). The S2 dispute stays open until a profiling
+  path exists on this box.
+- **S12-C IS RUNNING (launched 11:44:06Z):** three configs (5/6/12 workers) on the champion
+  compose binary, one load + one empty cell each, the promotion protocol per config
+  (stop → serve → wait health → settle 900 s → bench empty), the per-config engine-log
+  slice captured (the worker line proves the config engaged; serve.sh maps CPU_THREADS →
+  --cpu-threads; unset = the engine picks by itself — its own recommendation). The w=8
+  anchor is REUSED (the promotion compose-clean empty 22.53 tok/s — same binary, same
+  protocol, same day; the reuse rule: unchanged inputs + environment contract). Screen
+  rule: a config winning ≥ +3% over 22.53 justifies a confirm pass; a full promotion pass
+  (3 cells) decides any config change. Harvest ~12:55Z. The box returns to the champion
+  config (compose, w=8) serving at the end.
+- **THE QUEUE (updated by S12-B's verdict):** S12-C harvest → (a config win ≥ +3%: the
+  confirm pass then a promotion-style decision; else: the negative recorded) → Lever A
+  (STRATA_POOLMS: one env-gated fprintf in the pool's step path, default OFF — the kqlog
+  precedent; one rebuild + gates + one decode capture) → the pool/attention split + the
+  pool's effective GB/s settle the roofline's remaining term → the next kernel/config
+  lever by the evidence. THP is dropped; the compose binary stays the champion.
