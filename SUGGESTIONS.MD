@@ -218,29 +218,49 @@ the literature-backed options to fix the churn).
   <https://partnerinai.com/blogs/llamacpp-n-cpu-moe-performance-why-speedups-happen>; PowerInfer /
   MoE-Offloading lineage via MoE-CORE above.
 
-## S6 — Tree drafting on the MTP block (raise tokens/step without linear verify cost)
+## S6 — Drafting depth, rows, and trees: what the measured acceptance actually says
 
-**Status: PROPOSED — trial C's FINAL verdict confirms the direction (reject on all three cells)**
-(research agent, ~04:50Z: mtp3 empty 20.81 (−5.1%), ctx32k 18.55 (−5.0%), **ctx128k 10.92 (−7.4% vs
-11.80)** — chain depth 3 loses everywhere at 262k and the loss grows with context; acceptance gains
-don't pay the extra sequential draft cost. A tree gets more candidates per sequential step instead
-of more depth; the model's hybrid GDN+attention structure is the best case for it).
+**Status: REFINED with measured marginals (research agent, ~04:45Z) — the tree-branch idea is
+predicted LOW-VALUE for this model; the depth×row-cost trade is the real lever.**
 
-- **Change:** draft a 2–3-token tree per step (the MTP block + greedy top-2 branches), verify all
-  branches in ONE pass with a tree attention mask in `k_attn_part` (the verify path already batches
-  rows: `rs.kc`/`rs.vc`). EAGLE-2 is the reference design; Twig argues tree speculation specifically
-  suits **hybrid-attention (SSM/GDN + attention) LLMs** because the idle GDN headroom absorbs the
-  extra verify rows.
-- **Mechanism:** acceptance is context-dependent (EAGLE-2's core finding; the repo measured a=2.51 at
-  empty with MTP 2). A tree of depth 2–3 with 2 branches raises expected accepted tokens per verify
-  step from ~2.5 toward 3–4 at the same verify cost per row-batch — the pool's per-step cost scales
-  with rows, so tokens/step is nearly free until rows grow.
-- **Measure:** tokens/step and acceptance, not just tok/s (mission C5); parity by construction
-  (greedy verify). Budget: 30-min rule.
-- **Sources:** EAGLE-2 (arXiv 2406.16858 — context-aware dynamic draft trees, 4–5.5 tokens/cycle):
-  <https://arxiv.org/html/2406.16858v1>; Twig (arXiv 2608.01651 — tree speculative decoding for
-  hybrid-attention LLMs): <https://arxiv.org/pdf/2608.01651>; SGLang MTP spec-decoding config surface:
-  <https://docs.sglang.ai/advanced_features/speculative_decoding.html>.
+- **Measured marginal acceptance of the 3rd draft** (source: the engine log's per-run
+  "drafts accepted N of M" lines; MTP 3 run = log lines 545-550, MTP 2 baseline = 531-536):
+
+| cell | MTP2: acc. drafts/window (a) | MTP3: acc. drafts/window (a) | marginal 3rd draft | tok/s |
+| --- | --- | --- | --- | --- |
+| empty | 1.502 (2.50) — 308/410, 205 win | 1.903 (2.90) — 335/528, 176 win | **+0.401 (+16%)** | 21.92 → 20.81 (−5.1%) |
+| ctx32k | 1.493 (2.49) — 306/410 | 1.873 (2.87) — 333/534 | +0.380 | 19.52 → 18.55 (−5.0%) |
+| ctx128k | 1.363 (2.36) — 295/432 | 1.731 (2.73) — 324/561 | +0.367 | 11.80 → 10.92 (−7.6%) |
+
+  The 3rd draft buys +14–16% tokens/window but costs +33% rows/window (+22.7% step time at empty,
+  more at 128k) → net loss at every cell. **Depth is NOT the problem: acceptance decays slowly
+  with depth (the 3rd draft's conditional acceptance ≈ 0.40/1.49 ≈ 0.27 of the prefix rate). The
+  rows-per-window cost is the binding constraint.**
+- **Why a same-depth sibling tree loses here:** a branch replacing the chain's 3rd row has
+  marginal acceptance ≈ (1−p)·p′ (the sibling is correct only when the model's top-1 continuation
+  is wrong AND the sibling matches) ≈ 0.26 × ~0.15 ≈ **0.04 tokens/window**, versus the chain's
+  depth-3 marginal of **0.40**. Tree verification only pays when acceptance is branching-limited;
+  this model's acceptance is depth-tolerant, so trees would spend rows on near-zero marginals.
+  (EAGLE-2/Twig remain the references for the case where it would pay: weak drafters or
+  branching-limited regimes.)
+- **The lever the data actually points to: cut the per-row cost, then re-sweep depth (mission C5).**
+  A pool at ~1.5–2x (S1) shifts the depth-3 trade from −5% to roughly break-even to positive
+  (the +33% row cost shrinks toward the attention/overhead share), and at ~2x pool speed the
+  optimal depth moves from 2 toward 3 — composing S1 with a depth re-sweep, not with tree shape.
+  The engine already logs everything needed to re-sweep: "drafts accepted N of M" per run.
+- **Measure (when S1 lands):** empty-cell depth sweep 2 → 3 → 4 at the new pool speed; accept if
+  the median decode improves ≥2% with no cell regressing >2%; record the acceptance marginals
+  per depth (the log lines give them for free).
+
+- **Original proposal (superseded by the measured marginals above):** draft a 2–3-token tree per
+  step and verify with a tree mask in `k_attn_part` (the verify path already batches rows:
+  `rs.kc`/`rs.vc`). The references below remain the design literature; the measured acceptance
+  says the tree's sibling marginal ≈ 0.04 tokens/window here, so do NOT spend rows on it — keep
+  this item parked unless acceptance becomes branching-limited (weak drafter, sampling ≠ greedy).
+- **Sources (context):** EAGLE-2 (arXiv 2406.16858 — context-aware dynamic draft trees, 4–5.5
+  tokens/cycle): <https://arxiv.org/html/2406.16858v1>; Twig (arXiv 2608.01651 — tree speculative
+  decoding for hybrid-attention LLMs): <https://arxiv.org/pdf/2608.01651>; SGLang MTP spec-decoding
+  config surface: <https://docs.sglang.ai/advanced_features/speculative_decoding.html>.
 
 ## S7 — L2 persistence for the KV scales (small; only after S2)
 
@@ -419,3 +439,11 @@ next experiment (research agent, ~04:45Z):
   remains the empirical authority. Also annotated: trial D ctx32k 18.46 (−5.4%) → both landed
   cells lose; branch 2 confirmed. Remaining live: trial D ctx128k (04:34:55Z), then the uint4
   chain (S2's sequencing follows its verdicts).
+- **2026-11-17 ~04:50Z — S6 rebuilt on measured acceptance marginals (this commit).** Computed the
+  marginal acceptance of the 3rd draft from the engine log's "drafts accepted N of M" lines (MTP 3
+  run lines 545-550 vs the MTP 2 baseline lines 531-536): +0.401/+0.380/+0.367 tokens/window at
+  empty/32k/128k — +14–16% tokens/window for +33% rows/window → net loss at every cell, matching
+  the trial verdicts. Verdict recorded: depth pays, row cost binds; a same-depth sibling tree has
+  marginal ≈ 0.04 tokens/window (predicted from (1−p)·p′) — the tree idea is parked with the
+  arithmetic shown; the lever is cutting per-row cost (S1/S2) and re-sweeping depth after S1 lands
+  (mission C5's re-measure point). Trial D ctx128k still running when written.
