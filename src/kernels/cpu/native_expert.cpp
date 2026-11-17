@@ -252,7 +252,7 @@ bool iq256_supported(int type) noexcept {
     return type == 16 || type == 17 || type == 18 || type == 21 || type == 22 || type == 23;
 }
 
-bool kq256_supported(int type) noexcept { return type == 12 || type == 7 || type == 8; }
+bool kq256_supported(int type) noexcept { return type == 12 || type == 13 || type == 7 || type == 8; }
 
 bool native_fmt(int gu_type, int d_type, int64_t n_embd, int64_t n_ff, NativeFmt& f, std::string& err) {
     init_once();
@@ -548,12 +548,15 @@ void native_gu_rows_impl(const NativeFmt& f, const uint8_t* blob, const void* co
     }
     const int mt_min = native_gu_mt_min(f.gu_type);   // #152
     const bool singleton_iq = Arithmetic == NativeArithmetic::WindowInvariant && mt_min > 1;
-    // Unsloth UD-Q4_K_XL's Q4_K gate/up: the multi-token kernel is bit-exact against ggml's per-token dot (any group
-    // size, no #152 rule).  Opt-in, STRATA_KQ256=1: measured no faster in the engine (a window's expert groups hold
-    // ~1.4 tokens and the weights stay in L1 across ggml's per-token calls; 1.01-1.13x in native_expert_parity).
+    // Unsloth UD-Q4_K_XL's Q4_K gate/up and the model's own Q5_K gate/up AND down: the multi-token kernel is
+    // bit-exact against ggml's per-token dot (any group size, no #152 rule).  Opt-in, STRATA_KQ256=1: Q4_K
+    // measured no faster in the engine (a window's expert groups hold ~1.4 tokens and the weights stay in L1
+    // across ggml's per-token calls; 1.01-1.13x in native_expert_parity).  Q5_K adds the fifth-bit decode to
+    // the per-token weight work (~16 of ~21 integer ops per pair are weight-side), so decode-once has more
+    // to remove there; the S1 spec's design target is ~1.5-2x on the dot (kq_cpu_bench first).
     static const bool kq = [] { const char* v = std::getenv("STRATA_KQ256"); return cpu_avx2_ok() && v != nullptr && std::atoi(v) != 0; }();
     // KQ matches the ggml AVX2/FMA dot; other builds keep their own singleton arithmetic.
-    if (kq && f.gu_type == 12 && nt >= 2 &&
+    if (kq && (f.gu_type == 12 || f.gu_type == 13) && nt >= 2 &&
         (Arithmetic == NativeArithmetic::Default || (ggml_cpu_has_avx2() && ggml_cpu_has_fma()))) {   // one token: ggml's own dot below (the same bits, less overhead)
         kq256_gu_rows(f.gu_type, blob, f.gu_row, f.up_off, (int) f.n_embd, act, nt, ff, r0, r1);
         return;
@@ -647,8 +650,8 @@ void native_down_rows_impl(const NativeFmt& f, const uint8_t* blob, const void* 
         tq_rows(tq_isa(), f.d_type, blob + f.down_off, f.d_row, (int) f.n_ff, hq, nt, out, r0, r1);
         return;
     }
-    if (cpu_avx2_ok() && kq && nt >= 2 && (f.d_type == 7 || f.d_type == 8) &&
-        (Arithmetic == NativeArithmetic::Default || (ggml_cpu_has_avx2() && ggml_cpu_has_fma()))) {   // Q5_1 / Q8_0 down: bit-exact, any group size
+    if (cpu_avx2_ok() && kq && nt >= 2 && (f.d_type == 13 || f.d_type == 7 || f.d_type == 8) &&
+        (Arithmetic == NativeArithmetic::Default || (ggml_cpu_has_avx2() && ggml_cpu_has_fma()))) {   // Q5_K / Q5_1 / Q8_0 down: bit-exact, any group size
         kq256_rows(f.d_type, blob + f.down_off, f.d_row, (int) f.n_ff, hq, nt, out, r0, r1);
         return;
     }
