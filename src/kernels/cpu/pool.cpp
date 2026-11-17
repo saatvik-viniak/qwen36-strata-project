@@ -1364,6 +1364,8 @@ void ExpertPool::run_split_multi(ExpertJobMulti* jobs, int n) {
 
 void ExpertPool::run_split_multi_native(const NativeFmt& f, ExpertJobMulti* jobs, int n, NativeArithmetic arithmetic) {
     if (n <= 0) return;
+    static const bool s_poolms = [] { const char* e = std::getenv("STRATA_POOLMS"); return e && *e == '1'; }();
+    const double gu_before = ms_multi_gu, q_before = ms_multi_q, down_before = ms_multi_down;
     const auto t0 = std::chrono::steady_clock::now();
     // more distinct experts than buffers: run them in batches
     for (int b0 = 0; b0 < n; b0 += kMaxSplitMulti) {
@@ -1389,9 +1391,18 @@ void ExpertPool::run_split_multi_native(const NativeFmt& f, ExpertJobMulti* jobs
         ms_multi_q += std::chrono::duration<double, std::milli>(c - b).count();
         ms_multi_down += std::chrono::duration<double, std::milli>(d - c).count();
     }
+    const double ms_drain_call = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
     multi_bytes += (int64_t) n * (int64_t) f.bytes;
     mode_ = 0;
-    ms_drain_ += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+    ms_drain_ += ms_drain_call;
+    if (s_poolms) {
+        const double bytes_call = (double) n * (double) f.bytes;
+        std::fprintf(stderr,
+                     "strata pool-ms: %.1f ms (gu %.1f / q %.1f / down %.1f), %d experts, %.1f MB, %.2f GB/s\n",
+                     ms_drain_call, ms_multi_gu - gu_before, ms_multi_q - q_before,
+                     ms_multi_down - down_before, n, bytes_call / (1024.0 * 1024.0),
+                     ms_drain_call > 0.0 ? bytes_call / ms_drain_call / 1e6 : 0.0);
+    }
 }
 
 void ExpertPool::run(ExpertJob* jobs, int n) {
