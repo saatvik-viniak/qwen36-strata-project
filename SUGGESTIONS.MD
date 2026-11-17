@@ -286,19 +286,19 @@ per change).
   champion)**; at ctx32k (attention ~20 ms of a 128.6 ms step) the same work → **≈ 20.3–20.9
   (+4–7%)**; empty is untouched (attention ≈ 0). The 32k cell is REOPENED by the thrash insight —
   it was written off as pool-bound only.
-  **DISPUTE ON THE PREMISE (primary agent, 06:26Z, commit 24909d0 — research agent concurs with
-  the deferral):** the primary agent argues the revised +62–74% "conflicts with the sector math
-  (adjacent warps' 16-B halves form fully-used sectors)" — i.e. if the V-path warp's lanes map
-  to contiguous V addresses and adjacent warps cover adjacent ranges, the sectors are already
-  fully used and the staging's gain collapses to the instruction-count reduction (~32× fewer
-  load instructions, same data traffic), which is smaller than the thrash model predicts. Both
-  models agree on the direction and the bit-identical staging; they diverge only on magnitude.
-  **What settles it: ncu's sector counters in the primary agent's §9.0 profiling pass** — the
-  decisive check is sectors-per-request (≈1.0 = fully used, the primary agent's model; ≈4+ =
-  thrash, mine) plus L1/TEX load sectors vs requests for the V path. Until then, treat both S2
-  projections (ctx128k 19–20.5, ctx32k 20.3–20.9) as PROVISIONAL upper bounds under the thrash
-  model; the instruction-count-only fallback is smaller at both contexts. The spec itself
-  stands either way — it is a pure instruction-count/`__ldg` change that cannot hurt.
+  **DISPUTE ON THE PREMISE (primary agent, commit 24909d0 — research agent concurs with the
+  deferral):** the primary agent read the V loop concretely: the warp reads bytes
+  w×16..w×16+15 per row-iteration — 16 contiguous bytes per warp-iteration — so adjacent warps'
+  16-B halves form fully-used 32-B sectors **within the same load instruction → ~no sector
+  amplification** (vs the QK loop's 1 useful byte per sector that the uint4 fix removed). On that
+  reading the staging's gain is instruction count/L1 pressure only, **bounded by the Q4_K
+  decode-once precedent (1.01–1.13×)** — much smaller than the +62–74% thrash model. Both models
+  agree the change is bit-identical and cannot hurt; they diverge only on magnitude. **What
+  settles it: ncu's sector counters in the primary agent's §9.0 profiling pass** — sectors per
+  request (≈1.0 = fully used, the primary agent's model; ≈4+ = thrash, mine). Until then the S2
+  projections (ctx128k 19–20.5, ctx32k 20.3–20.9) are PROVISIONAL upper bounds under the thrash
+  model; the instruction-count-only fallback (≈1.01–1.13× on the V path's share) is the primary
+  agent's bound. The spec stands either way — a pure instruction-count/`__ldg` change.
 - **The q5k chain v4 adopted the confound fixes (research agent, ~06:15Z, reading the primary
   agent's diff):** (1) its reconcile reads `research/uint4_verdict.txt` ("keep"/"revert",
   **default revert**) instead of trusting `cand_uint4.done`'s "bench_complete" (which a losing
@@ -756,12 +756,15 @@ next experiment (research agent, ~04:45Z):
 - **2026-11-17 ~06:33Z — v5 fix landed; the V-path premise is DISPUTED (this commit).** The
   primary agent applied the surgical spec to the runner (v5, mtime 06:30:36Z): source AND call
   strata_find_cuda at the parity step, rm -rf parity_build, ccache launchers, cuda_env_failed
-  branch — the committed 24909d0 content is pre-fix (froze v4); the working tree is v5. Relaunch
-  pending (~40–50 min to verdicts after). Also recorded the primary agent's dispute with the S2
-  revision: it argues adjacent warps' 16-B halves form fully-used sectors (gain =
-  instruction-count only, smaller); my thrash model said ~50% sector efficiency (bigger gain).
-  Both agree the staging is bit-identical and cannot hurt; ncu's sectors-per-request counter in
-  the §9.0 profiling pass settles the magnitude question. S2 projections marked
+  branch — the committed 24909d0 content is pre-fix (froze v4); the working tree is v5.
+  **Relaunched as v5 (pid 90529, launch 06:33:50Z after the edit — no stale-offset race); build
+  ok 06:34:11Z; verdicts expected ~07:15–07:25Z.** Also recorded the primary agent's dispute with
+  the S2 revision — sharpened with its concrete loop reading: the V loop's warp already reads
+  bytes w×16..w×16+15 per row-iteration (adjacent warps' 16-B halves form fully-used 32-B
+  sectors → ~no sector amplification), so the staging's gain is instructions/L1 pressure only,
+  **bounded by the Q4_K decode-once precedent (1.01–1.13×)**, not my thrash model's +62–74%.
+  Both models agree the staging is bit-identical and cannot hurt; ncu's sectors-per-request
+  counter in the §9.0 profiling pass settles the magnitude question. S2 projections marked
   PROVISIONAL under the thrash model. Trial E sized and DEFERRED by the primary agent (0 slots
   at 262k MMQ — the staging eats the budget; slots cost ctx32k more than they buy) — matches my
   S3-revival arithmetic.

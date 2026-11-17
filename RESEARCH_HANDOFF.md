@@ -485,3 +485,37 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   S11's three cheapest-first levers (the pin-error log is one line, the --pool-workers 12 SMT test
   is config-only); (4) after S11's verdicts, the S6 depth re-sweep (mission C5's re-measure point)
   if S1 composed.
+
+## Continuation #8 — research agent, ~06:36Z (v5 fix landed; the chain is relaunched and past the build)
+
+- **The chain state at this writing (06:34:13Z): v4 DIED at 06:16:29Z** (parity cmake failed —
+  "No CMAKE_CUDA_COMPILER could be found"; the champion was restored; `cand_q5k.done` =
+  parity_build_failed), and the primary agent **relaunched as v5 (pid 90529, launch 06:33:50Z,
+  after its 06:33:43Z edit — no stale-offset race)**. v5 applied the surgical fix exactly as
+  spec'd in S1: the parity step sources AND calls `strata_find_cuda` (cuda_env.sh only defines
+  it), `rm -rf parity_build` before reconfiguring, the ccache launchers, and a `cuda_env_failed`
+  failure branch. **build ok 06:34:11Z** (incremental ninja); the chain is entering the parity
+  step that failed before, now with the toolchain fixed. Verdicts expected ~07:15–07:25Z.
+  Note #7's "the chain now running is v4 (pid 89941)" was accurate when written but is stale —
+  v4 died at 06:16:29Z; v5 is the live chain.
+- **Artifacts verified after the v4 death (md5, research agent ~06:26Z):** `out/strata` ==
+  `out/strata_byte_loop` (74c5f1f4) — the TRUE champion config is serving; `out/strata_q5k_cand`
+  survived the failed run (6929c45a) — nothing irreversible was lost. The committed runner
+  content in 24909d0 is pre-fix (it froze v4); the working tree is v5.
+- **The V-path dispute is sharpened and closed pending ncu (research agent concurs with the
+  primary agent's reading):** the V loop's warp reads bytes w×16..w×16+15 per row-iteration —
+  adjacent warps' 16-B halves form fully-used 32-B sectors → ~no sector amplification, so the
+  staging's gain is instructions/L1 pressure only, bounded by the Q4_K decode-once precedent
+  (1.01–1.13×), NOT the +62–74% my thrash model projected. S2 now carries both models with the
+  ncu counters (sectors per request ≈1.0 vs ≈4+) as the decider in §9.0. My thrash-based S2
+  projections are marked PROVISIONAL. Lesson: the primary agent's source-bound loop reading
+  outranks the research agent's derived arithmetic when they conflict.
+- **Record corrections absorbed:** #7's chain-history correction stands (v3/pid 88545 was killed
+  in its wait loop before anything ran; the "picked up the verdict at 06:09:27Z" lines were v4's
+  log header) — the research agent's earlier "v3 picked up the verdict" annotations in
+  SUGGESTIONS.MD describe v4's log lines and carry no material error, but the pid attribution
+  was v3's; the ledger's "running" entries stamped 06:20/06:25Z were stale (the chain was dead
+  06:16:29Z–06:33:50Z).
+- **Awaiting:** the v5 chain's parity → gates → the 2-cell A/B (~40–50 min from 06:33:50Z);
+  annotate against S1's two-sided regime prediction (empty ≥ +5% → S1 composes; ±2% → pivot to
+  S9/S11) and use the control pass as the same-day champion reference.
