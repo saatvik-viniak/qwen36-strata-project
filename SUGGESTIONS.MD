@@ -126,6 +126,36 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   still pre-fix — the commit froze the v4 text; the working tree is v5 and correct. Relaunch is
   pending (no process at 06:32Z); the chain should now pass parity and reach verdicts ~40–50 min
   after it.
+- **RELUNCHED AND PAST THE KILLER STEP (research agent, ~06:40Z):** v5 is running (pid 90529,
+  launch 06:33:50Z after the 06:33:43Z edit — no stale-offset race), build ok 06:34:11Z
+  (incremental), and **parity PASSED 06:35:01Z** — `native_expert_parity: 0 failures`, with every
+  bit-exactness line clean (q5_K gate/down rows 0 of 36 token-sets differ in any bit, 1.45×/1.54×
+  one-thread speedups; v1 vs new launches 0 of 6144 differ; decode-once vs per-entry bitwise
+  equal; dequant 0 of 3145728 differ). The primary agent committed the v5 runner (7bea20a). The
+  chain is in the gates → the 2-cell A/B; verdicts ~07:30Z.
+- **Pre-bench config verification (research agent, ~06:40Z, script diff): the A/B is
+  config-fair.** `serve_262k_q5k.sh` differs from `serve_262k.sh` ONLY by
+  `export STRATA_KQ256=1` (plus comments) — MODEL_GGUF, MAX_CONTEXT=262144, PREFILL=1024, MTP=2,
+  CPU_THREADS=8, PORT=30000, KV=int4, SAMPLING, ENGINE_LOG are identical. No trial-C-style thread
+  or config confound.
+- **Verdict-interpretation protocol (research agent, ~06:40Z — read BEFORE the cells land):**
+  (1) the candidate pass serves the COMPOSE binary (uint4+q5k) with the env on; the control pass
+  serves out/strata_byte_loop (the TRUE champion) via serve_262k.sh. (2) The EMPTY cell is the
+  decisive regime test and is attribution-clean: attention ≈ 0 of an empty step, so uint4's
+  kernel-side effect ≈ 0 there and the empty delta isolates the q5k CPU kernel — S1's two-sided
+  prediction applies (empty ≥ +5% → compute-bound share → S1 composes; ±2% → latency-bound →
+  pivot to S9/S11). (3) The ctx32k delta = q5k + uint4's 32k effect, which is UNQUANTIFIED (the
+  confounded 17.91 vs the champion spread 18.94–20.44 could be the disturbance, not uint4) — a
+  compose win at 32k is attribution-ambiguous; a compose LOSS at 32k alongside an empty win would
+  pin uint4's 32k effect as negative and contradict the thrash-removal mechanism (check the SASS
+  and the small-context grid before believing that). (4) The two passes sit at DIFFERENT
+  disturbance states (the candidate first, ~0–15 min post-load; the control ~25–40 min post-load,
+  with more preceding 21-GiB cycles) — the "delta is valid" claim assumes symmetric treatment
+  that the decay curve does not guarantee, in either direction. **The control pass's absolute
+  numbers are the anchor: control empty ≈ 21.9 → clean window, the delta is fair; ≈ 18–19 →
+  disturbed, read the delta as disturbance-limited and let the clean promotion pass decide.**
+  (5) Whatever the cells say, the promotion pass (settled ~15 min, no watchdog, 3 cells vs the
+  clean anchors) remains the promotion decision per #7's protocol.
 
 - **Change:** `src/kernels/cpu/kq_avx2.cpp` + the dispatch in `src/kernels/cpu/native_expert.cpp`.
   The model's experts are Q5_K (gate/up type 13, down type 13). The dispatch covers Q4_K gate/up
@@ -753,6 +783,16 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~06:41Z — the v5 chain is past parity; the A/B verified config-fair; the verdict-
+  interpretation protocol written before the cells land (this commit).** Parity PASSED 06:35:01Z
+  (0 failures, all bit-exactness lines clean; 1.45×/1.54× one-thread kernel speedups). The
+  serve-script diff confirms the A/B differs only by STRATA_KQ256=1. The protocol: the empty
+  cell is the decisive regime test (attribution-clean — uint4 ≈ 0 there); ctx32k's delta =
+  q5k + uint4's unquantified 32k effect; the two passes sit at different disturbance states, so
+  the control pass's absolute numbers anchor the window (≈21.9 clean → fair delta; ≈18–19 →
+  disturbance-limited, the clean promotion pass decides). A compose loss at 32k alongside an
+  empty win would pin uint4's 32k effect as negative — verify against the mechanism before
+ believing it.
 - **2026-11-17 ~06:33Z — v5 fix landed; the V-path premise is DISPUTED (this commit).** The
   primary agent applied the surgical spec to the runner (v5, mtime 06:30:36Z): source AND call
   strata_find_cuda at the parity step, rm -rf parity_build, ccache launchers, cuda_env_failed
