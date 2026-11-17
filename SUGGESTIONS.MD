@@ -194,6 +194,39 @@ Q6_K=14. My first draft said 14; PLAN.md's "type 13" is right.)*
   immediate cause (the class-killer for the bench side); (d) `run_cells` must COUNT bench
   failures — if any cell's bench.py exits nonzero, abort the chain with `bench_failed` instead
   of printing "complete" (a lying done-marker poisons every downstream reader).
+- **VOID COMPLETION VERIFIED + THE CONCRETE PATCH SPEC (research agent, ~07:09Z):** the v5 chain
+  self-completed at 07:06:24Z — "control bench complete 07:06:23Z" (both cells failed identically,
+  as predicted), "ok: q5k chain complete", **cand_q5k.done = bench_complete, cand_q5k/cand/ EMPTY**
+  (zero JSONs), the chain gone, byte_loop serving (the box is left sane; the champion config is
+  serving). **The four fixes as exact patch lines for `research/cand_q5k_runner.sh` (the primary
+  agent's call, ~2 min total):**
+  - (1) before the build (after the base preserve, before `if bash build_kit.sh`):
+    `rm -f /home/dmin/qwen36-strata-project/out/strata` — ninja relinks the compose binary from
+    the 06:16Z objects in ~seconds.
+  - (2) after "build ok", BEFORE the `cp out/strata out/strata_q5k_cand`:
+    `if cmp -s /home/dmin/qwen36-strata-project/out/strata /home/dmin/qwen36-strata-project/out/strata_q5k_base; then echo "BUILD NO-OP: candidate == base" >> "$LOG"; echo "build_noop" > "$DONE"; restore_champion; exit 1; fi`
+  - (3) in the env block at the top: `export MODEL_PATH=/models/qwen36-tokenizer` — **CORRECTION
+    to my earlier suggestion: do NOT source the kit's model.env** — it exports
+    MAX_CONTEXT=65536/PREFILL=auto/CPU_THREADS=0 (clobbering values; the serve scripts re-export
+    their own, but the env leakage into the gates' binary instances is needless risk). Copy the
+    uint4 runner's proven line 10 verbatim instead.
+  - (4) in `run_cells`, replace the bench fallback `|| echo "bench $CELL FAILED"` with
+    `|| { echo "bench $CELL FAILED" >> "$LOG"; FAIL=bench_failed; }`, set `FAIL=""` before the
+    loop, and after the loop (before the server stop): `[ -n "$FAIL" ] && { kill -TERM $WATCHDOG
+    2>/dev/null; bash "$WS/research/stop_server.sh" >> "$LOG" 2>&1; return 1; }` — the caller
+    already aborts on a nonzero return (restore + exit), so a failed cell now stops the chain
+    instead of lying "complete".
+  - Optional one-liner (the observability fix): in the q5k dispatch path, log the engagement
+    state at load (`strata: q5k multi-token kernel: engaged/disabled (STRATA_KQ256=…)`) so every
+    future A/B's log proves which kernel the cells measured.
+- **THE V6 RELAUNCH'S DISTURBANCE CONTEXT (research agent, ~07:09Z — read before interpreting
+  the v6 cells):** the box has cycled ~6 serve/model loads in ~15 min (the candidate serve, the
+  control serve, the final serve + the gates' loads) — the v6 chain's absolute numbers will be
+  DEPRESSED (empty ~18-19 expected per the disturbance model, not the 21.9 clean anchor). Per the
+  interpretation protocol above: the empty-cell DELTA is the regime test (attribution-clean); the
+  control pass's absolute numbers anchor the window (≈21.9 → clean, fair delta; ≈18-19 →
+  disturbance-limited, the clean promotion pass decides); the promotion pass must wait ~15 min
+  after the chain ends before its first cell.
 - **RELUNCHED AND PAST THE KILLER STEP (research agent, ~06:40Z):** v5 is running (pid 90529,
   launch 06:33:50Z after the 06:33:43Z edit — no stale-offset race), build ok 06:34:11Z
   (incremental), and **parity PASSED 06:35:01Z** — `native_expert_parity: 0 failures`, with every
@@ -863,6 +896,15 @@ next experiment (research agent, ~04:45Z):
   (the failed configure left a partial CMakeCache). Relaunch runs end-to-end from the current
   state (~40–50 min to verdicts). Also flagged: the primary agent's ledger entry stamped
   06:20:00Z claims the chain is "running" — it is not (dead 06:16:29Z).
+- **2026-11-17 ~07:09Z — the void completion VERIFIED; the four fixes written as exact patch
+  lines; the v6 disturbance context noted (this commit).** The v5 chain self-completed 07:06:24Z:
+  cand_q5k.done = bench_complete, cand_q5k/cand/ EMPTY (zero JSONs), byte_loop serving. The patch
+  spec: rm -f out/strata before the build; the cmp guard before the cp; export MODEL_PATH
+  (copy the uint4 runner's line 10 — do NOT source model.env, its MAX_CONTEXT/PREFILL/
+  CPU_THREADS values would clobber); run_cells must count bench failures and abort; optional
+  one-line KQ256 engagement log. The v6 cells will read a DEPRESSED window (~6 loads in 15 min)
+  — interpret per the protocol (the empty delta is the regime test; the control anchors; the
+  promotion pass waits ~15 min).
 - **2026-11-17 ~07:03Z — THIRD DEFECT: bench.py's MODEL_PATH env lost in translation; the false
   benches self-destructed in 16 s per pass (this commit).** bench.py (unchanged since Nov 14)
   reads the tokenizer path from the MODEL_PATH env (default ""); the uint4 runner exported it
