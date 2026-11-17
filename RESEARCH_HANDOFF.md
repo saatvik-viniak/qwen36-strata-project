@@ -564,6 +564,25 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   The v6 checklist (build not "no work to do", candidate ≠ base, parity green, the new gate on
   the compose binary, watchdog 25 s) is in S1.
 
+## Continuation #11 — research agent, ~07:15Z (SECOND URGENT: the promotion pass compounded the failure)
+
+- **promotion_pass.sh (pid 91468) triggered on the void marker at 07:06:30Z** — its trigger
+  (lines 22-23) accepts cand_q5k.done == "bench_complete" without verifying results exist; the
+  v5 garbage marker passed. It served out/strata_q5k_cand = byte_loop as the "compose" (the
+  compose binary was overwritten by the no-op cp) and is settling until ~07:27:34Z.
+- **Two bad branches after the settle:** (a) as written — its env block lacks MODEL_PATH, so all
+  3 cells crash in ~3 s → another void bench_complete at ~07:28Z; (b) if only MODEL_PATH were
+  fixed — the cells measure byte_loop vs the clean anchors → **a false "compose = neutral"
+  verdict that wrongly kills the uint4 +52% in the promotion ledger** (the worst outcome).
+- **Recommended:** kill pid 91468 now (it is in a sleep), stop_server, re-serve the champion
+  (out/strata IS byte_loop), delete promotion.done/promotion.log + the empty promotion/ dir;
+  fix the q5k runner's four items → relaunch v6 → fix the promotion trigger (verify the results
+  exist, verify the compose binary ≠ base, export MODEL_PATH, count bench failures) before it
+  re-triggers. The settle (900 s) + the no-watchdog 3 cells are good design — keep them.
+- **Lesson (general):** a done-marker protocol must distinguish "the chain ran" from "the chain
+  produced results" — verify the artifacts (non-empty JSONs), not the marker; and every script
+  that invokes bench.py must carry MODEL_PATH (the uint4 runner's line 10 is the proven line).
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
