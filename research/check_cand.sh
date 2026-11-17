@@ -1,0 +1,12 @@
+#!/bin/bash
+echo "== cand_uint4.log tail =="
+tail -14 /mnt/c/Users/Admin/Auto-research-agent/Runtime/projects/saatvik-viniak/qwen36-strata-project/research/cand_uint4.log 2>/dev/null || echo "(none)"
+echo ""
+echo "== cand_uint4.done =="
+cat /mnt/c/Users/Admin/Auto-research-agent/Runtime/projects/saatvik-viniak/qwen36-strata-project/research/cand_uint4.done 2>/dev/null || echo "(absent)"
+echo ""
+echo "== cand_q5k.log tail =="
+tail -6 /mnt/c/Users/Admin/Auto-research-agent/Runtime/projects/saatvik-viniak/qwen36-strata-project/research/cand_q5k.log 2>/dev/null || echo "(none)"
+echo ""
+echo "== processes =="
+ps aux --width 250 | grep -E 'cand_runner|cand_q5k|bench.py|out/strata|serve.server' | grep -v grep || echo "(none)"

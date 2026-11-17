@@ -1,20 +1,12 @@
-[Engine] Record trial C/D verdicts, S1 implemented, q5k chain staged
+[Engine] q5k chain v2: parity run after the server stop, control serves the base binary
 
-Trial C (mtp3): FULL REJECT on all three cells (empty 20.81 -4.9%, ctx32k
-18.55 -5.0%, ctx128k 10.92 -6.9%); MTP stays 2. Trial D (mmqslots2): FULL
-REJECT (20.11 -8.2%, 18.46 -5.4%, 11.69 -0.4% near-tie) - the fixed rebalance
-stalls amortize as context grows; the slot scheme at S=2 is measured dead in
-both prefill regimes.
-
-S1 (Q5_K multi-token AVX-2 expert kernels) implemented, commit 07a2766:
-q5k_dot<NT> mirrors ggml's __AVX2__ branch (the build IS AVX2 - the earlier
-AVX1/generic note was wrong, corrected in the notebook and handoff); dispatch
-+= type 13 behind STRATA_KQ256 (default path byte-identical). Scratch parity
-1600/1600 bit-identical (research/q5k_parity_scratch.cpp). The WSL clone is
-patched via apply_q5k.py (md5-guarded; its CPU sources verified byte-identical
-to the canonical pre-edit state). cand_q5k_runner.sh (pid 75509) staged
-detached: uint4 verdict reconcile (revert_uint4.py if rejected) -> build ->
-native_expert_parity --synthetic q5_K/q5_K -> STRATA_KQ256=1 gates (bit
-identical) -> candidate + control 3-cell benches.
+Two defects found in cand_q5k_runner.sh v1 while the uint4 chain ran: (1) the
+parity test allocates a CUDA context beside the champion's ~7.4 GiB - moved
+after the server stop; (2) the control pass would have served the kernel build
+instead of the base binary - the base is copied back onto out/strata first.
+The v1 process was killed while still in its wait loop (nothing had run), the
+script rewritten complete (never edited mid-run), relaunched as pid 75866.
+Also: the uint4 candidate passed its cmp gate bit-identical (10 of 10 prompts)
+and is in its 3-cell bench.
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)

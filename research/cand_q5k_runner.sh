@@ -6,15 +6,19 @@
 #   1. apply_q5k.py (idempotent; the dispatch is STRATA_KQ256-gated = inert default);
 #   2. preserve out/strata -> out/strata_q5k_base (the A/B's old binary), build via
 #      build_kit.sh, keep the new binary as out/strata_q5k_cand;
-#   3. build the parity test tree (separate cmake dir, STRATA_BUILD_TESTS=ON) and run
-#      native_expert_parity --synthetic q5_K/q5_K at the model's shapes: bit-for-bit
-#      against ggml-cpu's vec_dot for 1..8 tokens + the honest 4-token ratio;
-#   4. stop the server, gates: solo old (base binary, no env) vs solo new (kernel binary,
-#      STRATA_KQ256=1) vs cmp (bit-identical required);
-#   5. bench: candidate 3 cells (serve_262k_q5k.sh), then control 3 cells on the base
-#      binary (serve_262k.sh);
+#   3. STOP the server (the parity test allocates a CUDA context beside the champion's
+#      ~7.4 GiB — the 8 GiB card must be free), then build the parity test tree (separate
+#      cmake dir, STRATA_BUILD_TESTS=ON) and run native_expert_parity --synthetic
+#      q5_K/q5_K at the model's shapes: bit-for-bit against ggml-cpu's vec_dot for
+#      1..8 tokens + the honest 4-token ratio;
+#   4. gates: solo old (base binary, no env) vs solo new (kernel binary, STRATA_KQ256=1)
+#      vs cmp (bit-identical required);
+#   5. bench: candidate 3 cells (serve_262k_q5k.sh), then the BASE binary back on
+#      out/strata and the control 3 cells (serve_262k.sh);
 #   6. leave the champion (base binary) serving; results in research/cand_q5k/.
-# Any failure restores the base binary + champion serving before exiting.
+# Any failure-restores the base binary + champion serving before exiting.
+# v2 (05:25Z): the parity run moved AFTER the server stop; the control pass serves the
+# base binary explicitly. The v1 process was killed while still in its wait loop.
 WS=/mnt/c/Users/Admin/Auto-research-agent/Runtime/projects/saatvik-viniak/qwen36-strata-project
 PY=/opt/strata/venv/bin/python
 BASE=http://127.0.0.1:30000
@@ -22,7 +26,7 @@ GGUF=/models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preser
 C=$WS/research/cand_q5k
 DONE=$WS/research/cand_q5k.done
 LOG=$WS/research/cand_q5k.log
-echo "== cand_q5k_runner up $(date -u +%F_%TZ) ==" > "$LOG"
+echo "== cand_q5k_runner v2 up $(date -u +%F_%TZ) ==" > "$LOG"
 
 restore_champion () {   # the base binary back on the port (the champion config)
   bash "$WS/research/stop_server.sh" >> "$LOG" 2>&1
@@ -69,9 +73,9 @@ else
 fi
 cp out/strata out/strata_q5k_cand || { echo "cannot keep the candidate binary" >> "$LOG"; exit 1; }
 
-# 3. the repo's parity harness (GPU free is not required to BUILD; the run allocates a
-#    small CUDA context, so it must run while the champion still holds VRAM OR after a
-#    stop - run it BEFORE the benches, beside the idle champion server)
+# 3. free the GPU for the parity test's CUDA context, then build + run the parity tree
+bash "$WS/research/stop_server.sh" >> "$LOG" 2>&1
+echo "server stopped for the parity run $(date -u +%F_%TZ)" >> "$LOG"
 mkdir -p parity_build
 if cmake -G Ninja -S . -B parity_build -DCMAKE_BUILD_TYPE=Release -DSTRATA_ENABLE_CUDA=ON \
      -DSTRATA_BUILD_TESTS=ON -DSTRATA_NATIVE_EXPERTS=ON -DSTRATA_PORTABLE=ON \
@@ -96,10 +100,7 @@ else
   exit 1
 fi
 
-# 4. free the GPU: the gates need the VRAM (the champion holds ~7.4 GiB)
-bash "$WS/research/stop_server.sh" >> "$LOG" 2>&1
-echo "server stopped for the gates $(date -u +%F_%TZ)" >> "$LOG"
-
+# 4. text gates (the GPU is already free)
 FAIL=""
 "$PY" tools/qwen35/q36_solo_gate.py --exe /home/dmin/qwen36-strata-project/out/strata_q5k_base \
   --args "--native $GGUF --max-context 32768 --kv int4 --no-graph" --out "$C/old.json" >> "$LOG" 2>&1 \
@@ -123,7 +124,7 @@ if [ -n "$FAIL" ]; then
   exit 1
 fi
 
-# 5. bench: candidate (STRATA_KQ256=1), then control (base binary, no env)
+# 5. bench: candidate (STRATA_KQ256=1), then control (the BASE binary, no env)
 watchdog () {   # $1 = the vram.log file
   while true; do
     V=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null)
@@ -161,12 +162,13 @@ run_cells () {   # $1 = serve script, $2 = output dir, $3 = watchdog log
 mkdir -p "$C/cand" "$C/control"
 run_cells "$WS/research/serve_262k_q5k.sh" "$C/cand" "$C/vram_cand.log" || { restore_champion; echo "server_failed" > "$DONE"; exit 1; }
 echo "candidate bench complete $(date -u +%F_%TZ)" >> "$LOG"
+# the control pass must serve the BASE binary, not the kernel build
+cp /home/dmin/qwen36-strata-project/out/strata_q5k_base /home/dmin/qwen36-strata-project/out/strata
 run_cells "$WS/research/serve_262k.sh" "$C/control" "$C/vram_control.log" || { restore_champion; echo "server_failed" > "$DONE"; exit 1; }
 echo "control bench complete $(date -u +%F_%TZ)" >> "$LOG"
 
 # 6. leave the champion (base binary) serving
 cp /home/dmin/qwen36-strata-project/out/strata_q5k_base /home/dmin/qwen36-strata-project/out/strata
-setsid nohup bash "$WS/research/serve_262k.sh" > /home/dmin/qwen36-strata-project/serve_262k_launch.log 2>&1 < /dev/null \
-  || setsid nohup bash "$WS/research/serve_262k.sh" > /home/dmin/qwen36-strata-project/serve_262k_launch.log 2>&1 < /dev/null &
+setsid nohup bash "$WS/research/serve_262k.sh" > /home/dmin/qwen36-strata-project/serve_262k_launch.log 2>&1 < /dev/null &
 echo "ok: q5k chain complete $(date -u +%F_%TZ)" >> "$LOG"
 echo "bench_complete" > "$DONE"

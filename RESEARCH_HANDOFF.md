@@ -336,16 +336,20 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   verified byte-identical to the canonical checkout's pre-edit state, so the patch is exactly the
   committed one). The kernel is inert without STRATA_KQ256, so cand_runner's uint4 build (which now
   includes the patch) leaves the uint4 A/B clean.
-- **The q5k candidate chain is STAGED and detached (cand_q5k_runner.sh, pid 75509; it waits for
+- **The q5k candidate chain is STAGED and detached (cand_q5k_runner.sh v2, pid 75866; it waits for
   cand_uint4.done):** reconcile the uint4 verdict (revert_uint4.py if the candidate was rejected —
   the kernel A/B must be kernel-only) → apply → preserve out/strata → out/strata_q5k_base → build →
-  keep out/strata_q5k_cand → build the parity test tree (separate cmake dir parity_build,
-  STRATA_BUILD_TESTS=ON) and run `native_expert_parity --synthetic q5_K/q5_K` at the model's shapes
-  (Q4KQ_PARITY_EMBD=2048, Q4KQ_PARITY_FF=512; the harness compares vs ggml's live AVX2 dot bit for
-  bit for nt=1..8 and prints the 4-token ratio) → solo/cmp text gates with STRATA_KQ256=1
-  (bit-identical required) → candidate 3-cell bench (serve_262k_q5k.sh) → control 3-cell bench (the
-  base binary, serve_262k.sh) → champion restored. Any failure restores the base binary + champion
-  serving. Results: research/cand_q5k/{cand,control}/*.json + cand_q5k.done.
+  keep out/strata_q5k_cand → STOP the server (the parity test allocates a CUDA context beside the
+  champion's ~7.4 GiB — the 8 GiB card must be free) → build the parity test tree (separate cmake
+  dir parity_build, STRATA_BUILD_TESTS=ON) and run `native_expert_parity --synthetic q5_K/q5_K` at
+  the model's shapes (Q4KQ_PARITY_EMBD=2048, Q4KQ_PARITY_FF=512; the harness compares vs ggml's
+  live AVX2 dot bit for bit for nt=1..8 and prints the 4-token ratio) → solo/cmp text gates with
+  STRATA_KQ256=1 (bit-identical required) → candidate 3-cell bench (serve_262k_q5k.sh) → the BASE
+  binary back on out/strata → control 3-cell bench (serve_262k.sh) → champion restored. Any
+  failure restores the base binary + champion serving. Results:
+  research/cand_q5k/{cand,control}/*.json + cand_q5k.done. (v2 fixes, 05:25Z: the v1 process was
+  killed while still in its wait loop — the parity run moved after the server stop, and the
+  control pass serves the base binary explicitly.)
 - **Pipeline state:** trial C (mtp3) FULL REJECT (20.81/18.55/10.92 = −4.9/−5.0/−6.9%); trial D
   (mmqslots2) FULL REJECT (20.11/18.46/11.69 = −8.2/−5.4/−0.4%); the slot scheme at S=2 is measured
   dead in both prefill regimes (only S3's revival sequence remains). cand_runner: VERIFY started
