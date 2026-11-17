@@ -151,10 +151,13 @@ the literature-backed options to fix the churn).
      (`v *= 0.5`) — an expert unused for ~32 rows falls under the residents and ping-pongs, which
      is trial A's 32k mechanism. Try ×0.9, or `kRebalanceEvery` 32 → 64/128 scaled with context, or
      freeze the decay during prompts.
-- **Trial D decision tree (mmqslots2, running when this was written):** win on empty with no ctx32k
-  regression → promote slots+MMQ as champion, then F3/F1 to scale slots up (the staging shrink
-  frees VRAM for 7 slots). Wash or ctx32k loss → slots at the VRAM edge don't pay at S=2, and
-  F3 → F2 is the path to make trial A's 7-slot empty win survive 32k.
+- **Trial D decision tree (mmqslots2) — branch 2 is now LIVE (research agent, ~04:40Z: trial D
+  empty = 20.11 tok/s, −8.2% vs 21.92, peak 7.54 GiB):** 2 slots with the fast MMQ prefill LOSE at
+  empty — the fixed rebalance stalls (unconditional sync + swaps every 32 rows) cost more than 2
+  slots' hit-saving (~6% hit probability per layer-window at S=2). Per the tree: slots at the VRAM
+  edge don't pay at S=2 → **F3 → F2 is the path** (make the churn cheap first, then the CPU
+  fallback), and PLAN.md item 6's staging shrink matters only as an enabler for a working slot
+  scheme, not as a speedup itself. ctx32k/ctx128k cells were still running when this was written.
 - **Mechanism:** trial A proved 7 slots help empty (+5.1%) but the blocking swaps cost 32k (−4.5%).
   Remove the stall and the composition (MMQ staging shrink ~4x → more slots + fast MMQ prefill) is
   the single largest decode lever for both empty and 32k.
@@ -267,7 +270,22 @@ the int8 trade is opt-in and lossy-labelled).
 
 ## S10 — Post-profiling items (do §9.0 first; these are where the profiler should point)
 
-**Status: PROPOSED** (ordered by the ceiling math, cheapest checks first).
+**Status: PROPOSED** (ordered by the ceiling math, cheapest checks first). The profiling scripts
+exist (`research/profile_pool.sh` via perf on the engine pid; `research/profile_gpu.sh` via
+nsys→ncu); below is the counter→decision map I'd read them against — each row settles exactly one
+next experiment (research agent, ~04:45Z):
+
+| Counter / observation | Expected (THEORY.md) | What it decides |
+| --- | --- | --- |
+| perf: the Q5_K singleton dot's share of CPU time | ~85–90% at empty/32k | confirms S1 is the empty/32k lever; anything else large → look there first |
+| perf: `dTLB`/page-fault rate on the 21.14 GiB arena | high (4k pages, THP off) | decides S9 (hugepages) before/after S1 |
+| perf: cache-miss ratio in the dot | high (weights L1-resident claim vs measured) | re-tests the KQ256 negative result's mechanism on Q5_K |
+| nsys: `k_attn_part` ms/step at ctx128k | ~74–95 ms | the split-K (S2) size of the prize, vs the uint4 candidate's measured cut |
+| ncu: `k_attn_part` DRAM throughput % of 448 GB/s | ~10% (45–57× above floor) | <25% → latency/transaction-bound → split-K + cp.async; near-roofline → stop |
+| ncu: warp stall reasons | long-scoreboard / mio-throttle | picks cp.async pipelining (S2) vs more vectorization (uint4 follow-ups, V-path) |
+| nsys: launch gaps + per-step launch count under graphs | the ~8 ms overhead | decides C6 (one sync/token) and C2 fusions; graphs are off in hybrid mode (wall 3) |
+| nsys: swap H2D blocks visible during decode | 2.06 MB copies + sync stalls | confirms S3-F1's target and sizes its win |
+| nsys: GDN chunk kernels' share at empty | ~4.6 ms of the dense 1.03 GB/step | if larger → the ik_llama fused-delta-net port idea (S10.3) moves up |
 
 1. **Overhead split (~8 ms/step, 7% of empty):** PLAN.md's wall 3 now states CUDA graphs are
    **disabled in hybrid mode** — the captured graphs cover the GPU half, so the 41-layer × pool-call
@@ -368,3 +386,11 @@ the int8 trade is opt-in and lossy-labelled).
   −7.4%), the loss growing with context. Negative result recorded: chain depth beyond 2 does not
   pay at 262k; the tree direction (S6) and batch-mtp remain open. Trial D (mmqslots2) started
   04:19:57Z; its verdict selects the S3 option (decision tree in S3).
+- **2026-11-17 ~04:30Z — trial D branch 2 live + S10 counter→decision map (this commit).** Trial D
+  (mmqslots2) empty landed: 20.11 tok/s (−8.2% vs 21.92, peak 7.54 GiB) — 2 slots + MMQ prefill
+  LOSE at empty: the fixed rebalance stalls cost more than 2 slots' ~6% hit probability saves.
+  Annotated into S3 (branch 2 live: F3 → F2, and item 6's staging shrink is an enabler, not a
+  speedup). S10 gained the counter→decision map read against the existing profile scripts (9 rows,
+  each settling one next experiment: dot share → S1; TLB faults → S9; k_attn_part throughput →
+  split-K vs stop; stall reasons → cp.async vs vectorization; swap blocks → S3-F1; GDN share →
+  the delta-net port idea). ctx32k/ctx128k of trial D still running; the uint4 chain follows.
