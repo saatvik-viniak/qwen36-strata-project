@@ -23,7 +23,7 @@ medians 21.89/19.52/11.73 are the promotion reference.
 | C | MTP 3 (draft depth) | MTP=3 | pending | — |
 | D | MMQ + 2 expert slots (B1 at the VRAM edge) | --expert-slots 2 | queued | need-check margin ~13 MB; may refuse |
 | 4 | arena hugepages/WILLNEED + pool prefetch | code | pending | — |
-| 5 | int4 attention 128-bit loads | code | pending | — |
+| 5 | int4 attention 128-bit loads | code (dd9fee1: uint4 QK read, 16x fewer L1 tx) | candidate built into main, pending WSL build + VERIFY + bench | attention is transaction-bound (45-57x above the DRAM floor) — the 128k cell's main lever |
 | 6 | MMQ staging sub-chunk shrink → slots+MMQ compose | code | pending | staging 2×max_layer→~4× smaller keeps 7 slots beside the fast prefill |
 
 ## Walls (evidence in THEORY.md)
