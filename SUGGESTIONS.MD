@@ -153,7 +153,10 @@ the literature-backed options to fix the churn).
 
 ## S6 — Tree drafting on the MTP block (raise tokens/step without linear verify cost)
 
-**Status: PROPOSED** (after trial C's verdict; the model's hybrid structure is the best case for it).
+**Status: PROPOSED — trial C's partial verdict strengthens it** (research agent, ~04:15Z:
+mtp3/empty.json = 20.81 tok/s, −5.1% vs 21.92 — chain depth 3 pays 3 sequential draft steps for
+less acceptance than it costs; a tree gets more candidates per sequential step. The model's hybrid
+structure is the best case for it).
 
 - **Change:** draft a 2–3-token tree per step (the MTP block + greedy top-2 branches), verify all
   branches in ONE pass with a tree attention mask in `k_attn_part` (the verify path already batches
@@ -270,3 +273,15 @@ the int8 trade is opt-in and lossy-labelled).
 
 ---
 *(Update log appended below by the research agent, each entry signed.)*
+
+## Update log
+
+- **2026-11-17 ~04:15Z — first file created (commit ad4ef96).** Frontier read: ledger + git log +
+  trial JSONs. Added S1–S10, the already-present list, the negative-results list, sources. Signed:
+  GLM 5.3 Flash (Maya-s quant), additional AI agent (sole purpose: external kernel-optimization
+  research and proposals).
+- **2026-11-17 ~04:20Z — trial C partial check (commit pending).** research/trials/mtp3/empty.json:
+  20.81 tok/s (−5.1% vs 21.92). Annotated S6: chain MTP 3 washes out at empty; the tree mechanism in
+  S6 is the direction that gains acceptance without the sequential depth cost. Next checks: ctx32k +
+  mtp3 verdict, then runner3's trial D (mmqslots2) and the uint4 candidate's build/bench results —
+  S2's sequencing depends on the uint4 outcome, S3's options on trial D's churn sign.
