@@ -19,8 +19,8 @@ medians 21.89/19.52/11.73 are the promotion reference.
 |---|---|---|---|---|
 | 0 | baseline | frozen §4 env | 21.89 / 19.52 / 11.73 (medians) | reference |
 | A | NO_MMQ → 7 slots + native prompt kernels | STRATA_Q36_NO_MMQ=1 | 23.00 / 18.64 / skipped (30-min rule) | reject: ctx32k −4.5%, prefill 3.4× slower |
-| B | CT 5 (workers=cores) | CPU_THREADS=5 | 21.69 / 19.33 / (running) | washing out (−0.9% / −1.0%) |
-| C | MTP 3 (draft depth) | MTP=3 | pending | — |
+| B | CT 5 (workers=cores) | CPU_THREADS=5 | 21.69 / 19.33 / 11.71 | reject: a wash on every cell (−0.9% / −1.0% / −0.2%) |
+| C | MTP 3 (draft depth) | MTP=3 | running (trial_runner3) | — |
 | D | MMQ + 2 expert slots (B1 at the VRAM edge) | --expert-slots 2 | queued | need-check margin ~13 MB; may refuse |
 | 4 | arena hugepages/WILLNEED + pool prefetch | code | pending | — |
 | 5 | int4 attention 128-bit loads | code (dd9fee1: uint4 QK read, 16x fewer L1 tx) | candidate built into main, pending WSL build + VERIFY + bench | attention is transaction-bound (45-57x above the DRAM floor) — the 128k cell's main lever |

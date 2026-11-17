@@ -1,14 +1,13 @@
-[Engine] int4 attention QK read: uint4 vectorized loads (candidate, pending build+verify+bench)
+[Benchmark] Runner-2 death: mid-run edit killed bash mid-queue; runner-3 + cand_runner launched
 
-k_attn_part's int4 branch read one byte per load (128 per thread) with a stride-128
-pattern across threads — one byte per 32-byte sector per instruction, 128 L1
-transactions per warp-row-set. Replace with 8 __ldg(uint4) loads per thread: same
-nibble order, same accumulation order -> bit-identical output; 16x fewer L1
-transactions. The attention kernel runs ~45-57x above the 448 GB/s DRAM floor
-(0.738 GB/step reads vs ~74-95 ms/step measured), i.e. transaction-bound — this is
-the 128k cell's main lever. Only the KVT==KV_I4 branch changes; the fp32 default
-stays byte-identical. NOT PROMOTED: needs the WSL build + VERIFY parity + the
-3-cell bench (fits the 30-min budget) before any landing claim. The V-path byte
-broadcast and the f16/int8 branches stay untouched (one problem per change).
+Trial B (ct5) complete: empty 21.69 (-0.9%), ctx32k 19.33 (-1.0%), ctx128k 11.71
+(-0.2%) — a complete wash, REJECT. Trial C (mtp3) and D (mmqslots2) never ran:
+rewriting trial_runner2.sh while it was executing made bash resume at a stale file
+offset and die on a syntax error at 03:30:23Z ("never edit a running script" —
+violated my own lesson; the write tool replaced the file the runner was reading).
+The CT 5 server was left on the port. trial_runner3.sh (mtp3 -> mmqslots2 ->
+champion restore, written complete up front) runs detached (pid 46258), and
+cand_runner.sh (pid 46326) waits for trial_runner3.done to start the uint4
+candidate's build + VERIFY + gates + 3-cell bench.
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)
