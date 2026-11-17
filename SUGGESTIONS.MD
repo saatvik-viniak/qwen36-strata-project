@@ -216,6 +216,29 @@ per change).
   so its control bench measures the uint4 config, NOT the champion config — after the q5k chain,
   the frontier still needs a same-day champion-config re-measure to re-base every historical
   comparison on this box.
+- **VERDICT: ctx128k = 17.77 tok/s (+52% vs the champion's 11.73/11.66) — the decision rule's
+  promote branch, EXCEEDED (research agent, ~06:10Z).** Measured decode 28.81 s vs the champion's
+  43.91 s; warmup 29.93 s ≈ measured (the post-load disturbance is gone at 38 min — the decay
+  evidence complete); prefill 211.2 tok/s vs the champion's 215.5 (parity). Step time 212.7 →
+  140.5 ms (−72 ms): the uint4 fix removed the L1/L2 sector thrash that was throttling the ENTIRE
+  kernel — both the QK and the V paths speed up as a side effect, which is why the gain exceeds
+  the QK-half model's 15.5–16.5 upper bound. **Promotion ledger: incumbent = the byte-loop
+  champion (11.73/11.66 at ctx128k, measured without the watchdog); challenger = the uint4
+  candidate (17.77, measured with it); decision = PROMOTE pending a clean re-measure — the true
+  gain may exceed +52% since the champion never paid the watchdog's core theft.** The empty/ctx32k
+  cells carry NO VERDICT (confounded by the post-load disturbance + the watchdog; neutrality is
+  plausible by construction — the kernel is ~0% of an empty step and bit-identical — but only a
+  clean re-measure can confirm). Post-load disturbance quantified: the first request after a
+  server load runs in a degraded window that decays over ~15+ min (the empty warmup ran 96 s
+  vs the champion-era 34 s; the ctx32k warmup prefill 83.7 tok/s vs measured 249.98); it scales
+  with the number of preceding 21-GiB alloc/free cycles (the candidate chain cycled 4 servers in
+  30 min). **Fix for every future bench: sleep ~15 min after server load before the first cell.**
+- **Revised follow-up arithmetic (the thrash insight):** the attention floor after the uint4 fix
+  is ~25–30 ms/step at 128k. The V-path staging spec (below) targets the remaining ~50% sector
+  efficiency + the 256-loads/thread loop → ~15–20 ms → **ctx128k ≈ 19–20.5 tok/s (+62–74% vs the
+  champion)**; at ctx32k (attention ~20 ms of a 128.6 ms step) the same work → **≈ 20.3–20.9
+  (+4–7%)**; empty is untouched (attention ≈ 0). The 32k cell is REOPENED by the thrash insight —
+  it was written off as pool-bound only.
 - **Pre-bench static verification + prediction (research agent, ~05:02Z, commit dd9fee1 read
   line-by-line):** the candidate's parity claim checks out statically. (1) `k_attn_part` has
   `constexpr int HD = 256` (q36_engine.cu:391) — both loops fully unroll at compile time, so the
@@ -641,6 +664,21 @@ next experiment (research agent, ~04:45Z):
   the QK half recovers to ~10–15 ms, ≈ 13.5–14.5 (+15–24%) on a partial win; <12.5 means the
   mechanism didn't engage (check SASS for spill before rejecting the idea). Follow-up if it passes:
   the same uint4 pattern on the V path, then split-K. VERIFY phase started 05:00:49Z.
+- **2026-11-17 ~06:12Z — THE UINT4 VERDICT: ctx128k +52%, promote pending a clean re-measure
+  (this commit).** ctx128k landed 17.77 tok/s (measured decode 28.81 s vs the champion's 43.91 s;
+  warmup ≈ measured — the post-load disturbance decayed by 38 min; prefill at champion speed).
+  Step time 212.7 → 140.5 ms: the uint4 fix removed the L1/L2 sector thrash throttling the whole
+  kernel (both paths), exceeding the QK-half model. Promotion ledger written into S2: incumbent =
+  the byte-loop champion (11.73/11.66, no watchdog), challenger = the uint4 candidate (17.77, with
+  it) → PROMOTE pending a clean re-measure. The empty (18.08) and ctx32k (17.91) cells carry NO
+  VERDICT — confounded by the post-load disturbance (quantified: the first request after a server
+  load runs in a degraded window decaying over ~15+ min, scaling with the number of preceding
+  21-GiB alloc/free cycles; the chain cycled 4 servers in 30 min) + the watchdog; neutrality is
+  plausible by construction. Bench-infrastructure fixes recorded: sleep ~15 min after load before
+  the first cell; poll nvidia-smi every 10-30 s or once per cell. The q5k chain (v3) picked up the
+  verdict at 06:05:54Z (no revert — bench_complete; the uint4 patch rides along) and is building.
+  The V-path staging spec's expected gain revised with the thrash insight: ctx128k ≈ 19-20.5
+  (+62-74% vs the champion), ctx32k ≈ 20.3-20.9 (+4-7%) — the 32k cell is REOPENED.
 - **2026-11-17 ~05:10Z — primary agent: S1 implemented + chain staged (commit 07a2766).** (1)
   **S1's kernel is written and applied to the build clone** (apply_q5k.py, md5-guarded — the clone's
   4 CPU files verified byte-identical to the canonical pre-edit state): `q5k_dot<NT>` mirrors the
