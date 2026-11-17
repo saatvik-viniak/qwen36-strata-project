@@ -519,3 +519,36 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
 - **Awaiting:** the v5 chain's parity → gates → the 2-cell A/B (~40–50 min from 06:33:50Z);
   annotate against S1's two-sided regime prediction (empty ≥ +5% → S1 composes; ±2% → pivot to
   S9/S11) and use the control pass as the same-day champion reference.
+
+## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
+
+- **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
+  q5_K/q5_K` at the model's shapes → **0 of 36 token-sets differ in any bit** for BOTH gate rows
+  and down rows (AVX2 multi-token vs ggml's live vec_dot); width invariance holds (1 vs 3 tokens:
+  0 rows differ); **the honest 4-token ratio: gate/up 1.45× (114 vs 165 us), down 1.54× (141 vs
+  217 us)** — above the scratch's contested 1.33× and inside the S1 spec's 1.5–2× design target;
+  0 failures overall. Committed 0ca9083.
+- **The gates progress:** old gate ok 06:43:07Z (the champion binary); the new gate (the compose
+  binary, STRATA_KQ256=1) was loading at 06:48Z; then cmp (bit-identical required) → the 2-cell
+  A/B → chain done ~07:39Z.
+- **THE PROMOTION PASS IS STAGED and detached (promotion_pass.sh, pid 91468, launched 06:45:26Z):**
+  it waits for cand_q5k.done == bench_complete, then runs the CLEAN protocol — serve the compose
+  binary via serve_262k_q5k.sh (STRATA_KQ256=1), **settle 900 s** (the disturbance fix — this pass
+  compares against the CLEAN anchors, so it must settle; the chain's A/B passes carried the same
+  treatment and need no settle), bench empty/ctx32k/ctx128k with **NO watchdog**, then restore the
+  champion. Results: research/promotion/{empty,ctx32k,ctx128k}.json + promotion.done. The VERDICT
+  (per cell vs the clean anchors 21.89/19.52/11.73) is the primary agent's; promotion restarts use
+  the out/strata_byte_loop restore semantics.
+- **S11 lever-1 APPLIED to both trees (apply_pinerr.py, idempotent):** the 21.14 GiB arena's
+  swallowed cudaHostAlloc failure now logs the CUDA error string — one diagnostic line, no
+  behavior change (src/qwen35/q36_engine.cu, the Windows checkout + the WSL clone via the
+  applier). It rides the NEXT build and reveals why the pool runs in pageable memory (a WSL2
+  page-locked cap = not fixable; fragmentation or a reserve = fixable). The running benches use
+  built binaries and are unaffected.
+- **Next steps (ordered):** (1) harvest the chain's cmp gate + the 2-cell A/B (~07:39Z) — the
+  regime test reads the empty delta; (2) harvest the promotion pass (~08:30Z) — the per-cell
+  verdict vs the clean anchors decides the promotion; (3) §9.0 profiling during a NON-measured
+  decode on the restored champion (profile_pool.sh/profile_gpu.sh): the pool/attention/overhead
+  split, the ncu V-path counters (sectors per request ≈1.0 vs ≈4+ — the dispute decider), S11
+  lever-2 (--pool-workers 12 SMT test, config-only) after; (4) the S6 depth re-sweep if S1
+  composed (mission C5's re-measure point).

@@ -3278,7 +3278,13 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
     uint8_t* arena = nullptr;
     bool pinned = cudaHostAlloc((void**) &arena, host, cudaHostAllocDefault) == cudaSuccess;
     if (!pinned) {
-        (void) cudaGetLastError();
+        // S11 lever 1 (diagnostic): the pin failure used to be swallowed silently - the
+        // pool has run 21.14 GiB in PAGEABLE memory the whole session (6.2 GB/s effective,
+        // 12% of DDR4 peak). Log WHY it fails (a WSL2 page-locked cap is not fixable;
+        // fragmentation or a reserve might be): one line, no behavior change.
+        const char* perr = cudaGetErrorString(cudaGetLastError());
+        std::fprintf(stderr, "strata-q36: cudaHostAlloc for the %.2f GiB expert arena FAILED (%s); "
+                     "the pool runs in pageable host memory\n", (double) host / (1 << 30), perr);
         arena = (uint8_t*) std::malloc(host);
         if (!arena) {
             err = "no host memory for the experts (" + std::to_string(host >> 20) + " MiB)";

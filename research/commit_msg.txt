@@ -1,12 +1,17 @@
-[Engine] q5k parity gate GREEN: bit-exact at the model's shapes, 1.45-1.54x 4-token ratio
+[Engine] Promotion pass staged (clean protocol); S11 lever-1 applied (pin-error log)
 
-native_expert_parity --synthetic q5_K/q5_K (the compose tree, chain v5):
-0 of 36 token-sets differ in any bit for BOTH gate/up and down rows vs ggml's
-live AVX2 vec_dot; width invariance holds (1 vs 3 tokens: 0 rows differ); the
-honest 4-token ratio is gate/up 1.45x (114 vs 165 us) and down 1.54x (141 vs
-217 us) - inside the S1 spec's 1.5-2x design target and above the scratch's
-contested 1.33x. 0 failures overall. The solo/cmp gates + the empty/ctx32k
-A/B follow in the chain; the regime test reads the empty delta (>= +5% =
-compute-bound share -> S1 composes; +/-2% = latency-bound -> pivot to S9/S11).
+promotion_pass.sh (detached, pid 91468) waits for the q5k chain's
+bench_complete, then runs the CLEAN promotion bench for the compose candidate
+(q5k+uint4): serve_262k_q5k.sh (STRATA_KQ256=1), a 900 s post-load settle (the
+disturbance fix), the 3 cells with NO watchdog (the 3-s poll stole ~1 core
+on WSL2 and confounded the uint4 empty/ctx32k cells), the champion restored
+after; the verdict is the primary agent's vs the clean anchors
+(21.89/19.52/11.73).
+
+S11 lever 1 applied to the tree (apply_pinerr.py, idempotent): the 21.14 GiB
+arena's swallowed cudaHostAlloc failure now logs the CUDA error string - one
+diagnostic line, no behavior change; it rides the next build and reveals why
+the pool runs in pageable memory (a WSL2 page-locked cap = not fixable;
+fragmentation or a reserve = fixable).
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)
