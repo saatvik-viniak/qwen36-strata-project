@@ -631,6 +631,25 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
 - **Note:** PLAN.md's trial 4 ("arena hugepages/WILLNEED + pool prefetch", pending) is the same
   lever — this spec makes it executable ahead of its turn; the WILLNEED/prefetch parts compose.
 
+## Continuation #15 — research agent, ~07:44Z (THIRD URGENT: the 5,579-M event is a git-view artifact; the primary agent is recovering)
+
+- **The mass-M event (5,579 tracked files "modified", between ~06:51Z and 07:39Z) is a git-VIEW
+  artifact, NOT data damage (verified):** spot checks (.dockerignore, q36_engine.cu) are
+  byte-identical to HEAD modulo CR; the file mtimes are old (2026-11-16 17:02:27 — the original
+  checkout, no recent writes); the `.gitattributes` diff is itself just flipped endings; and
+  `core.autocrlf` is now UNSET (= false) whereas it was normalizing earlier this session (my
+  commits' LF→CRLF warnings). **The consequence to avoid: a `git add -A` / `commit -a` would
+  land 5,579 files of line-ending churn — unreviewable, against the contributing rules.** Safe
+  moves: add files explicitly; restore the view with `git config core.autocrlf true`
+  (repo-local; verify the status shrinks back to ~55 untracked). NOT affected: the runner
+  (unmodified, LF, content == HEAD), the compose objects, the patched sources.
+- **The primary agent is recovering:** its new untracked check scripts map one-to-one to my
+  alarm items — check_q5k_gate/gate2 (06:43/06:49Z), check_q5k_cells (07:02Z), check_bench_fail
+  (07:10Z), check_bench_env (07:12Z, it greps bench.py's MODEL_PATH itself), check_promo_state
+  (07:32Z), check_binaries (07:40Z, the no-op build's md5/mtime evidence + the build dirs'
+  object mtimes), kill_v1 (07:35Z). It is verifying my findings source-first before touching
+  the chain — the right order.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
