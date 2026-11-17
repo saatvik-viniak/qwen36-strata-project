@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 1054.3014989998483,
+      "decode_ms": 35179.91803000041,
+      "output_tokens": 403,
+      "text": "It looks like your message got cut off! Did you mean to type something like **Auto**, **Author**, **Automatic**, **Autism**, **Autonomous**, or something else? Let me know how I can help! \ud83d\ude0a",
+      "first": 6972.073405159,
+      "last": 7007.253323189
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 373.76661700000113,
+      "decode_ms": 16083.849038000153,
+      "output_tokens": 452,
+      "text": "It looks like your message might be incomplete! Did you mean to type something like *Auto*, *Author*, *Automatic*, or were you starting a new question? Feel free to continue, and I\u2019ll jump right in to help. \ud83d\ude0a",
+      "first": 7007.687094458,
+      "last": 7023.770943496
+    }
+  ],
+  "decode_tps": 28.102725842060075,
+  "prefill_tps": 2.675466332510902,
+  "ttft_ms": 373.76661700000113,
+  "warmup_ttft_ms": 1054.3014989998483,
+  "peak_gib": 6.6826171875
+}

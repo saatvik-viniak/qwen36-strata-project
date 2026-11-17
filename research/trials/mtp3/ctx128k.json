@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 131072,
+  "prompt_tokens_actual": 124520,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 620521.7851449997,
+      "decode_ms": 48391.008442000384,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\" repeated many times (looks like hundreds of times).\n   - There's no explicit question or prompt. It's just the repeated statement.\n   - The statement describes a process called \"Autoresearch\" which is essentially a greedy optimization loop (change -> measure -> keep if better -> undo if worse). It also mentions \"The judge owns the clock and the check,\" which implies an external evaluator/arbiter controls timing and validation.\n\n2.  **Identify Key Concepts:**\n   - **Autoresearch**: A systematic, iterative optimization process.\n   - **Loop structure**: Change one variable/parameter -> Measure outcome -> Keep if improved -> Revert if not.\n   - **Judge**: An external entity that controls time (\"owns the clock\") and validation/verification (\"owns the check\").\n   - This is reminiscent of:\n     - A/B testing\n     - Hill climbing / greedy optimization\n     - Scientific method (hypothesis -> experiment -> result -> conclusion)\n     - Automated hyperparameter tuning\n     - Evolutionary algorithms (though simpler, as it's single-step greedy)\n     - The phrase \"The judge owns the clock and the check\" might be a reference to a specific framework, paper, or concept (maybe from machine learning, systems engineering, or a specific author's work).\n\n3.  **Determine Response Strategy:**\n   - Since there's no explicit question, I should:\n     a. Acknowledge the input\n     b. Explain/summarize the concept clearly\n     c. Connect it to known methodologies\n     d. Ask what the user wants to do with it (apply it, refine it, discuss it, etc.)\n     e. Keep it concise despite the repetitive input.\n\n4.  **Draft Response (Mental Refinement):**\n   You\u2019ve shared a concise definition of **Autoresearch** as a greedy, single-variable optimization loop: change one parameter, measure the result, keep it if it improves performance, and revert if it doesn\u2019t. The phrase *\u201cThe judge owns the clock and the check\u201d* suggests an external arbiter controls both timing (when to stop/iterate",
+      "first": 13984.453657224,
+      "last": 14032.844665666
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 584104.2983789993,
+      "decode_ms": 46868.84582099992,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\" repeated many times (looks like hundreds of times).\n   - There's no explicit question or prompt. It's just the repeated statement.\n   - The statement describes a process called \"Autoresearch\" which is essentially a greedy optimization loop (change -> measure -> keep if better -> undo if worse). It also mentions \"The judge owns the clock and the check,\" which implies an external evaluator/arbiter controls timing and validation.\n\n2.  **Identify Key Concepts:**\n   - **Autoresearch**: A systematic, iterative optimization process.\n   - **Loop structure**: Change one variable/parameter -> Measure outcome -> Keep if improved -> Revert if not.\n   - **Judge**: An external entity that controls time (\"owns the clock\") and validation/verification (\"owns the check\").\n   - This is reminiscent of:\n     - A/B testing\n     - Hill climbing / greedy optimization\n     - Scientific method (hypothesis -> experiment -> result -> conclusion)\n     - Automated hyperparameter tuning\n     - Evolutionary algorithms (though simpler, as it's single-step greedy)\n     - The phrase \"The judge owns the clock and the check\" might be a reference to a specific framework, paper, or concept (maybe from machine learning, systems engineering, or a specific author's work).\n\n3.  **Determine Response Strategy:**\n   - Since there's no explicit question, I should:\n     a. Acknowledge the input\n     b. Explain/summarize the concept clearly\n     c. Connect it to known methodologies\n     d. Ask what the user wants to do with it (apply it, refine it, discuss it, etc.)\n     e. Keep it concise despite the repetitive input.\n\n4.  **Draft Response (Mental Refinement):**\n   You\u2019ve shared a concise definition of **Autoresearch** as a greedy, single-variable optimization loop: change one parameter, measure the result, keep it if it improves performance, and revert if it doesn\u2019t. The phrase *\u201cThe judge owns the clock and the check\u201d* suggests an external arbiter controls both timing (when to stop/iterate",
+      "first": 14616.99564544,
+      "last": 14663.864491261
+    }
+  ],
+  "decode_tps": 10.924100882607926,
+  "prefill_tps": 213.18110540457707,
+  "ttft_ms": 584104.2983789993,
+  "warmup_ttft_ms": 620521.7851449997,
+  "peak_gib": 7.3740234375
+}

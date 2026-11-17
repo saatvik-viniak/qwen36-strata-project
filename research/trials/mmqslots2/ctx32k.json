@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 32768,
+  "prompt_tokens_actual": 31130,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 174120.8579719987,
+      "decode_ms": 26018.470091999916,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text.\n   - The core text is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This exact two-sentence block is repeated many times (I count roughly 100+ repetitions).\n   - The input ends abruptly with \"Autoresearch is a loop: change\" (cut off mid-sentence).\n\n2.  **Identify Key Characteristics:**\n   - **Repetition:** Extreme redundancy. The same phrase is repeated ad nauseam.\n   - **Content:** Defines \"Autoresearch\" as an iterative optimization loop (change, measure, keep/undo). Mentions \"The judge owns the clock and the check\" (likely metaphorical or from a specific context, possibly related to automated testing, optimization, or a specific paper/tool).\n   - **Structure:** No new information is added across repetitions. It's purely a loop definition repeated.\n   - **Ending:** Abrupt cutoff.\n\n3.  **Determine User Intent:**\n   - Why would someone paste this? Possible reasons:\n     - Testing my ability to handle repetitive/long inputs.\n     - Accidental paste (e.g., from a script that printed a loop definition many times).\n     - Wanting me to recognize, summarize, or respond to the core concept.\n     - Just sharing a mantra/definition.\n   - Since there's no explicit question, I should:\n     - Acknowledge the input.\n     - Extract and confirm the core message.\n     - Note the repetition and abrupt ending.\n     - Ask how I can help (e.g., explain autoresearch, discuss the \"judge\" metaphor, format it, etc.).\n\n4.  **Formulate Response:**\n   - Acknowledge the repetition: \"You\u2019ve shared a highly repetitive definition of 'Autoresearch'...\"\n   - Extract the core concept: \"At its core, it describes an iterative optimization loop: change one variable, measure the outcome, keep the change if it improves results, and revert it if it doesn\u2019t. The phrase 'The judge owns the clock and the check' likely emphasizes that an automated evaluator (the 'judge') controls both timing and validation.\"\n   - Note the",
+      "first": 15333.070399719,
+      "last": 15359.088869811
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 124612.33401400023,
+      "decode_ms": 27729.407238999556,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text.\n   - The core text is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This exact two-sentence block is repeated many times (I count roughly 100+ repetitions).\n   - The input ends abruptly with \"Autoresearch is a loop: change\" (cut off mid-sentence).\n\n2.  **Identify Key Characteristics:**\n   - **Repetition:** Extreme redundancy. The same phrase is repeated ad nauseam.\n   - **Content:** Defines \"Autoresearch\" as an iterative optimization loop (change, measure, keep/undo). Mentions \"The judge owns the clock and the check\" (likely metaphorical or from a specific context, possibly related to automated testing, optimization, or a specific paper/tool).\n   - **Structure:** No new information is added across repetitions. It's purely a loop definition repeated.\n   - **Ending:** Abrupt cutoff.\n\n3.  **Determine User Intent:**\n   - Why would someone paste this? Possible reasons:\n     - Testing my ability to handle repetitive/long inputs.\n     - Accidental paste (e.g., from a script that printed a loop definition many times).\n     - Wanting me to recognize, summarize, or respond to the core concept.\n     - Just sharing a mantra/definition.\n   - Since there's no explicit question, I should:\n     - Acknowledge the input.\n     - Extract and confirm the core message.\n     - Note the repetition and abrupt ending.\n     - Ask how I can help (e.g., explain autoresearch, discuss the \"judge\" metaphor, format it, etc.).\n\n4.  **Formulate Response:**\n   - Acknowledge the repetition: \"You\u2019ve shared a highly repetitive definition of 'Autoresearch'...\"\n   - Extract the core concept: \"At its core, it describes an iterative optimization loop: change one variable, measure the outcome, keep the change if it improves results, and revert it if it doesn\u2019t. The phrase 'The judge owns the clock and the check' likely emphasizes that an automated evaluator (the 'judge') controls both timing and validation.\"\n   - Note the",
+      "first": 15483.74402607,
+      "last": 15511.473433309
+    }
+  ],
+  "decode_tps": 18.46415235591139,
+  "prefill_tps": 249.8147574741882,
+  "ttft_ms": 124612.33401400023,
+  "warmup_ttft_ms": 174120.8579719987,
+  "peak_gib": 7.572265625
+}

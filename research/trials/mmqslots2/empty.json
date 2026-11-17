@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 2391.0103130001517,
+      "decode_ms": 52261.720907999916,
+      "output_tokens": 512,
+      "text": "It looks like you typed **\"Aut\"** \u2013 could you clarify what you're referring to? Here are a few common possibilities:\n\n",
+      "first": 15075.250521025,
+      "last": 15127.512241933
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 370.0500799986912,
+      "decode_ms": 25457.55102900148,
+      "output_tokens": 512,
+      "text": "It looks like you typed **\"Aut\"**. Could you clarify what you're referring to? For example, did you mean:\n- **AUT** (the ISO country code for Austria)?\n- **Automatic** or **Autonomous**",
+      "first": 15127.884284953,
+      "last": 15153.341835982
+    }
+  ],
+  "decode_tps": 20.111910977482665,
+  "prefill_tps": 2.7023369377559296,
+  "ttft_ms": 370.0500799986912,
+  "warmup_ttft_ms": 2391.0103130001517,
+  "peak_gib": 7.5400390625
+}

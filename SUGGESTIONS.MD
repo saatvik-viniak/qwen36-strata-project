@@ -1325,6 +1325,57 @@ q36_engine.cu's hybrid dispatch path; the microbench spec is now pattern-exact.*
   case first; then (a)'s microbench decides whether this item lives. Both fit the
   between-benches rule; neither touches the default path.
 
+- **The capture's reading protocol, PRE-REGISTERED before the data lands (research agent,
+  ~14:24Z, from the runner/analyze/apply artifacts + the promotion anchor artifact):** the
+  primary agent's Lever A build is live (apply_poolms.py md5-guarded both trees; the build
+  gate PASSED bit-identical, 10/10 solo prompts, `out/strata_poolms` preserved md5 df3c3230;
+  the capture serve carries the FULL champion config — SAMPLING presence_penalty 0 = the MTP
+  ON, STRATA_KQ256=1, w=8, 262k — so the pool-share reading is champion-comparable). The
+  pool-ms line records per call: `ms (gu/q/down), N experts, MB, GB/s`. Five protocol points,
+  decided BEFORE the numbers:
+  1. **The anchor check first:** `poolms/empty.json`'s decode_tps must read ~22.53 ±2.6% (the
+     compose-clean anchor; same bench.py, same protocol — verified identical: prompt 1 /
+     output 512 / concurrency 1). If it reads off, the box state drifted and the share
+     reading is qualified, not voided (the pool-ms lines stay valid; the % does not).
+  2. **The SUM/2 heuristic in analyze_poolms.sh OVERSTATES the share ~1.75x — use the
+     session-line split instead.** Ground: the promotion empty.json's own rounds — the warmup
+     round decoded 512 tokens in 56.47 s, the measured round in 22.73 s (2.48x slower for the
+     identical request). If the warmup round's slowness lives in the pool (idle-reclaim
+     page-fault stalls on the 21.14 GiB arena after the 900-s settle), the warmup round's
+     pool-ms lines carry inflated ms with the SAME bytes → SUM(warmup+measured)/2 ≈
+     (2.48·M + M)/2 ≈ 1.74·M against a measured-round denominator → the pool share inflated
+     ~75%. Fix: the slice contains exactly two `session 0:` lines (the bench's warmup then
+     measured request; the load-warmup logs none); the measured round's pool-ms lines = the
+     lines AFTER the first session line and BEFORE the second. Compute the share from those
+     only: measured-round pool SUM / measured decode ms (22,725 ms from the anchor; the
+     capture's own empty.json decode_ms is the honest denominator). ALSO report the warmup
+     round's per-call ms vs the measured round's: warmup >> measured = the reclaim/fault
+     stall lives IN the pool → itself a finding (a NEW lever: arena residency through idle —
+     a periodic touch or mlock path, S12-B's THP drop does not apply; bench-protocol note:
+     a second warmup round would dodge it). Warmup ≈ measured = the slowness is NOT the
+     pool (the SUM/2 share was doubly wrong; the session-line split is the only honest read).
+  3. **The call-model check (the line cadence):** ~41 pool-ms lines per decode step = one
+     call per layer (the source model); ~1 per step = a per-step batch call. The per-call MB
+     discriminates independently (per-layer: 16–48 MB = 8–24 experts × 2.01 MB; per-step:
+     660–1980 MB). The analyze script's "experts/call × 41" assumes per-layer — verify the
+     cadence before trusting the distinct/layer figure.
+  4. **The phase split is the compute-vs-streaming discriminator (the pool-ms line gives it
+     free):** gu+down ≥ ~80% of the call's ms → the weight streaming dominates → S13-(a)'s
+     pattern-exact microbench is GO (its SPLIT/SHARED question is exactly the right one). q
+     ≥ ~30% → the intermediate/compute phase dominates → the compute lever first (vector-
+     ization/batch shape, not the access pattern) → (a) is re-scoped before it runs.
+  5. **The go/no-go thresholds (from S13-(a)'s existing rules + the bracket):** the measured-
+     round aggregate GB/s (measured-round MB SUM / measured-round ms SUM) ≥ ~25 → at
+     ceiling, the pattern cost is small → (a) dies (record the negative; the pool is bounded
+     elsewhere — sync/launch/imbalance; S14's share reading decides what carries). ~14–20 →
+     the pattern cost matches → (a) proceeds as spec'd. ≤ ~10 → the pattern cost dominates
+     → (b) is the big lever. Cross-check: the volume bracket (experts/step × 2.01 MB vs
+     660 MB–1.98 GB) discriminates the routing-sharing premise — the MTP rows routing
+     identically (n ≈ 8/layer) vs differing (n ≈ 24/layer) is directly readable from the
+     per-call N. **S14's reopening condition rides the same reading:** the pool ≥ ~60% of
+     the measured step AND S3 stays blocked → re-read the layer loop for the row-pipeline
+     sketch.
+
 ## S14 — The layer-serial structure: the GPU idles through the pool's FFN (parked pending Lever A)
 
 **Status: PARKED (research agent, ~13:25Z) — a mechanism observation from the S13 source read,
@@ -1350,9 +1401,12 @@ splits the step.**
 
 ## S15 — The serving-config levers the clean-bench exposed: the MTP sampling gate and the slots mode (research agent, ~14:08Z)
 
-**Status: NEW (research agent, ~14:08Z) — the primary agent's clean-bench run (a fresh-WSL
-baseline after the wedge) tripped over two serving-config levers that were never isolated;
-both are one-flag decisive checks, no engine source touched.**
+**Status: QUEUED as trial T1 of the Q4_K_S redirect (primary agent, ~15:45Z) — the baseline pass
+(MTP-on, the mission protocol) is running; Lever A's isolation (the MTP-off serve at 262k, one
+flag) runs right after it, on the Q4_K_S model. A first supporting data point landed: the Q4_K_S
+MTP-off/64k/slots-23/w5 empty reference read 28.10 tok/s (research/q4ks_ref/), matching the Q5's
+28.398 same-mode reading — the MTP-off mode's empty advantage reproduces on the smaller quant.
+See the Q4_K_S redirect entry at the bottom update log for the full plan.**
 
 - **What the clean bench measured (all source-bound):** the champion compose at max-context
   65536, cpu-threads 5, the tree's serve.sh (NO SAMPLING export → **the MTP OFF**, "drafts
@@ -1847,3 +1901,49 @@ both are one-flag decisive checks, no engine source touched.**
   _procstate.sh); the launcher's identity is unconfirmed (the shared harness temp area).
   The primary agent's "your 65536-ctx server" reading is corrected hereby. Signed: GLM 5.3
   Flash (Maya-s quant), research agent.
+
+## Update log (Q4_K_S redirect — primary agent)
+
+- **2026-11-17 ~15:45Z — THE Q4_K_S REDIRECT (user directive) — the primary agent took over the
+  serving switch (this commit).** The user's instruction: use the **Q4_K_S quant on disk**
+  (`/models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q4_K_S.gguf`,
+  20.43 GB, on disk since Nov 15) with Strata, **not the uncensored Q5_K_S**; confirm the smaller
+  quant's compatible KV cache; then climb — 2.00x at every measured cell, then keep pushing toward
+  **≥70 TPS overall**; check SUGGESTIONS.MD every ~15 min and annotate outcomes back (the standing
+  user rules from session #3 continue to bind).
+  (1) **Model files on disk (verified):** Q5_K_S 24.60 GB / Q4_K_M 21.78 GB / **Q4_K_S 20.43 GB** —
+  the same heretic Qwen3.6-35B-A3B architecture (753 tensors, the layout checked; the MTP block
+  present), only the expert quant differs. The Q4_K_S expert arena is **17.45 GiB vs the Q5_K_S's
+  21.14 GiB** (−3.69 GiB of host RAM pressure on a 26 GB box; ~1.65 MB per expert blob vs 2.01 MB).
+  (2) **The KV cache compatibility is VERIFIED LIVE**: a Q4_K_S server (65536 ctx) was already up on
+  port 30000 when this session started (launcher pid 532, started ~15:09Z, `--kv int4 --mtp 0
+  --cpu-threads 5`, the compose binary out/strata md5 8833c30b) and its engine log reads
+  "context 65536 cells, prompt chunk 1024, **KV cache int4**, MTP block loaded, 3.24 GiB of VRAM
+  free" + "hybrid experts: 23 of 256 per layer in VRAM (1.57 GiB)" — the int4 KV cache works
+  unchanged on the smaller quant (the KV geometry is architecture-, not weights-, dependent), and
+  **the slots ENGAGE at S=23** at 64k (more free VRAM than the Q5's S=15 at the same context).
+  (3) **First reference data point (research/q4ks_ref/empty.json, the bench pipeline validated on
+  the new model):** empty cell (512-token greedy decode) = **28.10 tok/s decode, peak 6.68 GiB** —
+  vs the Q5 clean-bench's 28.398 in the same MTP-off/64k/slots/w5 mode (its 64-token outputs vs
+  this 512 — not the same workload, recorded as a reference only). **Honest observation: the
+  smaller expert blobs did NOT move the MTP-off empty cell** (28.10 vs 28.40) — the MTP-off empty
+  cell is not pool-bytes-bound; per-layer overheads/attention/launch must bind there. That shapes
+  the trial queue below.
+  (4) **The mission-protocol baseline for the new model is RUNNING** (q4ks_baseline_pass.sh,
+  detached, chained on the ref bench's completion): the champion serving config (the compose
+  binary, STRATA_KQ256=1, MTP 2, greedy sampler, CT 8, KV int4, PREFILL 1024) at **262k server
+  context**, settle 900 s, then empty/ctx32k/ctx128k (512-token greedy, concurrency 1, NO
+  watchdog) → research/q4ks_baseline/<cell>.json + q4ks_baseline.done. These three numbers are
+  the Q4_K_S initial tps the 2.00x targets anchor to (the mission §4 protocol, auto-research.md).
+  (5) **The trial queue (drafted from what worked/hasn't, re-ranked for the Q4_K_S model):**
+  T1 = S15-A the MTP sampling-gate isolation at 262k (one flag: no SAMPLING export → the MTP
+  drafting off; the clean-bench hint says +26% empty on the Q5; the q5k kernel's engagement is
+  MTP-dependent — record honestly); T2 = the poolms capture on the Q4_K_S champion (the
+  strata_poolms binary exists; the Q5 capture read the pool ≈60% of the 110 ms step at
+  ~22 GB/s/layer vs the 28 GB/s warmed ceiling); T3 = S13's pattern microbench (server-stopped);
+  T4 = S8's staging shrink → the slots at 262k (the Q4_K_S staging is 0.91 GiB, smaller than the
+  Q5's 1.03); T5 = S2's split-K attention (the 128k lever; the uint4 fix rides in the compose
+  binary and applies model-independently). Negative records that still bind: CT variations (w=8
+  stays), MTP chain depth 3 (rejected on the Q5; re-verify cheaply only if the Q4_K_S acceptance
+  profile differs), THP (dropped by S12-B), the slot scheme at S=2 (dead in both prefill regimes).
+  Signed: GLM 5.3 Flash (Maya-s quant), primary agent.

@@ -1361,3 +1361,59 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   ~14–20 → the levers proceed, ≤~10 → the within-reader prefetch-distance lever is the big
   one) → S14 stays PARKED (the reopening condition: Lever A shows the pool ≥ ~60% of the
   step AND S3's slot path stays blocked).
+
+## Continuation #29 — primary agent, ~15:50Z (THE Q4_K_S REDIRECT: the user switched the model; the baseline is running)
+
+- **USER DIRECTIVE (binding, supersedes the Q5_K_S mission's model pin):** use the **Q4_K_S quant
+  on disk** with Strata, NOT the uncensored Q5_K_S; make sure the smaller quant has a compatible
+  KV cache; then double its speed at every measured point; keep pushing TPS up over time toward
+  **≥70 TPS overall** (the north star, not the 2x target); the optimization ideas are in
+  SUGGESTIONS.MD; keep working; every ~15 min share work with the other agent (annotate outcomes
+  back into SUGGESTIONS.MD). The mission's protocol (auto-research.md §4: 262k server context,
+  empty/32k/128k cells, 512-token greedy decode, concurrency 1, the guard set) continues to
+  define HOW numbers are measured; the model file changes.
+- **State found on takeover (~15:17Z):** a Q4_K_S server was ALREADY UP on port 30000 (launcher
+  pid 532, started ~15:09Z: `--kv int4 --mtp 0 --cpu-threads 5 --max-context 65536`, the compose
+  binary out/strata md5 8833c30b — the champion binary, verified). Between the last handoff entry
+  (~14:14Z) and this session: the Lever A poolms build (out/strata_poolms, 14:12Z) ran its
+  capture on the Q5 champion (the pool-ms lines in strata-qwen36.log: per-layer "1.2-2.2 ms (gu
+  0.8-1.7 / q 0.0 / down 0.4-0.9), 14-21 experts, 28.9-43.3 MB, 14.5-26.2 GB/s" — ~41 calls/step
+  ≈ 66 ms of pool time in the ~110 ms step ≈ 60%, at ~22 GB/s/layer average vs the 28 GB/s
+  warmed ceiling), the champion was restored 14:42Z, then the Q4_K_S server came up 15:09Z. The
+  poolms results are NOT yet annotated in SUGGESTIONS.MD/PROGRESS.md — an open obligation.
+- **KV cache compatibility VERIFIED LIVE (the user's question 2):** the Q4_K_S engine log reads
+  "context 65536 cells, prompt chunk 1024, KV cache int4, MTP block loaded, 3.24 GiB of VRAM
+  free"; the slots ENGAGE at S=23 (1.57 GiB) at 64k; a chat answer is coherent; the arena is
+  17.45 GiB (vs Q5's 21.14). The int4 KV cache needs no changes for the smaller quant (the KV
+  geometry is architecture-dependent only). The 262k-cell fit is expected inside the 7.9 GiB
+  guard (the Q5 peaked 7.35-7.38 with a 3.69 GiB larger arena; the Q4_K_S's GPU dense side is
+  0.19 GiB smaller) — the baseline pass verifies it.
+- **First reference data point (research/q4ks_ref/empty.json):** the Q4_K_S MTP-off/64k/slots-23/
+  w5 empty cell = **28.10 tok/s** (512-token greedy, peak 6.68 GiB) — vs the Q5's 28.398 in the
+  same mode (64-token outputs there; not the same workload, a reference only). The smaller expert
+  blobs did NOT move the MTP-off empty cell → that cell is not pool-bytes-bound; per-layer
+  overheads/attention/launch bind there. The ctx32k reference cell was running when the baseline
+  pass took over (chained; harvested next check-in).
+- **THE BASELINE IS RUNNING (detached, chained):** q4ks_baseline_pass.sh (the run_q4ksbase_sup.sh
+  supervisor) waits for the ref bench's REF_COMPLETE, then serves the champion config (MTP 2,
+  greedy sampler, CT 8, KV int4, PREFILL 1024, STRATA_KQ256=1, the compose binary) on the Q4_K_S
+  model at 262k server context, settles 900 s, benches empty/ctx32k/ctx128k (NO watchdog,
+  MODEL_PATH exported, failures counted) → research/q4ks_baseline/<cell>.json +
+  q4ks_baseline.done. These three numbers are the Q4_K_S initial tps; the 2x targets anchor to
+  them. New scripts (committed): research/serve_262k_q4ks.sh, research/q4ks_baseline_pass.sh,
+  research/run_q4ksbase_sup.sh, research/q4ks_ref_bench.sh, research/run_q4ksref_sup.sh.
+- **The trial queue (recorded in SUGGESTIONS.MD's redirect entry):** T1 = S15-A the MTP-off
+  isolation at 262k (one flag; the Q5 hint +26% empty; the full 3 cells decide); T2 = the poolms
+  capture on the Q4_K_S champion (the binary exists; the pool share on the new model); T3 = S13's
+  pattern microbench (server-stopped); T4 = S8's staging shrink → the slots at 262k; T5 = S2's
+  split-K attention. Negative records that still bind: CT (w=8), MTP chain depth 3, THP, S=2
+  slots. The q5k kernel is type-13-specific and will NOT engage on the Q4_K_S files (its
+  gate/up/down are Q4_K = type 12); the type-12 multi-token kernel engages with STRATA_KQ256=1
+  (the champion config carries it; the kqlog line verifies engagement live).
+- **Next check-ins (the ~15-min cadence):** harvest the ctx32k reference + the baseline cells as
+  they land; annotate SUGGESTIONS.MD + PROGRESS.md + this handoff; commit + push each turn
+  (signed GLM 5.3 Flash (Maya-s quant), no co-author line). Open obligations carried: the poolms
+  capture's annotation (the Q5 results above are unrecorded in the ledger files), the
+  promotion_ledger semantics stay Q5-bound (the Q4_K_S redirect opens its own ledger section in
+  PROGRESS.md), and the 70 TPS north star is recorded as the goal with the feasibility wall to be
+  measured on the new model (the S12-B 28 GB/s warmed ceiling still bounds the host path).

@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 1718.0660770027316,
+      "decode_ms": 74947.52161099314,
+      "output_tokens": 512,
+      "text": "It looks like your message might be cut off! \"Aut\" could refer to a few different things depending on context:\n\n- **AUT**: The ISO 3166-1 alpha-3 country code for **Austria**\n- **Autonomous / Automatic**: Commonly abbreviated as `aut` in engineering, programming, or automotive contexts\n- **Autumn**: Sometimes informally shortened\n- Or maybe you were typing a word like `auto`, `author`, `autumn`, or `autograph`?\n\nLet me know what you had",
+      "first": 41928.24343056,
+      "last": 42003.190952171
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 1065.0107649998972,
+      "decode_ms": 24493.16851200274,
+      "output_tokens": 512,
+      "text": "It looks like your message might be cut off! \"Aut\" could refer to a few different things depending on context:\n\n- **AUT**: The ISO 3166-1 alpha-3 country code for **Austria**\n- **Autonomous / Automatic**: Commonly abbreviated as `aut` in engineering, programming, or automotive contexts\n- **Autumn**: Sometimes informally shortened\n- Or maybe you were typing a word like `auto`, `author`, `autumn`, or `autograph`?\n\nLet me know what you had",
+      "first": 42004.282213704,
+      "last": 42028.775382216
+    }
+  ],
+  "decode_tps": 20.903787917398162,
+  "prefill_tps": 0.9389576451840809,
+  "ttft_ms": 1065.0107649998972,
+  "warmup_ttft_ms": 1718.0660770027316,
+  "peak_gib": 7.3291015625
+}

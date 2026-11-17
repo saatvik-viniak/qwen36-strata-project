@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 131072,
+  "prompt_tokens_actual": 124520,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 616076.6197379999,
+      "decode_ms": 47591.92960600012,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\" repeated many times.\n   - There's no explicit question or prompt at the end. It just ends with \"The judge\".\n   - The core message is about \"Autoresearch\" being a loop of change, measure, keep/undo, with a \"judge\" controlling time and validation.\n\n2.  **Identify Key Concepts:**\n   - **Autoresearch**: A systematic, iterative optimization process.\n   - **Loop**: Change one variable \u2192 Measure outcome \u2192 Keep if better \u2192 Undo if worse.\n   - **Judge**: Controls the process (owns the clock and the check), implying authority over timing, validation, and decision-making.\n   - **Repetition**: The text is repeated ~1000+ times, possibly to emphasize the concept, test AI behavior, or just as a stylistic choice.\n\n3.  **Determine Response Strategy:**\n   - Acknowledge the core concept clearly.\n   - Explain/expand on the metaphor (\"Autoresearch\", the loop, the judge).\n   - Note the repetition if relevant (maybe it's intentional for emphasis or a test).\n   - Ask how I can help with this concept (e.g., apply it to a specific domain, refine the process, explain it further, etc.).\n   - Keep it concise since the input is highly repetitive.\n\n4.  **Draft Response (Mental Refinement):**\n   You\u2019ve described a tight, iterative optimization loop: *change one variable \u2192 measure the result \u2192 keep it if it improves performance, revert if it doesn\u2019t*. The \u201cjudge\u201d metaphor nicely captures the idea of a central authority (or system) that controls timing, validation, and decision-making. This is essentially a disciplined A/B testing or single-factor experimentation framework, often used in engineering, product development, or algorithm tuning.\n\n   Since you repeated this definition many times, I assume you want to either:\n   - Apply it to a specific system or domain\n   - Refine the process (e.g., add statistical rigor, automation, or parallelization)\n   - Explore how the \u201cjudge\u201d role could be implemented (human, algorithmic",
+      "first": 16133.593838457,
+      "last": 16181.185768063
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 674733.5586519984,
+      "decode_ms": 43814.62516300235,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\" repeated many times.\n   - There's no explicit question or prompt at the end. It just ends with \"The judge\".\n   - The core message is about \"Autoresearch\" being a loop of change, measure, keep/undo, with a \"judge\" controlling time and validation.\n\n2.  **Identify Key Concepts:**\n   - **Autoresearch**: A systematic, iterative optimization process.\n   - **Loop**: Change one variable \u2192 Measure outcome \u2192 Keep if better \u2192 Undo if worse.\n   - **Judge**: Controls the process (owns the clock and the check), implying authority over timing, validation, and decision-making.\n   - **Repetition**: The text is repeated ~1000+ times, possibly to emphasize the concept, test AI behavior, or just as a stylistic choice.\n\n3.  **Determine Response Strategy:**\n   - Acknowledge the core concept clearly.\n   - Explain/expand on the metaphor (\"Autoresearch\", the loop, the judge).\n   - Note the repetition if relevant (maybe it's intentional for emphasis or a test).\n   - Ask how I can help with this concept (e.g., apply it to a specific domain, refine the process, explain it further, etc.).\n   - Keep it concise since the input is highly repetitive.\n\n4.  **Draft Response (Mental Refinement):**\n   You\u2019ve described a tight, iterative optimization loop: *change one variable \u2192 measure the result \u2192 keep it if it improves performance, revert if it doesn\u2019t*. The \u201cjudge\u201d metaphor nicely captures the idea of a central authority (or system) that controls timing, validation, and decision-making. This is essentially a disciplined A/B testing or single-factor experimentation framework, often used in engineering, product development, or algorithm tuning.\n\n   Since you repeated this definition many times, I assume you want to either:\n   - Apply it to a specific system or domain\n   - Refine the process (e.g., add statistical rigor, automation, or parallelization)\n   - Explore how the \u201cjudge\u201d role could be implemented (human, algorithmic",
+      "first": 16856.041296096,
+      "last": 16899.855921259
+    }
+  ],
+  "decode_tps": 11.685595804944592,
+  "prefill_tps": 184.54691989645445,
+  "ttft_ms": 674733.5586519984,
+  "warmup_ttft_ms": 616076.6197379999,
+  "peak_gib": 7.572265625
+}
