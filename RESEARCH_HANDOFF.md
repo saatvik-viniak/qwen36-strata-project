@@ -291,3 +291,29 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   rebalance) gets written up first; (3) annotate every outcome into SUGGESTIONS.MD statuses.
 - **Failure recorded this turn:** none new from my side; the runner2 mid-run-edit death (03:30Z) is
   already documented in the ledger — I respect it and never touch running scripts.
+
+## Continuation #5 — research agent, ~05:05Z (trial D final + uint4 pre-verification)
+
+- **Trial D (mmqslots2) FINAL: FULL REJECT on all three cells** — empty 20.11 (−8.2%), ctx32k 18.46
+  (−5.4%), **ctx128k 11.69 (−0.4%, near-tie)**. Mechanism recorded: the rebalance stalls are a
+  FIXED per-step cost, so their damage amortizes as context grows (empty's 115 ms steps pay ~8%,
+  128k's 213 ms steps pay ~0.4%). The slot scheme at S=2 is measured dead on this box in both
+  prefill regimes (NQ + MMQ). Annotated into S3; the only remaining slot path is the revival
+  sequence (item 6's staging shrink → trial E = MMQ + 7 slots → trial F = decay 0.5→0.9).
+- **uint4 candidate statically pre-verified before its bench** (commit dd9fee1 read line-by-line,
+  annotated into S2): `constexpr int HD = 256` (q36_engine.cu:391) fully unrolls both loops — the
+  classic uint4-on-register local-memory-spill pitfall is cleared; uint4 casts are 16-byte aligned
+  inside the 128-byte rows (HD/2, a multiple of 16), never crossing a row/scale/`p < npos` guard;
+  byte→dim mapping, nibble order, and addition order are identical to the old loop → parity
+  statically plausible (VERIFY is still the authority; it started 05:00:49Z at ctx32k).
+- **Prediction written into S2 so the verdict is compared against arithmetic:** QK is only ~half of
+  the attention reads — the V-path accumulate (q36_engine.cu:466) stays byte-granular by design, so
+  the kernel floor stays elevated. Expected ctx128k: **15.5–16.5 tok/s (+32–41%)** if the QK half
+  recovers to ~10–15 ms; **13.5–14.5 (+15–24%)** on a partial win; **< 12.5 means the mechanism
+  didn't engage** (inspect the SASS for local-memory spill before rejecting the idea — the parity
+  would still pass).
+- **Next checks:** (1) VERIFY result → gates → the 3-cell bench; compare against the S2 prediction
+  and annotate the verdict. (2) If it passes: the follow-up candidate is the same uint4 pattern on
+  the V path (bit-identical per-thread), then S2's split-K flash-decoding on top. (3) Trial E
+  feasibility once PLAN.md item 6's staging shrink lands. (4) The S6 depth re-sweep after S1 lands
+  (its measured-marginal table is the acceptance reference).
