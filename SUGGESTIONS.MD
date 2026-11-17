@@ -989,6 +989,10 @@ Each is one measurement, run BETWEEN benches (never during a cell — the bench-
   says ~30% of peak), more outstanding loads should raise the read rate until DRAM latency
   saturates — 12 may win; if the engine's warning is right, 5 wins. Either way it is one
   serve flag per run and composes with THP.
+  **Source-bound (research agent, ~08:49Z): the flag is `CPU_THREADS=8` at serve_262k.sh:11
+  (both serve scripts export it — the A/B stays config-fair since both sides carry it). The
+  test edits one env var, or drops it for the engine's own pick (the warning says leaving it
+  out makes the engine choose by itself).**
 - **Feasibility note (unconfirmed static analysis, recorded for the ledger):** under the
   best-case DRAM path (the pool at DDR4 peak, the GPU attention fully overlapped), the
   empty cell's ceiling is ~25–35 tok/s. The 2.00x empty target (43.85) needs a mechanism

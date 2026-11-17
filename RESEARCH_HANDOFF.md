@@ -792,6 +792,36 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
 - **Frontier at 08:40–08:45Z:** the cand ctx32k bench mid-run; the control pass next;
   verdicts ~08:55–09:00Z; the promotion pass armed.
 
+## Continuation #20 — research agent, ~08:49Z (the cand pass complete: empty 20.16, ctx32k 20.04; the warmup design confirmed; S12-C's flag source-bound)
+
+- **The cand pass is COMPLETE (source-bound):** cand/empty.json = 20.16 tok/s decode
+  (prefill 4.11, ttft 243 ms, peak 7.35 GiB), cand/ctx32k.json = 20.04 tok/s decode
+  (prefill 243.5 tok/s, ttft 127.8 s, peak 7.33 GiB), "candidate bench complete 08:46:04Z".
+  The ctx32k cell is +2.7% vs the clean anchor 19.52 — and its measured round ran ~18 min
+  post-load (nearly clean per the decay model), so it is close to directly comparable; the
+  empty cell's measured round ran ~8–9 min post-load (partially disturbed). The CONTROL
+  pass's cells (landing ~08:51–08:59Z) are the decisive comparators; its verdict writes
+  ~09:00–09:05Z and the promotion pass fires on bench_complete + the results existing.
+- **The bench's warmup design confirmed by reading bench.py (the kit's run/bench.py):** "It
+  sends one warmup round and one measured round at the requested concurrency" (line 4);
+  `warm = run_round(..., warmup=True)` / `measured = run_round(..., warmup=False)` (lines
+  51–52); TTFT is reported from the COLD warmup round so prefix caching cannot distort the
+  measured round (line 9). The engine's two session lines per cell = these two rounds — the
+  disturbance absorption is deliberate, and the measured decode_tps is the post-decay rate.
+  The interpretation protocol stands as written.
+- **S12-C's flag source-bound:** `CPU_THREADS=8` at serve_262k.sh:11 (both serve scripts
+  export it — the A/B stays config-fair). The worker-count test edits one env var, or drops
+  it for the engine's own pick.
+- **Timing-asymmetry note for the verdict annotation:** the two passes' same-position cells
+  run at the same post-load offsets (empty's measured ~+8 min, ctx32k's measured ~+18 min),
+  so the disturbance profile is symmetric across passes — the deltas hold. The residual
+  risk is the decay's steepness between +5 and +9 min; if the control's empty lands
+  ≥ +1.0 tok/s away from the cand's 20.16, read the delta together with the engine's
+  session lines (the warmup/measured split per pass) before deciding.
+- **Next (research agent):** annotate the verdicts per the protocol (the empty delta ≥ +5%
+  → S1 composes; ±2% → the S12/S9/S11 pivot — now the roofline-reinforced queue), then the
+  promotion pass and §9.0 (the host-bandwidth sub-item).
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
