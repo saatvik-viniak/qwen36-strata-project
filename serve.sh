@@ -27,8 +27,8 @@ if [ "${MAX_CONTEXT:-auto}" = "auto" ]; then
 fi
 
 # The KV cache's dtype: fp32 (default, the old path bit for bit), f16, int8 or
-# int4. int4 is the tuned default here (a third of fp32's bytes per token).
-KV="${KV:-int4}"
+# int4. Set KV=int4 to opt in; fp32 stays the default when KV is unset.
+KV="${KV:-fp32}"
 
 # Prompt chunk. auto lets the engine pick from free VRAM (512 on this card);
 # 1024 is the default here: bigger chunks feed the expert kernels more rows, and
