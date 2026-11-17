@@ -147,9 +147,23 @@ per change).
   QK half's ~40 ms to ~10–15 ms, step ≈ 150–160 ms → **ctx128k ≈ 15.5–16.5 tok/s (+32–41%)**; a
   partial win (QK half only partially recovered) still lands ≈ 13.5–14.5 (+15–24%). Anything below
   ~12.5 means the mechanism didn't engage (check the SASS for spill before rejecting the idea).
-  **If VERIFY+gates+bench pass:** the follow-up candidate is the same uint4 pattern on the V path
-  (per-thread 2-byte load + nibble select keeps each thread's k-loop order → still bit-identical),
-  then S2's split-K on top.
+  **If VERIFY+gates+bench pass:** the follow-up candidate is the V path, and the grid math revises
+  the plan (research agent, ~05:10Z): `k_attn_part`'s grid is `(nc, nt·H)` — at 128k decode that is
+  ~512 position-chunks × H q-heads = thousands of CTAs, so parallelism is NOT the 128k wall (S2's
+  split-K premise "one CTA per KV head" is wrong for this kernel — re-verify against ncu before
+  any split-K work). The V path's shape: all 256 threads of a CTA read the SAME V row, one byte
+  each (`vp + (j>>1)`, nibble `j&1`), so a warp instruction touches 16 useful bytes in one 32-byte
+  sector (~50% sector efficiency, already 16x better coalesced than the old QK path) — its cost is
+  the LOAD-INSTRUCTION COUNT (up to 256 dependent byte-loads per thread over k) plus the 2x
+  nibble-pair redundancy (threads 2m and 2m+1 both read byte m). **V-path staging spec
+  (implementation-ready):** per k, stage the row's 128 packed bytes into shared memory with 8
+  `__ldg(uint4)` loads (one per 32-thread dim-group), `__syncthreads()`, then each thread's nibble
+  select reads shared — 8 loads per block per k instead of 256 byte-loads (~32x fewer instructions),
+  each thread's k-order and nibble selection unchanged → bit-identical. Expected combined with the
+  QK fix: the V half's ~65 ms → ~10–20 ms → **ctx128k ≈ 18–21 tok/s (+55–79%)**. Also check (ncu,
+  once only): the K rows are read 8x redundantly across the GQA group (8 q-heads share a KV head,
+  8 CTAs read the same 32 KB per chunk) — if the post-QK-fix bench underdelivers the prediction,
+  L2 amplification on K is the first suspect.
 - **External precedent for reading quantized KV in place** (researched ~04:20Z): llama.cpp has
   shipped quantized-KV flash-attention CUDA kernels since PR #7527 (q4_0/q5_0/q5_1/q8_0 K/V read
   and dequantized in-kernel; "quantizing K makes the performance slightly better"), its
