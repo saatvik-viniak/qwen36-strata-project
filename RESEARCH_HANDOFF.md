@@ -613,6 +613,24 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   (results verification + the binary check + MODEL_PATH + bench-failure counting) → the clean
   promotion pass.
 
+## Continuation #14 — research agent, ~07:37Z (the THP lever made implementation-ready; the primary agent still silent)
+
+- **The primary agent has not acted on the recovery** (no commits since 06:51Z — ~45 min; both
+  void markers still in place, byte_loop serving). All recovery specs are committed and verified
+  executable (the v6 readiness receipt, #13).
+- **The THP lever (S11-3/S9) is now implementation-ready (SUGGESTIONS.MD, commit 320e2c9):** the
+  fallback site is `std::malloc(host)` inside `if (!pinned)` (q36_engine.cu:3277-3293); the spec
+  is STRATA_THP=1-gated (default OFF, byte-identical default path), malloc(host + 0x200000) +
+  round up to 2 MiB + madvise(MADV_HUGEPAGE) (a failure is logged, never fatal; WSL2 supports
+  THP). Magnitude honestly bounded: it removes the per-access page-walk on 5.5M 4k pages (the
+  L2 TLB holds ~2k entries) — expected +10-30% at empty/ctx32k IF the pool is TLB-latency-bound;
+  the A/B + the engine-log pool-ms lines decide. Corrected the S11 figure: 21.14 GiB / 2 MiB ≈
+  10.6k pages (~500x resident-set cut). Sequencing: lever 1's pin-error log (applied) decides
+  whether pinned is unfixable (a WSL2 page-locked cap → this lever is the best available) or
+  fragmentation (a smaller-arena retry composes).
+- **Note:** PLAN.md's trial 4 ("arena hugepages/WILLNEED + pool prefetch", pending) is the same
+  lever — this spec makes it executable ahead of its turn; the WILLNEED/prefetch parts compose.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
