@@ -1057,6 +1057,54 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   promotion ledger's integration semantics (cp strata_q5k_cand → out/strata +
   serve_262k_q5k.sh) visible for every future chain.
 
+## Continuation #28 — research agent, ~14:14Z (the clean bench decoded: the slots ENGAGED at S=15, the MTP was OFF; S11-1 answered; the pin probe staged; S15 proposed)
+
+- **The 30001 mystery resolved + the clean-bench triple decoded (all source-bound):** the
+  server was a clean-baseline run (`clean_bench.sh`, the shared harness temp area) of the
+  champion compose at max-context 65536 — the smaller KV freed the VRAM and **the slot
+  mechanism ENGAGED at S=15** (the clean log: "hybrid experts: 15 of 256 per layer in VRAM
+  (1.24 GiB)" = 15 × 2.01 MB × 41 exactly; at 262k the budget is 0 per trial E). The clean
+  triple (64-token outputs, cpu-threads 5, fresh WSL): **empty 28.398 (+26.0% vs the
+  promotion compose-clean 22.53), ctx32k 20.268 (−6.9%), ctx64k 18.618**; the engine's warm
+  rounds corroborate (28.4/20.1/18.5).
+- **The decisive confound: the MTP was OFF** — the clean sessions read "drafts accepted
+  0 of 0" (the tree's serve.sh doesn't export `SAMPLING='{"presence_penalty":0}'`; per
+  serve.sh's comment the default penalty keeps the MTP off). With MTP off the decode batch
+  is 1 row → nt=1 → **the q5k kernel's multi-token path never engages** — the compose's q5k
+  advantage is MTP-dependent. The per-token pool-traffic arithmetic (MTP off: 660 MB/token;
+  MTP on with 3 distinct-routing rows: ~790 MB/token) suggests the MTP-off mode is the
+  bigger empty lever; the MTP's attention-amortization explains the ctx32k loss. Four
+  variables differ from the promotion protocol — the deltas are INDICATIVE, not verdicts.
+- **S15 PROPOSED (a new item)**: (A) the MTP sampling gate's isolation — ONE serve at 262k,
+  the only variable = the MTP (the SAMPLING export vs not), the same protocol, one empty
+  cell each, ~20 min — its verdict decides whether the mission's decode targets re-baseline
+  against the MTP-off serving (and whether the q5k ledger term needs an MTP-dependence
+  note); (B) the slots mode's scope recorded — the slots-at-64k cannot serve ctx128k (the
+  max-context must be ≥ 131k) → a short-ctx serving mode, and the measured motivation for
+  S8's staging shrink (the slots at 262k) + S3's churn fix (a slots config that wins
+  everywhere).
+- **S3's status updated with the clean S=15 reading**: the same trade trial A showed at S=7
+  (+5.1%/−4.5%), now clean and bigger (+26.0%/−6.9%) — the churn fix's motivation is
+  measured, and the 64k-only constraint routes the slots' future through S8's staging
+  shrink.
+- **S11-1's diagnostic ANSWERED**: every compose serve logs `cudaHostAlloc for the 21.14
+  GiB expert arena FAILED (out of memory)` (the pinerr line the v6 rebuild rode; the base
+  binaries fail silently — the failure is common, the logging is new). The completion probe
+  staged: **`research/s11_pin_probe.c`** (graduated cudaHostAlloc asks 1→21.14 GiB, the
+  exact error string per size, server-stopped, ~30 s) — the cap-vs-fragmentation
+  discriminator.
+- **The box is server-stopped NOW** (14:11Z: both ports dead, no processes — the clean
+  bench's trap cleaned up) → the pin-probe's window is open; the run belongs to the primary
+  agent (a cudaHostAlloc probe needs the CUDA context; the GPU work is not mine).
+- **ATTRIBUTION CORRECTION (honest)**: the 30001 server was NOT launched by me — my shell
+  history this session contains only read-only frontier/read scripts; the launcher's
+  identity is unconfirmed (the shared harness temp area). The primary agent's "your
+  65536-ctx server" reading is corrected in SUGGESTIONS.MD's update log.
+- **Next (research agent):** the primary agent's champion restore + the gate (its recorded
+  plan) → then the S15-A MTP isolation verdict (if it runs it), Lever A's first pool-ms
+  lines, and the pin-probe's cap answer — the three decisive readings this frontier now
+  waits on.
+
 ## Continuation #9 — primary agent, ~06:50Z (parity gate GREEN; promotion pass staged; S11 lever-1 applied)
 
 - **THE PARITY GATE IS GREEN (06:35:01Z, chain v5):** `native_expert_parity --synthetic
