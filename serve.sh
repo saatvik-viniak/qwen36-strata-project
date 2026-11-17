@@ -30,6 +30,11 @@ fi
 # int4. Set KV=int4 to opt in; fp32 stays the default when KV is unset.
 KV="${KV:-fp32}"
 
+# KV streaming: keep this many cells of each attention layer in VRAM and the
+# whole K/V in mapped host RAM; the freed VRAM goes to expert slots. 0: all in
+# VRAM (the historic path). The engine's minimum is 20480 cells.
+KV_RESIDENT="${KV_RESIDENT:-0}"
+
 # Prompt chunk. auto lets the engine pick from free VRAM (512 on this card);
 # 1024 is the default here: bigger chunks feed the expert kernels more rows, and
 # 2048 costs ~0.26 GiB more buffers per step, which this card does not have.
@@ -69,7 +74,7 @@ CFG="$HERE/strata-qwen36.json"
 LOG="${ENGINE_LOG:-$HERE/strata-qwen36.log}"
 MODEL_GGUF="$GGUF" MAX_CONTEXT="$MAX_CONTEXT" PREFILL="$PREFILL" MTP="$MTP" \
 CPU_THREADS="$CPU_THREADS" PORT="$PORT" BIN="$BIN" MODEL_NAME="$MODEL_NAME" CFG="$CFG" \
-TOKENIZER_DIR="$TOKENIZER_DIR" LOG="$LOG" SAMPLING="$SAMPLING" \
+TOKENIZER_DIR="$TOKENIZER_DIR" LOG="$LOG" SAMPLING="$SAMPLING" KV_RESIDENT="$KV_RESIDENT" \
 "$PYTHON" - <<'PY'
 import json, os
 e = os.environ
@@ -82,6 +87,8 @@ if e["CPU_THREADS"] not in ("", "0"):
     args += ["--cpu-threads", e["CPU_THREADS"]]
 if e["KV"]:
     args += ["--kv", e["KV"]]
+if e.get("KV_RESIDENT") not in ("", "0"):
+    args += ["--kv-resident", e["KV_RESIDENT"]]
 EXPERT_SLOTS = e.get("EXPERT_SLOTS", "")
 if EXPERT_SLOTS:
     args += ["--expert-slots", EXPERT_SLOTS]
