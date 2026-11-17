@@ -18,11 +18,13 @@ medians 21.89/19.52/11.73 are the promotion reference.
 | # | lever | config | result | verdict |
 |---|---|---|---|---|
 | 0 | baseline | frozen §4 env | 21.89 / 19.52 / 11.73 (medians) | reference |
-| 1 | NO_MMQ → expert slots ~6-9 | STRATA_Q36_NO_MMQ=1 | pending | — |
-| 2 | CT 5 (workers=cores) | CPU_THREADS=5 | pending | — |
-| 3 | MTP 3 (draft depth) | MTP=3 | pending | — |
+| A | NO_MMQ → 7 slots + native prompt kernels | STRATA_Q36_NO_MMQ=1 | 23.00 / 18.64 / skipped (30-min rule) | reject: ctx32k −4.5%, prefill 3.4× slower |
+| B | CT 5 (workers=cores) | CPU_THREADS=5 | 21.69 / 19.33 / (running) | washing out (−0.9% / −1.0%) |
+| C | MTP 3 (draft depth) | MTP=3 | pending | — |
+| D | MMQ + 2 expert slots (B1 at the VRAM edge) | --expert-slots 2 | queued | need-check margin ~13 MB; may refuse |
 | 4 | arena hugepages/WILLNEED + pool prefetch | code | pending | — |
 | 5 | int4 attention 128-bit loads | code | pending | — |
+| 6 | MMQ staging sub-chunk shrink → slots+MMQ compose | code | pending | staging 2×max_layer→~4× smaller keeps 7 slots beside the fast prefill |
 
 ## Walls (evidence in THEORY.md)
 1. CPU expert pool: 0.630 GiB/step at ~6 GB/s effective (empty/32k = 85-90% of step time).

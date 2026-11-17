@@ -1,14 +1,11 @@
-[Benchmark] Trial A rejected at ctx32k (-4.5%); trial B ct5 washing out; trial D mmqslots2 queued
+[Engine] Slots mechanism grounded: rebalance every 32 rows, <=8 blocking 2.06 MB swaps + sync
 
-Trial A (NO_MMQ): empty +5.1% but ctx32k 18.64 (-4.5% vs 19.52, below the baseline's
-whole spread) and a 3.4x prefill regression — reject pending control re-measure. Its
-ctx128k cell is skipped under the new 30-min-per-bench budget rule (native prefill
-~70 tok/s would take ~65 min). Trial B (CT 5): empty -0.9%, ctx32k -1.0% — washing
-out vs the frozen CT 8. Placement math grounded in place_experts: MMQ staging 1.03
-GiB + the 768 MiB reserve leave no slot budget with MMQ on; --expert-slots bypasses
-the budget but must pass the need-check (S=2 passes by ~13 MB). Queued trial D
-(mmqslots2): MMQ + --expert-slots 2 — the mission's B1 lever at the VRAM edge,
-config-only, keeps the fast MMQ prompt path. watch_and_swap.sh + trial_runner2.sh
-run detached; the runner hard-fails a dead server to avoid 15-min stalls.
+The rebalance (q36_engine.cu) halves scores each pass and blocks the decode on the
+swap copies (~2-3 ms/step at 7 slots) — explaining trial A's pattern (empty +5.1%
+hit-saving vs 32k churn cost ~-4.5%, or noise given the 7.7% baseline spread).
+Composition recipe refined: the MMQ staging sub-chunk shrink keeps the fast prefill
+(same PCIe bytes, finer pipelining), but the slots' 32k churn needs a B2-style fix
+(non-blocking swap stream, weaker decay, or context-scaled kRebalanceEvery). Trial
+D's ctx32k (S=2, MMQ prefill) is the cheap sign test. SUGGESTIONS.MD check armed.
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)
