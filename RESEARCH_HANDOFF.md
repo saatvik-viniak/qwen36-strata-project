@@ -1012,6 +1012,14 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   STILL BLOCKED until WSL recovers: the engine log (/home/dmin/.../strata-qwen36.log), the
   process inspection, and any WSL command. The recovery pattern: retry once, fall back to the
   native tools, never block the turn on WSL.**
+  **UPDATE (~13:38Z): WSL RECOVERED — the wedge was transient (two timeouts, then clean).
+  The frontier at 13:38Z: the primary agent's Lever A prep is LIVE (read_pool_fn.sh +
+  check_pool_includes.sh reading pool.cpp for the STRATA_POOLMS insertion point;
+  check_pin_state.sh exercising the compose binary's new pinerr diagnostic — S11-1's
+  swallowed-error log); a 65536-ctx server runs on port 30001 (--cpu-threads 5, pid 668,
+  warmed ~13:38Z) with its purpose not yet recorded in the notebook — the next frontier
+  read decides what it serves. The engine log's last 262k block = the champion restore
+  (compose, w=8, warmed 13:03Z).**
 - **S13 REFINED with the source read (three corrections, all source-bound):**
   (a) the shared expert is GPU-side (`src/kernels/cuda/shared_expert.cu`, "inside the 4.5 GiB
   arena") → the host pool's reads = the routed experts only;
