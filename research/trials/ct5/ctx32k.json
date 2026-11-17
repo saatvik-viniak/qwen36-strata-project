@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 32768,
+  "prompt_tokens_actual": 31130,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 148917.22364099952,
+      "decode_ms": 25249.54653700115,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text.\n   - The core text is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This exact two-sentence block is repeated many times (I count roughly 100+ repetitions).\n   - The input ends abruptly with \"Autoresearch is a loop: change\" (cut off mid-sentence).\n\n2.  **Identify Key Characteristics:**\n   - **Repetition:** Extreme repetition of the same phrase.\n   - **Structure:** Two sentences per block, repeated identically.\n   - **Ending:** Incomplete/cut off at the end.\n   - **Content:** Describes a process called \"Autoresearch\" as a loop with specific steps (change, measure, keep if better, undo if not), and mentions \"The judge owns the clock and the check.\"\n\n3.  **Determine User Intent:**\n   - The user might be testing my ability to handle repetitive/cut-off input.\n   - They might want me to recognize the pattern, summarize it, or just acknowledge it.\n   - Since there's no explicit question, I should:\n     - Acknowledge the input.\n     - Note the repetition and the cutoff.\n     - Provide a concise summary/acknowledgment.\n     - Ask if they want me to do something specific with it (e.g., count repetitions, format it, analyze it, continue it, etc.).\n\n4.  **Formulate Response:**\n   - Acknowledge the repetitive structure.\n   - Note the cutoff at the end.\n   - Confirm understanding of the \"Autoresearch\" loop concept.\n   - Offer next steps.\n   - Keep it concise.\n\n   Draft:\n   You've pasted a highly repetitive block of text that repeats the same two sentences over 100 times, ending mid-sentence with \"Autoresearch is a loop: change\". \n\n   To confirm: you're describing **Autoresearch** as a continuous optimization loop\u2014modify one variable, measure the outcome, retain the change if it improves results, and revert it if it doesn\u2019t. The phrase \"The judge owns the clock and the check\" seems to emphasize that evaluation and",
+      "first": 10399.125345186,
+      "last": 10424.374891723
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 118676.8443480014,
+      "decode_ms": 26485.19552899961,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text.\n   - The core text is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This exact two-sentence block is repeated many times (I count roughly 100+ repetitions).\n   - The input ends abruptly with \"Autoresearch is a loop: change\" (cut off mid-sentence).\n\n2.  **Identify Key Characteristics:**\n   - **Repetition:** Extreme repetition of the same phrase.\n   - **Structure:** Two sentences per block, repeated identically.\n   - **Ending:** Incomplete/cut off at the end.\n   - **Content:** Describes a process called \"Autoresearch\" as a loop with specific steps (change, measure, keep if better, undo if not), and mentions \"The judge owns the clock and the check.\"\n\n3.  **Determine User Intent:**\n   - The user might be testing my ability to handle repetitive/cut-off input.\n   - They might want me to recognize the pattern, summarize it, or just acknowledge it.\n   - Since there's no explicit question, I should:\n     - Acknowledge the input.\n     - Note the repetition and the cutoff.\n     - Provide a concise summary/acknowledgment.\n     - Ask if they want me to do something specific with it (e.g., count repetitions, format it, analyze it, continue it, etc.).\n\n4.  **Formulate Response:**\n   - Acknowledge the repetitive structure.\n   - Note the cutoff at the end.\n   - Confirm understanding of the \"Autoresearch\" loop concept.\n   - Offer next steps.\n   - Keep it concise.\n\n   Draft:\n   You've pasted a highly repetitive block of text that repeats the same two sentences over 100 times, ending mid-sentence with \"Autoresearch is a loop: change\". \n\n   To confirm: you're describing **Autoresearch** as a continuous optimization loop\u2014modify one variable, measure the outcome, retain the change if it improves results, and revert it if it doesn\u2019t. The phrase \"The judge owns the clock and the check\" seems to emphasize that evaluation and",
+      "first": 10543.064461628,
+      "last": 10569.549657157
+    }
+  ],
+  "decode_tps": 19.331554469340897,
+  "prefill_tps": 262.3089632271997,
+  "ttft_ms": 118676.8443480014,
+  "warmup_ttft_ms": 148917.22364099952,
+  "peak_gib": 7.3740234375
+}

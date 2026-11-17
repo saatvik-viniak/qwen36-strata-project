@@ -1,7 +1,14 @@
-[Benchmark] Trial A nommq empty cell: 23.00 tok/s (+5.1% vs baseline 21.89), 7 expert slots in VRAM
+[Benchmark] Trial A rejected at ctx32k (-4.5%); trial B ct5 washing out; trial D mmqslots2 queued
 
-The relaunched trials run detached (pid 27821); port-race fix verified in production
-(nommq server bound cleanly after stop_server.sh's port-free poll). Add
-check_verdicts.sh to summarize trial cells vs baseline medians with A/B deltas.
+Trial A (NO_MMQ): empty +5.1% but ctx32k 18.64 (-4.5% vs 19.52, below the baseline's
+whole spread) and a 3.4x prefill regression — reject pending control re-measure. Its
+ctx128k cell is skipped under the new 30-min-per-bench budget rule (native prefill
+~70 tok/s would take ~65 min). Trial B (CT 5): empty -0.9%, ctx32k -1.0% — washing
+out vs the frozen CT 8. Placement math grounded in place_experts: MMQ staging 1.03
+GiB + the 768 MiB reserve leave no slot budget with MMQ on; --expert-slots bypasses
+the budget but must pass the need-check (S=2 passes by ~13 MB). Queued trial D
+(mmqslots2): MMQ + --expert-slots 2 — the mission's B1 lever at the VRAM edge,
+config-only, keeps the fast MMQ prompt path. watch_and_swap.sh + trial_runner2.sh
+run detached; the runner hard-fails a dead server to avoid 15-min stalls.
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)

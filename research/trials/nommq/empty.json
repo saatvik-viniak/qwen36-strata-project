@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 1,
+  "prompt_tokens_actual": 1,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 2520.0013800003944,
+      "decode_ms": 50819.93682199936,
+      "output_tokens": 512,
+      "text": "It looks like your message might be cut off! Did you mean **\"Aut\"** as in:\n- \ud83c\udde6\ud83c\uddf9 **Austria** (ISO country code: `AUT`)\n- \ud83e\udd16 **Autonomous** (e.g., autonomous systems/vehicles)\n- \ud83c\udf42 **Autumn**\n- \u270d\ufe0f **Author** (sometimes abbreviated as `Aut.`)\n- Or something",
+      "first": 8947.344056677,
+      "last": 8998.163993499
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 341.57739900001616,
+      "decode_ms": 22264.993441000115,
+      "output_tokens": 512,
+      "text": "It looks like you typed **\"Aut\"**. Could you clarify what you're referring to? For example:\n\n\ud83d\udd39 **AUT** = ISO country code for **Austria**  \n\ud83d\udd39 **Aut** = Common shorthand for *automatic",
+      "first": 8998.508404369,
+      "last": 9020.77339781
+    }
+  ],
+  "decode_tps": 22.99573998783094,
+  "prefill_tps": 2.9275941643901113,
+  "ttft_ms": 341.57739900001616,
+  "warmup_ttft_ms": 2520.0013800003944,
+  "peak_gib": 6.8779296875
+}

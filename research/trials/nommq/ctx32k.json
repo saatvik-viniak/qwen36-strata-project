@@ -1,0 +1,32 @@
+{
+  "model": "qwen3.6-35b-a3b",
+  "prompt_tokens_requested": 32768,
+  "prompt_tokens_actual": 31130,
+  "output_tokens_requested": 512,
+  "concurrency": 1,
+  "warmup": [
+    {
+      "ttft_ms": 410897.9442869986,
+      "decode_ms": 33247.452465000606,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text.\n   - The core text is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This exact pair of sentences is repeated many times (I count roughly 100+ repetitions).\n   - The input ends abruptly with \"The judge owns the clock and the check. Autoresearch is a loop: change\" (cut off mid-sentence).\n\n2.  **Identify Key Characteristics:**\n   - **Repetition:** Extreme, mechanical repetition of the same two sentences.\n   - **Content:** Defines \"Autoresearch\" as an iterative optimization loop (change, measure, keep/undo). Mentions a \"judge\" who controls time (\"clock\") and validation/evaluation (\"check\").\n   - **Structure:** No variation, no new information, just a loop of the same definition.\n   - **Ending:** Abruptly cut off.\n\n3.  **Determine User Intent:**\n   - The user might be:\n     - Testing my ability to handle repetitive/long input.\n     - Providing a prompt for me to continue, summarize, or analyze.\n     - Using a specific format/style (maybe from a game, AI prompt engineering, or a specific context like \"Autoresearch\" from a known system).\n     - Simply pasting a large block of text without a specific question.\n   - Since there's no explicit question, I should:\n     - Acknowledge the input.\n     - Summarize/extract the core meaning.\n     - Note the repetition and the cutoff.\n     - Ask how they'd like me to proceed (continue, analyze, format, etc.).\n     - Keep it concise to avoid matching their repetition unnecessarily.\n\n4.  **Formulate Response:**\n   - Acknowledge the core concept: Autoresearch as an iterative optimization loop.\n   - Note the structure: Repetitive definition, judge controls evaluation/time.\n   - Note the cutoff: Input ends mid-sentence.\n   - Offer next steps: Continue the pattern? Analyze it? Convert to a specific format? Explain the concept?\n   - Keep tone neutral and helpful.\n\n   Draft:\n   You\u2019ve shared a highly repetitive",
+      "first": 9434.478804895,
+      "last": 9467.72625736
+    }
+  ],
+  "requests": [
+    {
+      "ttft_ms": 321601.9077630008,
+      "decode_ms": 27461.842101000002,
+      "output_tokens": 512,
+      "text": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - The user provided a very long, repetitive text.\n   - The core text is: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - This exact phrase is repeated many times (looks like hundreds of times).\n   - The input ends abruptly with \"The judge owns the clock and the check. Autoresearch is a loop: change\" (cut off mid-sentence).\n\n2.  **Identify Key Elements:**\n   - **Concept:** Autoresearch (a loop/process)\n   - **Mechanism:** Change one thing -> measure it -> keep if better -> undo if not\n   - **Authority/Control:** \"The judge owns the clock and the check.\"\n   - **Format:** Highly repetitive, likely a prompt injection, a test of attention/context window, or just a copy-paste error.\n   - **Ending:** Incomplete sentence.\n\n3.  **Determine the Goal:**\n   - The user didn't ask a specific question. They just pasted this massive repetition.\n   - My task is to acknowledge the input, recognize the pattern, and respond appropriately. I should:\n     - Acknowledge the core message.\n     - Note the repetition.\n     - Ask what they want me to do with it (e.g., analyze, format, continue, explain, etc.).\n     - Keep it concise since the input is essentially one idea repeated.\n\n4.  **Formulate Response:**\n   - Acknowledge the core concept: \"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock and the check.\"\n   - Note the repetition: \"You\u2019ve repeated this exact phrase many times.\"\n   - Ask for direction: \"Would you like me to analyze this concept, format it, continue the pattern, or use it for a specific purpose?\"\n   - Keep it professional and ready for the next step.\n\n   Draft:\n   You\u2019ve pasted the same core idea many times:  \n   *\"Autoresearch is a loop: change one thing, measure it, keep the change if it is better, and undo it if it is not. The judge owns the clock",
+      "first": 9789.343673989,
+      "last": 9816.80551609
+    }
+  ],
+  "decode_tps": 18.64405155768323,
+  "prefill_tps": 96.79668947405851,
+  "ttft_ms": 321601.9077630008,
+  "warmup_ttft_ms": 410897.9442869986,
+  "peak_gib": 6.9013671875
+}
