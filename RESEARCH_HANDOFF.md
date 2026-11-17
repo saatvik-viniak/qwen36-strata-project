@@ -420,3 +420,57 @@ All my commits are signed GLM 5.3 Flash (Maya-s quant), no co-author line.
   uint4 patch rides along) and is building. Its A/B is internally fair (both sides carry the
   watchdog + the disturbance); its control serves the uint4-config binary, NOT the champion
   config — the same-day champion-config re-measure remains an open obligation for the frontier.
+
+## Continuation #7 — primary agent, ~06:35Z (uint4 verdict filed; chain v4 compose build; trial E deferred)
+
+- **Chain history correction (the record must be exact):** v3 (pid 88545) was killed in its wait
+  loop at ~06:07Z BEFORE anything ran — no build ever started under it. The "picked up the verdict
+  at 06:09:27Z" line above is v4's log header (the v3/v4 log file is the same path, overwritten at
+  each launch). The chain now running is **v4 (pid 89941)**, which read
+  `research/uint4_verdict.txt` = **keep** at ~06:15Z and started the build (cmake at 06:15:54Z).
+- **The verdict file = keep — the compose decision:** one chain beats two-plus-a-compose-bench on
+  time; the chain's cmp gate validates the COMBINATION bit-for-bit (uint4 measured 10/10, q5k
+  scratch 1600/1600 + the harness gate runs in the chain); ctx128k's +52% is already measured (the
+  watchdogged number is conservative — the confound costs ~3-5% at the GPU-bound 128k cell, not
+  the empty cell's ~17%). The empty/ctx32k cells: the q5k A/B's two passes carry the SAME
+  treatment (25-s watchdog + each pass's own post-load window) → the DELTA is valid even though
+  the absolute numbers are depressed; the champion-config same-day re-measure obligation (#6's
+  open item) is discharged by v4's control pass at empty/ctx32k and by the clean promotion pass at
+  ctx128k.
+- **v4's three fixes over v2/v3 (all caught while the chain still waited; the kill-while-waiting
+  rule was honored each time):** (1) the reconcile reads `research/uint4_verdict.txt`
+  ("keep"/"revert", default revert) — cand_runner writes `bench_complete` into cand_uint4.done on
+  ANY completed bench, win or loss, so the done file could not carry the verdict; (2) the A/B's
+  base binary is **out/strata_byte_loop** (the true champion) — cand_runner never restores the
+  champion after a completed bench, so out/strata held the uint4 candidate when v2/v3 would have
+  preserved it as "base" and its control pass would have served the uint4-config binary; (3) the
+  watchdog polls every 25 s (the infra fix; the 3-s poll stole ~1 core on WSL2). The bench cells
+  are empty+ctx32k (the pool-dot wall where S1 acts); ctx128k runs in the clean promotion pass.
+- **The promotion pass protocol (after the chain's A/B, run by the primary agent):** serve
+  out/strata_q5k_cand (the compose binary), settle ~15 min after load (the disturbance fix), bench
+  empty/ctx32k/ctx128k with NO watchdog, compare against the clean anchors (21.89/19.52/11.73).
+  Every cell must be ≥ the champion for promotion; the champion restart uses out/strata_byte_loop
+  restore semantics. If the compose wins empty/32k but the 128k attribution is needed, the
+  candidate's 128k vs the anchor decides (q5k is predicted neutral there; uint4's +52% is the
+  expected carry).
+- **Trial E sized and DEFERRED (place_experts traced with the placement lines):** at 262k MMQ
+  fr ≈ 1.28-1.30 GiB, staging = 2×max_layer ≈ 1.03 GiB, budget2 = fr − 768 MiB ≈ 0.53 GiB →
+  slot_bytes = 0 (budget2 < staging; the strict `>` keeps a 256 MiB reserve at 0 too — the
+  small-reserve variant is DEAD at 262k). Only the full staging-shrink surgery (stream
+  picked-expert groups through a small window; the MMQ WeightTab already supports per-launch
+  expert tables) reaches ~11-12 slots — but slots measurably cost ctx32k (−4.5% at S=7, −5.4% at
+  S=2) and buy ~+5% empty: poor expected value vs S1/S11. Re-evaluate after §9.0 profiling.
+- **V-path disagreement recorded (S10.2 vs the notebook):** the supplementary agent's revised
+  +62-74% conflicts with the sector math — the V loop's warp reads bytes w×16..w×16+15 per
+  row-iteration; adjacent warps' 16-B halves form fully-used 32-B sectors within the same load
+  instruction → ~no sector amplification (vs the QK loop's 1 useful byte per sector). The uint4-on-V
+  treatment would save instructions/L1 pressure, not bandwidth; the Q4_K decode-once precedent
+  (1.01-1.13×) bounds that. The ncu counters settle it in §9.0.
+- **Next steps (ordered):** (1) harvest the chain v4 A/B (~07:30Z): the parity harness ratio +
+  the empty/ctx32k delta + the regime-test verdict (empty ≥ +5% = compute-bound share → S1
+  composes; ±2% = latency-bound → pivot to S9/S11's access-path levers); (2) the clean promotion
+  pass (~2 h, no watchdog, settle, 3 cells); (3) §9.0 profiling during a NON-measured decode
+  (profile_pool.sh/profile_gpu.sh): the pool/attention/overhead split, the ncu V-path counters,
+  S11's three cheapest-first levers (the pin-error log is one line, the --pool-workers 12 SMT test
+  is config-only); (4) after S11's verdicts, the S6 depth re-sweep (mission C5's re-measure point)
+  if S1 composed.

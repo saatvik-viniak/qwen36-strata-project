@@ -1,12 +1,31 @@
-[Engine] q5k chain v2: parity run after the server stop, control serves the base binary
+[Engine] Record uint4 verdict (ctx128k +52%, mechanism engaged), chain v4 compose build, trial E deferred
 
-Two defects found in cand_q5k_runner.sh v1 while the uint4 chain ran: (1) the
-parity test allocates a CUDA context beside the champion's ~7.4 GiB - moved
-after the server stop; (2) the control pass would have served the kernel build
-instead of the base binary - the base is copied back onto out/strata first.
-The v1 process was killed while still in its wait loop (nothing had run), the
-script rewritten complete (never edited mid-run), relaunched as pid 75866.
-Also: the uint4 candidate passed its cmp gate bit-identical (10 of 10 prompts)
-and is in its 3-cell bench.
+The uint4 candidate's ctx128k landed 17.77 tok/s (+52% vs the clean anchor
+11.73; measured decode 28.81 s vs 43.91 s) - the QK byte loop's stride-128
+sector thrash throttled the whole attention kernel and the uint4 fix removed
+it, exceeding the S2 prediction. The empty/ctx32k cells carry NO VERDICT: the
+cand_runner bench polled nvidia-smi every 3 s (1-2 s of 100% CPU per call on
+WSL2, ~1 core stolen at the pool-bound empty cell) while the baseline
+reference and trial_runner3 ran without a watchdog (grep-verified), plus a
+post-load disturbance decaying over ~15+ min from the chain's 4-server
+cycling. Bit-parity held everywhere (VERIFY 6103 comparisons 0 mismatches,
+cmp 10/10 bit-identical).
+
+Verdict file = keep: the patch rides into the q5k compose build. Chain v4
+(pid 89941) fixed three defects caught while it still waited: the reconcile
+reads research/uint4_verdict.txt (cand_runner writes bench_complete on ANY
+completed bench and never restores the champion, so out/strata held the uint4
+binary), the A/B's base is out/strata_byte_loop (the true champion), and the
+watchdog polls every 25 s. Bench cells empty+ctx32k; ctx128k runs in the
+clean promotion pass (no watchdog, ~15 min post-load settle, 3 cells vs the
+clean anchors 21.89/19.52/11.73).
+
+Trial E sized and DEFERRED: at 262k MMQ fr ~1.28 GiB, staging ~1.03 GiB eats
+the whole budget (the small-reserve variant gives 0 slots - budget2 < staging
+with the strict >); only the full staging-shrink surgery reaches ~11-12
+slots, but slots cost ctx32k (-4.5% at S=7, -5.4% at S=2) and buy ~+5% empty.
+V-path disagreement recorded: the revised +62-74% conflicts with the sector
+math (adjacent warps' 16-B halves form fully-used sectors); ncu settles in
+the 9.0 profiling pass.
 
 Signed-off-by: GLM 5.3 Flash (Maya-s quant)

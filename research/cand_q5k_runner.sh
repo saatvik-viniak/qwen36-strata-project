@@ -1,24 +1,39 @@
 #!/bin/bash
 # cand_q5k_runner.sh — the Q5_K multi-token kernel candidate chain (SUGGESTIONS.MD S1 /
 # PLAN.md #7), under the 30-min-per-bench budget. Waits for cand_uint4.done, then:
-#   0. reconcile the tree: if the uint4 candidate was REJECTED, revert its patch first
-#      (the kernel A/B must be kernel-only);
+#   0. reconcile the tree with the PRIMARY AGENT's verdict (research/uint4_verdict.txt,
+#      written after the uint4 cells are harvested: "keep" or "revert"; default revert):
+#      cand_runner.sh writes "bench_complete" into cand_uint4.done on ANY completed bench,
+#      win or loss, so the done file alone cannot say whether the uint4 patch stays;
 #   1. apply_q5k.py (idempotent; the dispatch is STRATA_KQ256-gated = inert default);
-#   2. preserve out/strata -> out/strata_q5k_base (the A/B's old binary), build via
-#      build_kit.sh, keep the new binary as out/strata_q5k_cand;
+#   2. preserve the TRUE CHAMPION (out/strata_byte_loop, NOT out/strata: cand_runner.sh
+#      does not restore the champion after a completed bench, so out/strata holds the
+#      uint4 candidate binary) -> out/strata_q5k_base, build via build_kit.sh, keep the
+#      new binary as out/strata_q5k_cand;
 #   3. STOP the server (the parity test allocates a CUDA context beside the champion's
-#      ~7.4 GiB — the 8 GiB card must be free), then build the parity test tree (separate
+#      ~7.4 GiB - the 8 GiB card must be free), then build the parity test tree (separate
 #      cmake dir, STRATA_BUILD_TESTS=ON) and run native_expert_parity --synthetic
 #      q5_K/q5_K at the model's shapes: bit-for-bit against ggml-cpu's vec_dot for
 #      1..8 tokens + the honest 4-token ratio;
 #   4. gates: solo old (base binary, no env) vs solo new (kernel binary, STRATA_KQ256=1)
 #      vs cmp (bit-identical required);
-#   5. bench: candidate 3 cells (serve_262k_q5k.sh), then the BASE binary back on
-#      out/strata and the control 3 cells (serve_262k.sh);
+#   5. bench: candidate 2 cells (serve_262k_q5k.sh: empty + ctx32k, the pool-dot wall
+#      where S1 acts; ctx128k is predicted neutral for a CPU-pool kernel and each 128k
+#      bench costs ~23 min - it runs in the promotion pass instead), then the champion
+#      binary back on out/strata and the control 2 cells (serve_262k.sh); the control
+#      doubles as the same-watchdog reference for the confounded uint4 empty/ctx32k
+#      cells (the cand_runner bench polled nvidia-smi every 3 s, stealing ~1 core on
+#      WSL2; this chain's watchdog polls every 25 s for the same reason);
 #   6. leave the champion (base binary) serving; results in research/cand_q5k/.
-# Any failure-restores the base binary + champion serving before exiting.
-# v2 (05:25Z): the parity run moved AFTER the server stop; the control pass serves the
-# base binary explicitly. The v1 process was killed while still in its wait loop.
+# Any failure restores the base binary + champion serving before exiting.
+# v4 (06:05Z): the base binary is out/strata_byte_loop (the true champion - cand_runner
+# left the uint4 candidate on out/strata after its completed bench), the final restore
+# likewise, and the watchdog polls every 25 s (the 3 s poll stole ~1 core on WSL2 and
+# confounded the uint4 empty/ctx32k cells). v3 (05:50Z): the reconcile reads
+# research/uint4_verdict.txt ("keep"/"revert", default revert) instead of trusting
+# cand_uint4.done's "bench_complete" (which a losing bench also writes). v2 (05:25Z)
+# moved the parity run after the server stop and made the control pass serve the base
+# binary explicitly.
 WS=/mnt/c/Users/Admin/Auto-research-agent/Runtime/projects/saatvik-viniak/qwen36-strata-project
 PY=/opt/strata/venv/bin/python
 BASE=http://127.0.0.1:30000
@@ -26,7 +41,7 @@ GGUF=/models/qwen36-heretic/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preser
 C=$WS/research/cand_q5k
 DONE=$WS/research/cand_q5k.done
 LOG=$WS/research/cand_q5k.log
-echo "== cand_q5k_runner v2 up $(date -u +%F_%TZ) ==" > "$LOG"
+echo "== cand_q5k_runner v3 up $(date -u +%F_%TZ) ==" > "$LOG"
 
 restore_champion () {   # the base binary back on the port (the champion config)
   bash "$WS/research/stop_server.sh" >> "$LOG" 2>&1
@@ -36,31 +51,48 @@ restore_champion () {   # the base binary back on the port (the champion config)
   echo "champion restored $(date -u +%F_%TZ)" >> "$LOG"
 }
 
-# 0. wait for the uint4 chain (up to 2.5 h)
+# 0. wait for the uint4 bench (up to 2.5 h)
 for i in $(seq 1 300); do
   [ -f "$WS/research/cand_uint4.done" ] && break
   sleep 30
 done
 [ -f "$WS/research/cand_uint4.done" ] || { echo "uint4 chain never finished; aborting" >> "$LOG"; exit 1; }
-VERDICT=$(cat "$WS/research/cand_uint4.done" 2>/dev/null)
+echo "uint4 bench done $(date -u +%F_%TZ)" >> "$LOG"
+
+# 0a. wait for the primary agent's harvested verdict (up to 45 min; default revert)
+VERDICT=revert
+for i in $(seq 1 90); do
+  if [ -f "$WS/research/uint4_verdict.txt" ]; then
+    VERDICT=$(cat "$WS/research/uint4_verdict.txt" 2>/dev/null)
+    break
+  fi
+  sleep 30
+done
 echo "uint4 verdict: $VERDICT $(date -u +%F_%TZ)" >> "$LOG"
 mkdir -p "$C"
 rm -f "$DONE"
 
 cd /home/dmin/qwen36-strata-project || exit 1
 
-# 0b. reconcile: a rejected uint4 must not ride along in the kernel A/B
-if [ "$VERDICT" != "bench_complete" ]; then
+# 0b. reconcile: the kernel A/B must be kernel-only
+if [ "$VERDICT" != "keep" ]; then
   python3 "$WS/research/revert_uint4.py" >> "$LOG" 2>&1 || { echo "uint4 revert FAILED" >> "$LOG"; echo "revert_failed" > "$DONE"; exit 1; }
+  echo "uint4 patch reverted (kernel-only A/B) $(date -u +%F_%TZ)" >> "$LOG"
+else
+  echo "uint4 patch KEPT per verdict (the q5k build rides on it) $(date -u +%F_%TZ)" >> "$LOG"
 fi
 
 # 1. apply the kernel (idempotent, md5-guarded)
 python3 "$WS/research/apply_q5k.py" >> "$LOG" 2>&1 || { echo "apply_q5k FAILED" >> "$LOG"; echo "apply_failed" > "$DONE"; exit 1; }
 echo "kernel applied $(date -u +%F_%TZ)" >> "$LOG"
 
-# 2. preserve + build
-if [ ! -f out/strata_q5k_base ]; then
+# 2. preserve the TRUE CHAMPION + build
+if [ -f /home/dmin/qwen36-strata-project/out/strata_byte_loop ]; then
+  cp /home/dmin/qwen36-strata-project/out/strata_byte_loop /home/dmin/qwen36-strata-project/out/strata_q5k_base \
+    || { echo "cannot preserve the champion binary" >> "$LOG"; exit 1; }
+else
   cp out/strata out/strata_q5k_base || { echo "cannot preserve the base binary" >> "$LOG"; exit 1; }
+  echo "WARN: out/strata_byte_loop missing; preserved out/strata as base" >> "$LOG"
 fi
 echo "base binary preserved (out/strata_q5k_base) $(date -u +%F_%TZ)" >> "$LOG"
 if bash build_kit.sh >> "$LOG" 2>&1; then
@@ -134,7 +166,7 @@ watchdog () {   # $1 = the vram.log file
       pkill -TERM -f 'bench\.py' 2>/dev/null
       break
     fi
-    sleep 3
+    sleep 25
   done
 }
 run_cells () {   # $1 = serve script, $2 = output dir, $3 = watchdog log
@@ -143,7 +175,7 @@ run_cells () {   # $1 = serve script, $2 = output dir, $3 = watchdog log
     echo "server never healthy ($(date -u +%F_%TZ))" >> "$LOG"; return 1; }
   echo "server healthy $(date -u +%F_%TZ)" >> "$LOG"
   watchdog "$3" & WATCHDOG=$!
-  for CELL in empty ctx32k ctx128k; do
+  for CELL in empty ctx32k; do
     case "$CELL" in
       empty)   PT=1 ;;
       ctx32k)  PT=32768 ;;

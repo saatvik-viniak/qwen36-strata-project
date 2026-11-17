@@ -20,12 +20,12 @@ medians 21.89/19.52/11.73 are the promotion reference.
 | 0 | baseline | frozen §4 env | 21.89 / 19.52 / 11.73 (medians) | reference |
 | A | NO_MMQ → 7 slots + native prompt kernels | STRATA_Q36_NO_MMQ=1 | 23.00 / 18.64 / skipped (30-min rule) | reject: ctx32k −4.5%, prefill 3.4× slower |
 | B | CT 5 (workers=cores) | CPU_THREADS=5 | 21.69 / 19.33 / 11.71 | reject: a wash on every cell (−0.9% / −1.0% / −0.2%) |
-| C | MTP 3 (draft depth) | MTP=3 | running (trial_runner3) | — |
-| D | MMQ + 2 expert slots (B1 at the VRAM edge) | --expert-slots 2 | queued | need-check margin ~13 MB; may refuse |
+| C | MTP 3 (draft depth) | MTP=3 | 20.81 / 18.55 / 10.92 | reject: −4.9 / −5.0 / −6.9% on every cell; MTP stays 2 |
+| D | MMQ + 2 expert slots (B1 at the VRAM edge) | --expert-slots 2 | 20.11 / 18.46 / 11.69 | reject: −8.2 / −5.4 / −0.4%; the fixed rebalance stalls amortize as ctx grows; S=2 dead in both prefill regimes |
 | 4 | arena hugepages/WILLNEED + pool prefetch | code | pending | — |
-| 5 | int4 attention 128-bit loads | code (dd9fee1: uint4 QK read, 16x fewer L1 tx) | candidate built into main, pending WSL build + VERIFY + bench | attention is transaction-bound (45-57x above the DRAM floor) — the 128k cell's main lever |
-| 6 | MMQ staging sub-chunk shrink → slots+MMQ compose | code | pending | staging 2×max_layer→~4× smaller keeps 7 slots beside the fast prefill |
-| 7 | Q5_K multi-token AVX-2 expert kernels | code | in chain (07a2766; cand_q5k_runner.sh pid 75509 waits for cand_uint4.done) | type 13 gu+down fall to ggml's single-token AVX2-branch dot (the build IS AVX2 — the earlier AVX1 note was wrong); scratch parity 1600/1600; the honest 4-token ratio comes from native_expert_parity in the chain |
+| 5 | int4 attention 128-bit loads | code (dd9fee1: uint4 QK read, 16x fewer L1 tx) | ctx128k 17.77 (+52%, mechanism ENGAGED — the QK sector thrash throttled the whole kernel); empty/ctx32k carry no verdict (the bench's 3-s nvidia-smi watchdog + the post-load disturbance confound them) | keep verdict written (research/uint4_verdict.txt): the patch rides into the q5k compose build; the clean promotion pass (no watchdog, post-load settle, 3 cells vs the clean anchors) decides |
+| 6 | MMQ staging sub-chunk shrink → slots+MMQ compose | code | DEFERRED (sized 2026-11-17 ~06:10Z): at 262k MMQ fr ≈ 1.28 GiB, staging 1.03 GiB eats the whole budget (the small-reserve variant gives 0 slots — budget2−staging ≤ 0 either way); the full surgery (WeightTab group streaming) is the only path to ~11-12 slots, but slots measurably cost ctx32k (−4.5% at S=7, −5.4% at S=2) and buy ~+5% empty | poor expected value vs S1/S11; re-evaluate after §9.0 profiling |
+| 7 | Q5_K multi-token AVX-2 expert kernels | code | chain v4 building (pid 89941, verdict=keep → the compose build q5k+uint4; parity harness + STRATA_KQ256=1 gates + empty/ctx32k A/B vs the champion control) | two-sided prediction: empty ≥ +5% = the pool has a compute-bound share (S1 composes); ±2% = latency-bound → pivot to S9/S11's access-path levers |
 
 ## Walls (evidence in THEORY.md)
 1. CPU expert pool: 0.630 GiB/step at ~6 GB/s effective (empty/32k = 85-90% of step time).
