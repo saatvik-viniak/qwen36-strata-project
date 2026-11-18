@@ -3495,7 +3495,7 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
     }
     // host memory: every expert, pinned where the driver allows it (the prompt's stream and the slot copies).
     // 5.6: STRATA_Q36_PIN_GIB=<GiB> pins a BUDGET instead of one 17.45 GiB ask that WSL2's page-lock
-    // cap refuses on every serve: a graduated ladder 12->8->6->4->2->1 GiB, the granted prefix holds
+    // cap refuses on every serve: a graduated ladder 15->14->13->12->8->6->4->2->1 GiB, the granted prefix holds
     // whole layer slices, and the arena's remainder stays pageable (malloc; its pages commit as the
     // walk memsets them). Unset = the old single ask, byte for byte. The pin speeds the slot-replacement
     // copies and the prompt stream; the pool's own reads stay DRAM-bound either way.
@@ -3516,7 +3516,7 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
         if (qv >= 1) E.q_fills = qv;
     }
     if (const char* pin_env = std::getenv("STRATA_Q36_PIN_GIB")) {
-        static const int ladder[] = {12, 8, 6, 4, 2, 1};
+        static const int ladder[] = {15, 14, 13, 12, 8, 6, 4, 2, 1};
         int start = std::atoi(pin_env);
         if (start <= 0) start = 8;
         for (int g : ladder) {
