@@ -1398,6 +1398,15 @@ struct Engine {
     bool use_graph = true;
     int mtp_d = 0;   // MTP drafts per speculative step (0: none; greedy requests only)
 
+    // STRATA_Q36_PROFILE: a coarse host-side decomposition of the decode step, zero cost when unset.  The
+    // wrapper's decode loop turns prof_dec on (prompt feeds also run T == 1 forwards); forward times the whole
+    // pass and its layers loop, layer() times its MoE region and the region's CPU pool call, and every 32
+    // steps a mean lands on stderr as a PROF line.
+    bool prof = false;
+    bool prof_dec = false;
+    int prof_n = 0;
+    double prof_step = 0, prof_layers = 0, prof_moe = 0, prof_pool = 0;
+
     // ---- sessions: the conversation states.  One for a single-request engine; --batch N keeps N, each with its own
     // recurrent state and KV cache, so N requests run at once: their rows share one decode window (forward_rows).  The
     // members conv / S / kc / vc / pos / hlast above are the CURRENT session's (select() swaps them).
@@ -1414,6 +1423,7 @@ struct Engine {
         std::vector<ImgKey> imgs;           // the pictures among them
         bool active = false;                // a batch slot is decoding in it
         uint64_t used = 0;                  // when it was last used (the LRU pick)
+        bool ended = false;                 // the last reply in it ended at EOS: the state cannot continue it
     };
     std::vector<Sess> sess;
     int n_sess = 1, cur = 0;
@@ -2386,6 +2396,7 @@ struct Engine {
             mm(L.wo, att, y, T);
         }
         add_rms_post(L, T);
+        const Clock::time_point prof_m0 = prof_dec ? Clock::now() : Clock::time_point{};
         // routed experts (one token: the router and the shared expert's gate in one product, the gate its last row)
         const bool one = T == 1;
         // a decode batch of up to 8 rows takes the router and the shared expert's gate in one product too (rows of 257) when the fused
@@ -2456,9 +2467,12 @@ struct Engine {
             mm(L.sh_down, shh, sy, T);
         }
         if (!ext) f32mm(L.sh_gate_inp, h, sgate, N, 1, T);
+        const Clock::time_point prof_p0 = prof_dec ? Clock::now() : Clock::time_point{};
         if (hy_rows) moe_hybrid_cpu(li, T);   // the CPU pool's experts (while the GPU runs the rest), merged
+        if (prof_dec) prof_pool += ms_since(prof_p0);
         // the combine, the shared expert's gate, the residual add and the next norm in one launch
         moe_end(T, prow, sy, ext ? logits_r + g.n_expert : sgate, wn, hout, ext ? (int) g.n_expert + 1 : 1);
+        if (prof_dec) prof_moe += ms_since(prof_m0);
     }
 
     /// The main model over T rows (device `tok`, positions p0 .. p0 + T - 1, also at *pos0): hmain gets every row's
@@ -2467,6 +2481,7 @@ struct Engine {
     void forward(int T, int64_t p0, int heads, bool graph_mode, bool verify) {
         const auto& g = m->g;
         const int N = (int) g.n_embd;
+        const Clock::time_point prof_f0 = prof_dec ? Clock::now() : Clock::time_point{};
         if (main_hybrid && T > hybrid_t && use_mmq) {
             std::vector<int> seq;
             for (size_t l = 0; l < m->layers.size(); ++l)
@@ -2476,12 +2491,24 @@ struct Engine {
         K::iq_embed_rows(m->embd_type, m->embd, m->embd_row, tok, T, N, x, st);
         if (map_on) k_put_rows<<<T, kThreads, 0, st>>>(x, d_img, d_map, N);   // a picture's cells take its rows
         k_rms<<<T, kThreads, 0, st>>>(x, m->layers[0].attn_norm, h, N, m->eps);   // later layers: from k_moe_out
+        const Clock::time_point prof_l0 = prof_dec ? Clock::now() : Clock::time_point{};
         for (size_t l = 0; l < m->layers.size(); ++l) {
             const bool last = l + 1 == m->layers.size();
             layer(m->layers[l], l, T, p0, pos0, graph_mode, verify, last ? m->out_norm : m->layers[l + 1].attn_norm,
                   last ? hmain : h);
         }
+        if (prof_dec) prof_layers += ms_since(prof_l0);
         if (heads > 0) head_rows(hmain + (size_t) (T - heads) * N, heads, logits, pick);
+        if (prof_dec) {
+            prof_step += ms_since(prof_f0);
+            if (++prof_n % 32 == 0) {
+                std::fprintf(stderr,
+                             "PROF n=%d step=%.2f layers=%.2f moe=%.2f pool=%.2f dense=%.2f nonlayer=%.2f (ms/step, mean of 32)\n",
+                             prof_n, prof_step / 32, prof_layers / 32, prof_moe / 32, prof_pool / 32,
+                             (prof_layers - prof_moe) / 32, (prof_step - prof_layers) / 32);
+                prof_step = prof_layers = prof_moe = prof_pool = 0;
+            }
+        }
     }
     /// logits [n][V] = W_out hn rows, and each row's greedy pick.
     void head_rows(const float* hn, int n, float* lg, int32_t* pk) {
@@ -2818,6 +2845,7 @@ struct Engine {
     /// prompt also runs through it (its K / V for every position: row q reads h_{q-1} and token q).  on_chunk(done) runs
     /// after every chunk; false ends the read there (a cancelled request): the tokens processed are returned.
     template <class F> int64_t process(const int32_t* toks, int64_t n, F on_chunk_) {
+        if (n <= 0) return 0;   // a resumed session can already hold the whole prompt (the same prompt again: nothing to read)
         const int N = (int) m->g.n_embd;
         auto on_chunk = [&](int64_t done) -> bool {   // a callback returning void never cancels
             if constexpr (std::is_void_v<decltype(on_chunk_(done))>) {
@@ -3874,13 +3902,18 @@ struct Serve {
     /// The length of session ss's held tokens when they are a proper start of `ids` with the same pictures, else 0.
     size_t match_len(const Engine::Sess& ss, const std::vector<int32_t>& ids, const std::vector<ImgKey>& imgs) const {
         const size_t L = ss.live.size();
-        if (L == 0 || L >= ids.size() || !std::equal(ss.live.begin(), ss.live.end(), ids.begin())) return 0;
+        if (L == 0 || ss.ended) return 0;   // a reply that ended at EOS cannot be continued: the state is past its answer
+        // The held tokens match when one is a start of the other: the session may hold a strict prefix of the
+        // prompt (it continues a read), or the prompt may end inside the held tokens - the same prompt again,
+        // whose state already holds it, so the reply continues the conversation instead of reading it twice.
+        const size_t n = std::min(L, ids.size());
+        if (n == 0 || !std::equal(ss.live.begin(), ss.live.begin() + (std::ptrdiff_t) n, ids.begin())) return 0;
         std::vector<ImgKey> in_live;
         for (const ImgKey& k : imgs) {
-            if (k.cell + k.n <= (int64_t) L) in_live.push_back(k);
-            else if (k.cell < (int64_t) L) return 0;   // the held tokens end inside a picture
+            if (k.cell + k.n <= (int64_t) n) in_live.push_back(k);
+            else if (k.cell < (int64_t) n) return 0;   // the held tokens end inside a picture
         }
-        return in_live == ss.imgs ? L : 0;
+        return in_live == ss.imgs ? n : 0;
     }
 
     /// The session a request alone takes: the one holding the longest start of its prompt, else an empty one, else the
@@ -4010,6 +4043,7 @@ struct Serve {
             ss.live.clear();
             ss.imgs.clear();
         }
+        ss.ended = false;   // this round's reply is open again (the round's end sets it)
         if (geni) E.set_images(ir.rows, ir.cell_row, ir.mrope, (int64_t) ids.size(), ir.delta);
         else E.clear_images();
         const auto t0 = Clock::now();
@@ -4089,6 +4123,7 @@ struct Serve {
                 ss.active = true;
                 ++n_active;
             }
+            if (!cont) ss.ended = is_eos(nx) && !s_ignore_eos;   // the at-once reply ended: the state cannot continue it
             std::printf("BADM %d %d\n", slot, cont ? 1 : 0);
             std::fflush(stdout);
             std::fprintf(stderr, "strata batch: slot %d takes a prompt of %zu tokens = %zu reused + %lld read in %.0f ms (%.1f "
@@ -4096,6 +4131,8 @@ struct Serve {
                          prompt_ms > 0 ? 1000.0 * (double) fresh / prompt_ms : 0.0, cont ? "" : ", done at once");
             return;
         }
+        E.prof_dec = E.prof;   // only the decode loop's steps are profiled (prompt feeds also run T == 1 forwards)
+        bool eos_end = false;   // this round's reply ended at EOS (the loop's end moves it into the session's flag)
         for (;;) {
             if (smp.needs_logits()) {
                 E.host_logits(lg);
@@ -4106,7 +4143,7 @@ struct Serve {
                 std::fflush(stdout);
                 ++produced;
                 hist.push_back(t);
-                if (is_eos(t) && !s_ignore_eos) { finish = "stop"; return false; }
+                if (is_eos(t) && !s_ignore_eos) { finish = "stop"; eos_end = true; return false; }
                 if (produced >= max_new) return false;
                 if (stop.load()) { finish = "cancel"; return false; }
                 return true;
@@ -4138,6 +4175,8 @@ struct Serve {
             fix.clear();
             if (!smp.needs_logits()) nx = E.greedy();
         }
+        E.prof_dec = false;
+        ss.ended = eos_end;   // a reply that ended at EOS cannot be continued (match_len refuses it)
         E.sess[(size_t) E.cur].pos = E.pos;
         const double decode_ms = ms_since(d0);
         std::printf("DONE %lld %zu %.1f %.1f %s %lld %lld %zu 0 0 0 0 0.0 %lld 0\n", produced, ids.size(), prompt_ms,
@@ -4321,6 +4360,7 @@ int strata::qwen35::run(int argc, char** argv) {
     E.use_graph = graph;
     E.kv_dtype = kv_dtype;
     E.kv_res = kv_res_arg;
+    E.prof = std::getenv("STRATA_Q36_PROFILE") != nullptr;   // the decode step's host decomposition: PROF lines on stderr
     if (kv_res_arg > 0 && (long long) ctx <= kv_res_arg) {
         std::fprintf(stderr,
                      "strata-q36: the context %d does not exceed --kv-resident %lld: the whole cache stays in VRAM\n",
