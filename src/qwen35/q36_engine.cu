@@ -3423,24 +3423,56 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
             return false;
         }
     }
-    // host memory: every expert, pinned where the driver allows it (the prompt's stream and the slot copies)
+    // host memory: every expert, pinned where the driver allows it (the prompt's stream and the slot copies).
+    // 5.6: STRATA_Q36_PIN_GIB=<GiB> pins a BUDGET instead of one 17.45 GiB ask that WSL2's page-lock
+    // cap refuses on every serve: a graduated ladder 12->8->6->4->2->1 GiB, the granted prefix holds
+    // whole layer slices, and the arena's remainder stays pageable (malloc; its pages commit as the
+    // walk memsets them). Unset = the old single ask, byte for byte. The pin speeds the slot-replacement
+    // copies and the prompt stream; the pool's own reads stay DRAM-bound either way.
     size_t host = 0;
     for (Layer* L : all)
         if (!mtp_only || L == &m.mtp) host += L->stride * (size_t) ne + kMmqTail;
     uint8_t* arena = nullptr;
-    bool pinned = cudaHostAlloc((void**) &arena, host, cudaHostAllocDefault) == cudaSuccess;
-    if (!pinned) {
-        // S11 lever 1 (diagnostic): the pin failure used to be swallowed silently - the
-        // pool has run 21.14 GiB in PAGEABLE memory the whole session (6.2 GB/s effective,
-        // 12% of DDR4 peak). Log WHY it fails (a WSL2 page-locked cap is not fixable;
-        // fragmentation or a reserve might be): one line, no behavior change.
-        const char* perr = cudaGetErrorString(cudaGetLastError());
-        std::fprintf(stderr, "strata-q36: cudaHostAlloc for the %.2f GiB expert arena FAILED (%s); "
-                     "the pool runs in pageable host memory\n", (double) host / (1 << 30), perr);
-        arena = (uint8_t*) std::malloc(host);
+    uint8_t* pin_buf = nullptr;         // the granted pinned prefix (whole slices), else null
+    size_t pin_cap = 0;                 // its capacity (0 = all pageable)
+    size_t offp = 0, offq = 0;          // the two-offset slice walk
+    bool pinned = false;
+    if (const char* pin_env = std::getenv("STRATA_Q36_PIN_GIB")) {
+        static const int ladder[] = {12, 8, 6, 4, 2, 1};
+        int start = std::atoi(pin_env);
+        if (start <= 0) start = 8;
+        for (int g : ladder) {
+            if (g > start) continue;
+            if (cudaHostAlloc((void**) &pin_buf, (size_t) g << 30, cudaHostAllocDefault) == cudaSuccess) {
+                pin_cap = (size_t) g << 30;
+                break;
+            }
+            (void) cudaGetLastError();   // drain the sticky error before the next ask
+            pin_buf = nullptr;
+        }
+        if (!pin_buf)
+            std::fprintf(stderr, "strata-q36: the STRATA_Q36_PIN_GIB ladder granted nothing; the arena stays pageable\n");
+        pinned = pin_cap > 0;
+        arena = (uint8_t*) std::malloc(host);   // the pageable remainder's buffer (pages commit on the walk's memset)
         if (!arena) {
             err = "no host memory for the experts (" + std::to_string(host >> 20) + " MiB)";
             return false;
+        }
+    } else {
+        pinned = cudaHostAlloc((void**) &arena, host, cudaHostAllocDefault) == cudaSuccess;
+        if (!pinned) {
+            // S11 lever 1 (diagnostic): the pin failure used to be swallowed silently - the
+            // pool has run 21.14 GiB in PAGEABLE memory the whole session (6.2 GB/s effective,
+            // 12% of DDR4 peak). Log WHY it fails (a WSL2 page-locked cap is not fixable;
+            // fragmentation or a reserve might be): one line, no behavior change.
+            const char* perr = cudaGetErrorString(cudaGetLastError());
+            std::fprintf(stderr, "strata-q36: cudaHostAlloc for the %.2f GiB expert arena FAILED (%s); "
+                         "the pool runs in pageable host memory\n", (double) host / (1 << 30), perr);
+            arena = (uint8_t*) std::malloc(host);
+            if (!arena) {
+                err = "no host memory for the experts (" + std::to_string(host >> 20) + " MiB)";
+                return false;
+            }
         }
     }
     size_t off = 0;
@@ -3458,9 +3490,16 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
             L.n_slots = (int) ne;
             continue;
         }
-        L.hblobs = arena + off;
-        off += L.stride * (size_t) ne + kMmqTail;
-        std::memset(L.hblobs, 0, L.stride * (size_t) ne + kMmqTail);
+        const size_t sz = L.stride * (size_t) ne + kMmqTail;
+        if (pin_buf && offp + sz <= pin_cap) {   // 5.6: whole slices into the granted pinned prefix
+            L.hblobs = pin_buf + offp;
+            offp += sz;
+        } else {
+            L.hblobs = arena + offq;
+            offq += sz;
+        }
+        off += sz;
+        std::memset(L.hblobs, 0, sz);
         for (int64_t e = 0; e < ne; ++e) expert_blob(L, e, L.hblobs + (size_t) e * L.stride);
         L.n_slots = S;
         if (S > 0) {
@@ -3510,12 +3549,21 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
         std::fprintf(stderr, "strata-q36: every main layer's routed experts in VRAM (%.2f GiB); the MTP block's: %d of "
                      "%lld in VRAM, the rest on the CPU pool (its drafts only)\n", (double) total_main / (1 << 30), S,
                      (long long) ne);
-    else
-    std::fprintf(stderr, "strata-q36: hybrid experts: %d of %lld per layer in VRAM (%.2f GiB), all %.2f GiB in %s host "
-                 "memory, the rest of a batch of <= %d rows on %d CPU threads, bigger prompt chunks streamed (%.2f GiB "
-                 "staging); %.1f s\n", S, (long long) ne, (double) S * per_slot / (1 << 30), (double) host / (1 << 30),
-                 pinned ? "pinned" : "pageable", E.hybrid_t, E.pool->workers() + (E.pool->host_works() ? 1 : 0),
-                 (double) staging / (1 << 30), ms_since(t0) / 1000.0);
+    else {
+        char hostdesc[80];
+        if (pin_buf)
+            std::snprintf(hostdesc, sizeof hostdesc, "%.2f GiB pinned + %.2f GiB pageable",
+                          (double) offp / (1 << 30), (double) (host - offp) / (1 << 30));
+        else if (pinned)
+            std::snprintf(hostdesc, sizeof hostdesc, "pinned");
+        else
+            std::snprintf(hostdesc, sizeof hostdesc, "pageable");
+        std::fprintf(stderr, "strata-q36: hybrid experts: %d of %lld per layer in VRAM (%.2f GiB), all %.2f GiB in %s host "
+                     "memory, the rest of a batch of <= %d rows on %d CPU threads, bigger prompt chunks streamed (%.2f GiB "
+                     "staging); %.1f s\n", S, (long long) ne, (double) S * per_slot / (1 << 30), (double) host / (1 << 30),
+                     hostdesc, E.hybrid_t, E.pool->workers() + (E.pool->host_works() ? 1 : 0),
+                     (double) staging / (1 << 30), ms_since(t0) / 1000.0);
+    }
     return true;
 #endif
 }
