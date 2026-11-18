@@ -303,6 +303,46 @@ __global__ void k_group_small(const int32_t* ids, int n_ent, int K_, const int32
     }
 }
 
+/// STRATA_Q36_QMASK: the second grouped pass narrowed to THIS step's fills (fill_of[id] == the layer-step's
+/// stamp).  The first pass already wrote the hits' eparts; the old second pass regrouped every slotted entry
+/// and re-executed them all for nothing (.oc/GATHER_MAP §4).  Same one-block ranking as k_group_small.
+__global__ void k_group_fills(const int32_t* ids, int n_ent, int K_, const int32_t* slot_of,
+                              const long long* fill_of, long long stamp, const uint8_t* blobs,
+                              unsigned long long blob, unsigned long long* grp_ptr, int32_t* grp_start,
+                              int32_t* n_groups, int32_t* ent_dst, int32_t* ent_tok) {
+    __shared__ int sid[64];
+    const int e = threadIdx.x;
+    const int id = e < n_ent ? ids[e] : 0;
+    const bool valid = e < n_ent && fill_of[id] == stamp;
+    int rank = 0;
+    if (valid) {
+        for (int e2 = 0; e2 < n_ent; ++e2) {
+            const int id2 = ids[e2];
+            if (fill_of[id2] != stamp) continue;
+            if (id2 < id || (id2 == id && e2 < e)) ++rank;
+        }
+        ent_dst[rank] = e;
+        ent_tok[rank] = e / K_;
+        sid[rank] = id;
+    }
+    __syncthreads();
+    int nv = 0;
+    for (int e2 = 0; e2 < n_ent; ++e2) nv += fill_of[ids[e2]] == stamp ? 1 : 0;
+    if (valid && (rank == 0 || sid[rank - 1] != sid[rank])) {
+        int g = 0;
+        for (int q = 1; q < rank; ++q) g += sid[q - 1] != sid[q] ? 1 : 0;
+        g += rank > 0 ? 1 : 0;
+        grp_ptr[g] = (unsigned long long) (blobs + (size_t) slot_of[id] * blob);
+        grp_start[g] = rank;
+    }
+    if (e == 0) {
+        int G = nv > 0 ? 1 : 0;
+        for (int q = 1; q < nv; ++q) G += sid[q - 1] != sid[q] ? 1 : 0;
+        grp_start[G] = nv;
+        *n_groups = G;
+    }
+}
+
 /// route_topk<256, 8> (native_router.cu, copied: the same expressions) for n_tok <= 8 tokens (one warp each) and, in the same
 /// launch, k_group_small's grouping of the picks.  block (32, 8).  HY as k_group_small.
 template <bool HY>

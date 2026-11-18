@@ -25,6 +25,9 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#if defined(__x86_64__) || defined(_M_X64)
+#include <xmmintrin.h>   // STRATA_KQ_PREFETCH's _mm_prefetch (baseline SSE, no ISA flag)
+#endif
 
 namespace strata::kernels::cpu {
 namespace {
@@ -624,10 +627,27 @@ void native_gu_rows_impl(const NativeFmt& f, const uint8_t* blob, const void* co
         nvfp4_256_gu_rows(blob, f.gu_row, f.up_off, n, act, nt, ff, r0, r1, sg, su);
         return;
     }
+#if defined(__x86_64__) || defined(_M_X64)
+    // STRATA_KQ_PREFETCH: bytes ahead to warm while the current row's dot runs (0 = off, the default
+    // keeps today's binary byte-identical). The rows stream from DRAM once and are never reused;
+    // without this every row's first q4 load stalls the dependent chain. T0 hint, like the i-quant
+    // rows (iq_avx2.cpp: the non-temporal hint measured worse at the same distance). NOTE: 2048 B
+    // (the dev rig's default) benched NET-NEGATIVE on this box (-4.5/-2.3/-7.5% vs the control,
+    // ledger 11-18) - the distance needs a per-box sweep before any re-arm.
+    static const int pf = [] { const char* e = std::getenv("STRATA_KQ_PREFETCH");
+                                return e ? std::atoi(e) : 0; }();
+    const int64_t gu_ahead = pf > 0 ? (int64_t) (pf / (int) f.gu_row) + 1 : 0;   // hoisted: one div per call
+#endif
     const ggml_vec_dot_t dot = traits(f.gu_type)->vec_dot;
     for (int r = r0; r < r1; ++r) {
         const uint8_t* gr = blob + (size_t) r * f.gu_row;
         const uint8_t* ur = blob + f.up_off + (size_t) r * f.gu_row;
+#if defined(__x86_64__) || defined(_M_X64)
+        if (gu_ahead > 0 && r + gu_ahead < r1) {   // whole rows, both matrices
+            _mm_prefetch((const char*) (gr + (size_t) gu_ahead * f.gu_row), _MM_HINT_T0);
+            _mm_prefetch((const char*) (ur + (size_t) gu_ahead * f.gu_row), _MM_HINT_T0);
+        }
+#endif
         for (int t = 0; t < nt; ++t) {
             float g = 0.f, u = 0.f;
             dot(n, &g, 0, gr, 0, act[t], 0, 1);
@@ -698,9 +718,20 @@ void native_down_rows_impl(const NativeFmt& f, const uint8_t* blob, const void* 
         nvfp4_256_rows(blob + f.down_off, f.d_row, n, hq, nt, out, r0, r1, sd);
         return;
     }
+#if defined(__x86_64__) || defined(_M_X64)
+    // STRATA_KQ_PREFETCH (see the gu tail): the down phase is the latency hotspot - 288-B bursts,
+    // ~3x ideal stream per dot; 2048 B covers ~7 rows (net-negative on this box at 2048, see gu tail).
+    static const int pf = [] { const char* e = std::getenv("STRATA_KQ_PREFETCH");
+                                return e ? std::atoi(e) : 0; }();
+    const int64_t d_ahead = pf > 0 ? (int64_t) (pf / (int) f.d_row) + 1 : 0;   // hoisted: one div per call
+#endif
     const ggml_vec_dot_t dot = traits(f.d_type)->vec_dot;
     for (int r = r0; r < r1; ++r) {
         const uint8_t* dr = blob + f.down_off + (size_t) r * f.d_row;
+#if defined(__x86_64__) || defined(_M_X64)
+        if (d_ahead > 0 && r + d_ahead < r1)   // whole rows
+            _mm_prefetch((const char*) (dr + (size_t) d_ahead * f.d_row), _MM_HINT_T0);
+#endif
         for (int t = 0; t < nt; ++t) {
             float s = 0.f;
             dot(n, &s, 0, dr, 0, hq[t], 0, 1);

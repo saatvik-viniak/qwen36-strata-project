@@ -1464,6 +1464,10 @@ struct Engine {
         std::vector<long long> slot_tick;   // q-star LRU: the step clock when the slot's expert was last picked
         bool lru = false;            // this layer's residency follows the router (pinned slice, main layer)
         int32_t* slot_of_d = nullptr;
+        std::vector<long long> fill_of;   // STRATA_Q36_QMASK: the layer-step stamp when the expert was last filled
+        long long* fill_of_d = nullptr;   // its device image (uploaded once before the masked second pass)
+        int32_t* slot_of_pin = nullptr;    // STRATA_Q36_PINTAB: slot_of's pinned upload mirror (an async source
+        long long* fill_of_pin = nullptr;  // must be pinned — pageable implicitly syncs the stream); with qmask
 #if defined(STRATA_Q36_CPU_POOL)
         strata::kernels::cpu::NativeFmt fmt;
 #endif
@@ -1478,6 +1482,18 @@ struct Engine {
     // (default 2). Unset => today's path byte for byte (QSTAR_LRU_MAP §3.6).
     bool lru_env = false;
     int q_fills = 2;
+    // STRATA_Q36_QMASK (env-gated, default OFF => byte-identical): the second grouped pass narrowed to
+    // this step's fills — the first pass already wrote the hits' eparts; the old pass re-executed every
+    // slotted entry (.oc/GATHER_MAP §4). The mapped-arena gather transport (STRATA_Q36_GATHER) was
+    // REMOVED 2026-11-18: the cudaHostAllocMapped pin OOM-killed the serve at load on WSL2 (the mapped
+    // pages account as unswappable shmem, PLAN 11-18) and the UVA probe (.oc/uva_probe.cu) showed
+    // default-pinned memory is NOT coherently device-readable on this stack — no viable transport.
+    bool qmask_env = false;
+    // STRATA_Q36_PINTAB (default ON; =0 restores the pageable source): the second pass's slot-table
+    // uploads run from per-layer PINNED mirrors — a PAGEABLE async source implicitly syncs the host with
+    // the whole stream on every fill layer-step (~19/step; the ev_route wait makes the mirror rewrite
+    // safe by construction), the largest removable slice of the non-pool moe wall (.oc/GLUE_MAP RANK 1).
+    bool pintab = true;
     long long hy_step = 0;             // per-layer-step clock (monotone; ticks compare within one layer)
     std::vector<uint8_t> hy_pinned;    // per layer: its slice landed in the pin's prefix (the fills' gate)
     std::vector<uint8_t> lru_mark;     // this step's pick marks for the victim choice (sized n_expert lazily)
@@ -2723,6 +2739,7 @@ struct Engine {
                     H.slot_tick[(size_t) v] = step_tick;
                     CK(cudaMemcpyAsync(L.blobs + (size_t) v * L.stride, L.hblobs + (size_t) x * L.stride,
                                        L.L.bytes, cudaMemcpyHostToDevice, st));
+                    if (qmask_env) H.fill_of[(size_t) x] = step_tick;   // the masked second pass's stamp
                     h_miss[e] = 0;
                     ++n_fill;
                     prof_fill_bytes += (double) L.L.bytes;
@@ -2752,15 +2769,41 @@ struct Engine {
             for (int e2 = 0; e2 < n_ent; ++e2) lru_mark[(size_t) h_ids[e2]] = 0;
         hy_cpu += n_miss;
         hy_gpu += n_ent - n_miss;
-        // the q-star second pass: the fills' slots are fresh (the DMAs are stream-ahead); regroup all
-        // entries with the updated table and execute the fills on the GPU in-step — overlapping the
-        // inline pool call. The hits recompute bitwise-identically (same inputs, same kernels, same
-        // launch); the merge stays exact with zero changes because the fill entries' h_miss is 0 and
-        // k_merge_cpu skips them (QSTAR_LRU_MAP §3.4).
+        // the q-star second pass: the fills' slots are fresh (the copies are stream-ahead); regroup with
+        // the updated table and execute the fills on the GPU in-step — overlapping the inline pool call.
+        // STRATA_Q36_QMASK narrows the regroup to this step's fills (the first pass already wrote the
+        // hits' eparts; the old pass re-executed every slotted entry for nothing, GATHER_MAP §4); without
+        // it the hits recompute bitwise-identically (same inputs, same kernels, same launch). The merge
+        // stays exact with zero changes because the fill entries' h_miss is 0 and k_merge_cpu skips them
+        // (QSTAR_LRU_MAP §3.4).
         if (n_fill > 0) {
-            CK(cudaMemcpyAsync(H.slot_of_d, H.slot_of.data(), (size_t) g.n_expert * 4, cudaMemcpyHostToDevice, st));
-            q36k::k_group_small<true><<<1, 64, 0, st>>>(ids, n_ent, Kp, H.slot_of_d, L.blobs, L.stride,
-                                                        grp_ptr, grp_start, n_groups, ent_dst, ent_tok);
+            // STRATA_Q36_PINTAB: a PAGEABLE async source implicitly syncs the host with the whole stream
+            // — behind the first grouped pass + the shared expert + the fills' transports — on every fill
+            // layer-step (~19/step): the largest removable slice of the non-pool moe wall (.oc/GLUE_MAP
+            // RANK 1).  The pinned mirror makes the upload truly async; correct by construction: the
+            // mirror is only rewritten at this layer's NEXT fill loop, and the ev_route wait already
+            // guarantees the stream consumed the previous step's upload by then.  STRATA_Q36_PINTAB=0
+            // restores the pageable source (the escape hatch).
+            if (H.slot_of_pin) {
+                std::memcpy(H.slot_of_pin, H.slot_of.data(), (size_t) g.n_expert * 4);
+                CK(cudaMemcpyAsync(H.slot_of_d, H.slot_of_pin, (size_t) g.n_expert * 4, cudaMemcpyHostToDevice, st));
+            } else {
+                CK(cudaMemcpyAsync(H.slot_of_d, H.slot_of.data(), (size_t) g.n_expert * 4, cudaMemcpyHostToDevice, st));
+            }
+            if (qmask_env) {
+                if (H.fill_of_pin) {
+                    std::memcpy(H.fill_of_pin, H.fill_of.data(), (size_t) g.n_expert * 8);
+                    CK(cudaMemcpyAsync(H.fill_of_d, H.fill_of_pin, (size_t) g.n_expert * 8, cudaMemcpyHostToDevice, st));
+                } else {
+                    CK(cudaMemcpyAsync(H.fill_of_d, H.fill_of.data(), (size_t) g.n_expert * 8, cudaMemcpyHostToDevice, st));
+                }
+                q36k::k_group_fills<<<1, 64, 0, st>>>(ids, n_ent, Kp, H.slot_of_d, H.fill_of_d, step_tick,
+                                                     L.blobs, L.stride, grp_ptr, grp_start, n_groups,
+                                                     ent_dst, ent_tok);
+            } else {
+                q36k::k_group_small<true><<<1, 64, 0, st>>>(ids, n_ent, Kp, H.slot_of_d, L.blobs, L.stride,
+                                                            grp_ptr, grp_start, n_groups, ent_dst, ent_tok);
+            }
             K::native_expert_grouped(L.L, grp_ptr, grp_start, n_groups, ent_dst, ent_tok,
                                      std::min<int64_t>(n_ent, g.n_expert), n_ent, xq, escr, eparts, st);
         }
@@ -3515,6 +3558,9 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
         const int qv = std::atoi(qe);
         if (qv >= 1) E.q_fills = qv;
     }
+    E.qmask_env = std::getenv("STRATA_Q36_QMASK") != nullptr;
+    E.pintab = true;   // STRATA_Q36_PINTAB=0 restores the pageable slot-table upload (the A/B escape hatch)
+    if (const char* pe = std::getenv("STRATA_Q36_PINTAB")) E.pintab = std::atoi(pe) != 0;
     if (const char* pin_env = std::getenv("STRATA_Q36_PIN_GIB")) {
         static const int ladder[] = {15, 14, 13, 12, 8, 6, 4, 2, 1};
         int start = std::atoi(pin_env);
@@ -3600,6 +3646,14 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
         H.score.assign((size_t) ne, 0.0);
         CK(cudaMalloc(&H.slot_of_d, (size_t) ne * 4));
         CK(cudaMemcpy(H.slot_of_d, H.slot_of.data(), (size_t) ne * 4, cudaMemcpyHostToDevice));
+        if (E.pintab)   // STRATA_Q36_PINTAB: the pinned upload mirror (1 KB/layer; already-counted lock budget)
+            CK(cudaHostAlloc((void**) &H.slot_of_pin, (size_t) ne * 4, cudaHostAllocDefault));
+        if (E.qmask_env && H.lru) {   // the masked second pass's per-expert fill stamps (0 = never filled)
+            H.fill_of.assign((size_t) ne, 0);
+            CK(cudaMalloc((void**) &H.fill_of_d, (size_t) ne * 8));
+            CK(cudaMemset(H.fill_of_d, 0, (size_t) ne * 8));
+            if (E.pintab) CK(cudaHostAlloc((void**) &H.fill_of_pin, (size_t) ne * 8, cudaHostAllocDefault));
+        }
         if (!C::native_fmt(L.L.gu_type, L.L.d_type, g.n_embd, g.n_ff, H.fmt, err)) return false;
         if (H.fmt.up_off != L.L.up_off || H.fmt.down_off != L.L.down_off || H.fmt.bytes != L.L.bytes) {
             err = "the CPU and GPU expert layouts differ";
