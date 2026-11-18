@@ -52,7 +52,7 @@ bool check_format(int gu, int down, int ff, bool folded = false) {
             if (type == cpu::kNvfp4Type) std::memset(blob.data() + at, 0x28, 4); // finite UE4M3 sub-block scales
             else {
                 std::memcpy(blob.data() + at, &scale, sizeof(scale));
-                if (type == 12 || type == 7) std::memcpy(blob.data() + at + 2, &scale, sizeof(scale));
+                if (type == 12 || type == 13 || type == 7) std::memcpy(blob.data() + at + 2, &scale, sizeof(scale));
             }
         }
     };
@@ -117,6 +117,11 @@ int main() {
         if (!check_format(pair.first, pair.second, 64)) return 1;
     // STRATA_KQ256 selects grouped Q4_K/Q5_1/Q8_0 kernels only when their target arithmetic matches.
     if (!check_format(12, 7, 64) || !check_format(12, 8, 64)) return 1;
+    // The Qwen3.6-35B Q4_K_S model's real down pairs at the grouped width: Q4_K down on 36 of
+    // 41 layers, Q5_K on the other 5. With STRATA_KQ256=1 these exercise the grouped
+    // q4k_dot/q5k_dot kernels at nt >= 2 (dormant in the default engine, bit-exact per
+    // native_expert_parity q4_K/q4_K at the real n_ff=512).
+    if (!check_format(12, 12, 256) || !check_format(12, 13, 256)) return 1;
     // 0.2 adds Trellis formats and folded expert inputs. Exercise both their
     // production singleton dispatch and every grouped width through the new API.
     for (int gu : {144, 145, 146})
