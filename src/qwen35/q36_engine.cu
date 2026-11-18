@@ -1406,6 +1406,8 @@ struct Engine {
     bool prof_dec = false;
     int prof_n = 0;
     double prof_step = 0, prof_layers = 0, prof_moe = 0, prof_pool = 0;
+    double prof_fill_bytes = 0;   // the q-star fills' DMA bytes per PROF window
+    long long prof_fills = 0;
 
     // ---- sessions: the conversation states.  One for a single-request engine; --batch N keeps N, each with its own
     // recurrent state and KV cache, so N requests run at once: their rows share one decode window (forward_rows).  The
@@ -1459,6 +1461,8 @@ struct Engine {
     struct Hy {
         std::vector<int> slot_of, exp_in_slot;
         std::vector<double> score;   // routing counts, halved at each rebalance
+        std::vector<long long> slot_tick;   // q-star LRU: the step clock when the slot's expert was last picked
+        bool lru = false;            // this layer's residency follows the router (pinned slice, main layer)
         int32_t* slot_of_d = nullptr;
 #if defined(STRATA_Q36_CPU_POOL)
         strata::kernels::cpu::NativeFmt fmt;
@@ -1468,6 +1472,15 @@ struct Engine {
     int hybrid_t = 32;
     bool main_hybrid = false;   // some main layer is hybrid (else only the MTP block is: the decode graph stays)
     bool mtp_graph = true;      // the MTP draft step may be a graph (not when its layer is hybrid)
+    // q-star/LRU (env-gated): residency follows the router per step; each layer's first q misses are
+    // copied into a slot (pinned slices only) and executed on the GPU in-step; the pool carries only
+    // the rest (the C set). STRATA_Q36_LRU engages; STRATA_Q36_QFILLS caps the per-layer fills
+    // (default 2). Unset => today's path byte for byte (QSTAR_LRU_MAP §3.6).
+    bool lru_env = false;
+    int q_fills = 2;
+    long long hy_step = 0;             // per-layer-step clock (monotone; ticks compare within one layer)
+    std::vector<uint8_t> hy_pinned;    // per layer: its slice landed in the pin's prefix (the fills' gate)
+    std::vector<uint8_t> lru_mark;     // this step's pick marks for the victim choice (sized n_expert lazily)
     /// state index li's layer runs hybrid (its experts not all in VRAM)
     bool lhy(size_t li) const {
         if (!m->hybrid) return false;
@@ -2503,10 +2516,14 @@ struct Engine {
             prof_step += ms_since(prof_f0);
             if (++prof_n % 32 == 0) {
                 std::fprintf(stderr,
-                             "PROF n=%d step=%.2f layers=%.2f moe=%.2f pool=%.2f dense=%.2f nonlayer=%.2f (ms/step, mean of 32)\n",
+                             "PROF n=%d step=%.2f layers=%.2f moe=%.2f pool=%.2f dense=%.2f nonlayer=%.2f "
+                             "fills=%lld fillMB=%.1f (ms/step, mean of 32)\n",
                              prof_n, prof_step / 32, prof_layers / 32, prof_moe / 32, prof_pool / 32,
-                             (prof_layers - prof_moe) / 32, (prof_step - prof_layers) / 32);
+                             (prof_layers - prof_moe) / 32, (prof_step - prof_layers) / 32,
+                             prof_fills, prof_fill_bytes / (double) (1 << 20));
                 prof_step = prof_layers = prof_moe = prof_pool = 0;
+                prof_fill_bytes = 0;
+                prof_fills = 0;
             }
         }
     }
@@ -2664,7 +2681,14 @@ struct Engine {
         jobs.clear();
         std::vector<char> quantized((size_t) T, 0);
         int n_miss = 0;
+        int n_fill = 0;               // the q-star same-step fills (capped at q_fills per layer-step)
         std::map<int, size_t> open;   // expert -> its job with room
+        const long long step_tick = ++hy_step;   // the LRU's per-layer-step clock (monotone)
+        const int S = L.n_slots;
+        if (H.lru) {   // mark this step's picks: the victim choice never evicts one mid-step (it would thrash)
+            if (lru_mark.size() < (size_t) g.n_expert) lru_mark.assign((size_t) g.n_expert, 0);
+            for (int e2 = 0; e2 < n_ent; ++e2) lru_mark[(size_t) h_ids[e2]] = 1;
+        }
         const bool defer = rows_deferred && li < m->layers.size();
         if (defer) {
             if (row_ids.size() < m->layers.size()) row_ids.resize(m->layers.size());
@@ -2674,7 +2698,38 @@ struct Engine {
             const int x = h_ids[e];
             if (!defer) H.score[(size_t) x] += 1.0;
             h_miss[e] = H.slot_of[(size_t) x] < 0;
-            if (!h_miss[e]) continue;
+            if (!h_miss[e]) {
+                if (H.lru) H.slot_tick[(size_t) H.slot_of[(size_t) x]] = step_tick;
+                continue;
+            }
+            // the q-star fill: residency follows the router; the DMA + the in-step GPU pass below run
+            // only on the pin's slices (pageable sources are host-staged, PIN56_MAP §3) and only up to
+            // q_fills per layer-step — the cap is what bounds the DMA branch (QSTAR_LRU_MAP §4.1)
+            if (H.lru && n_ent <= 64 && n_fill < q_fills) {
+                int v = -1;   // v1 LRU victim: least-recently-picked, never one of this step's picks
+                for (int s = 0; s < S; ++s) {
+                    const int r = H.exp_in_slot[(size_t) s];
+                    if (lru_mark[(size_t) r]) continue;
+                    if (v < 0 || H.slot_tick[(size_t) s] < H.slot_tick[(size_t) v]
+                        || (H.slot_tick[(size_t) s] == H.slot_tick[(size_t) v]
+                            && H.score[(size_t) r] < H.score[(size_t) H.exp_in_slot[(size_t) v]]))
+                        v = s;
+                }
+                if (v >= 0) {
+                    const int y = H.exp_in_slot[(size_t) v];
+                    H.slot_of[(size_t) y] = -1;
+                    H.slot_of[(size_t) x] = v;
+                    H.exp_in_slot[(size_t) v] = x;
+                    H.slot_tick[(size_t) v] = step_tick;
+                    CK(cudaMemcpyAsync(L.blobs + (size_t) v * L.stride, L.hblobs + (size_t) x * L.stride,
+                                       L.L.bytes, cudaMemcpyHostToDevice, st));
+                    h_miss[e] = 0;
+                    ++n_fill;
+                    prof_fill_bytes += (double) L.L.bytes;
+                    ++prof_fills;
+                    continue;   // the GPU computes it in-step below; the pool never sees it
+                }
+            }
             ++n_miss;
             const int t = e / Kp;
             if (!quantized[(size_t) t]) {
@@ -2693,8 +2748,22 @@ struct Engine {
             j.out[j.nt] = cpu_out + (size_t) e * N;
             ++j.nt;
         }
+        if (H.lru)   // unmark this step's picks (the marks are per-step scratch)
+            for (int e2 = 0; e2 < n_ent; ++e2) lru_mark[(size_t) h_ids[e2]] = 0;
         hy_cpu += n_miss;
         hy_gpu += n_ent - n_miss;
+        // the q-star second pass: the fills' slots are fresh (the DMAs are stream-ahead); regroup all
+        // entries with the updated table and execute the fills on the GPU in-step — overlapping the
+        // inline pool call. The hits recompute bitwise-identically (same inputs, same kernels, same
+        // launch); the merge stays exact with zero changes because the fill entries' h_miss is 0 and
+        // k_merge_cpu skips them (QSTAR_LRU_MAP §3.4).
+        if (n_fill > 0) {
+            CK(cudaMemcpyAsync(H.slot_of_d, H.slot_of.data(), (size_t) g.n_expert * 4, cudaMemcpyHostToDevice, st));
+            q36k::k_group_small<true><<<1, 64, 0, st>>>(ids, n_ent, Kp, H.slot_of_d, L.blobs, L.stride,
+                                                        grp_ptr, grp_start, n_groups, ent_dst, ent_tok);
+            K::native_expert_grouped(L.L, grp_ptr, grp_start, n_groups, ent_dst, ent_tok,
+                                     std::min<int64_t>(n_ent, g.n_expert), n_ent, xq, escr, eparts, st);
+        }
         if (n_miss == 0) return;
         pool->run_split_multi_native(H.fmt, jobs.data(), (int) jobs.size());
         hy_cpu_ms += ms_since(t0);
@@ -2719,6 +2788,7 @@ struct Engine {
             const Layer& L = layer_at((int) li);
             const int S = L.n_slots;
             if (S <= 0 || S >= ne) continue;
+            if (H.lru) continue;   // residency follows the router per step on these layers (the q-star patch)
             std::vector<int> order((size_t) ne);
             for (int x = 0; x < ne; ++x) order[(size_t) x] = x;
             std::sort(order.begin(), order.end(), [&](int a, int b) { return H.score[(size_t) a] > H.score[(size_t) b]; });
@@ -3437,6 +3507,14 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
     size_t pin_cap = 0;                 // its capacity (0 = all pageable)
     size_t offp = 0, offq = 0;          // the two-offset slice walk
     bool pinned = false;
+    // q-star/LRU switches (once per load): STRATA_Q36_LRU engages the per-step router-following
+    // residency + the q-capped same-step fills on the pin's slices; STRATA_Q36_QFILLS caps them.
+    E.lru_env = std::getenv("STRATA_Q36_LRU") != nullptr;
+    E.q_fills = 2;
+    if (const char* qe = std::getenv("STRATA_Q36_QFILLS")) {
+        const int qv = std::atoi(qe);
+        if (qv >= 1) E.q_fills = qv;
+    }
     if (const char* pin_env = std::getenv("STRATA_Q36_PIN_GIB")) {
         static const int ladder[] = {12, 8, 6, 4, 2, 1};
         int start = std::atoi(pin_env);
@@ -3477,6 +3555,7 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
     }
     size_t off = 0;
     E.hy.resize(all.size());
+    E.hy_pinned.assign(all.size(), 0);   // the fills' gate: which layers' slices landed in the pin's prefix
     for (size_t li = 0; li < all.size(); ++li) {
         Layer& L = *all[li];
         if (mtp_only && &L != &m.mtp) {   // a main layer: every expert in VRAM, as in the all-in-VRAM placement
@@ -3491,7 +3570,9 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
             continue;
         }
         const size_t sz = L.stride * (size_t) ne + kMmqTail;
-        if (pin_buf && offp + sz <= pin_cap) {   // 5.6: whole slices into the granted pinned prefix
+        const bool slice_pinned = pin_buf && offp + sz <= pin_cap;
+        E.hy_pinned[li] = slice_pinned ? 1 : 0;
+        if (slice_pinned) {   // 5.6: whole slices into the granted pinned prefix
             L.hblobs = pin_buf + offp;
             offp += sz;
         } else {
@@ -3510,6 +3591,8 @@ bool place_experts(Model& m, Engine& E, double vram_gib, int threads, int hybrid
         Engine::Hy& H = E.hy[li];
         H.slot_of.assign((size_t) ne, -1);
         H.exp_in_slot.assign((size_t) S, 0);
+        H.slot_tick.assign((size_t) S, 0);
+        H.lru = E.lru_env && E.hy_pinned[li] && li < m.layers.size();   // the MTP block keeps score-rebalance
         for (int s = 0; s < S; ++s) {
             H.slot_of[(size_t) s] = s;
             H.exp_in_slot[(size_t) s] = s;
